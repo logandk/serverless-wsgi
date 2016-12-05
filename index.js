@@ -1,6 +1,5 @@
 /* jshint ignore:start */
 'use strict';
-
 const BbPromise = require('bluebird');
 const _ = require('lodash');
 const path = require('path');
@@ -13,13 +12,15 @@ class ServerlessWSGI {
   validate() {
     if (this.serverless.service.custom && this.serverless.service.custom.wsgi && this.serverless.service.custom.wsgi.app) {
       this.wsgiApp = this.serverless.service.custom.wsgi.app;
-    } else {
-      throw new this.serverless.classes.Error(
-        'Missing WSGI app, please specify custom.wsgi.app. For instance, if you have a Flask application "app" in "api.py", set the Serverless custom.wsgi.app configuration option to: api.app');
     }
   };
 
   packWsgiHandler() {
+    if (!this.wsgiApp) {
+      this.serverless.cli.log('Warning: No WSGI app specified, omitting WSGI handler from package');
+      return BbPromise.resolve();
+    }
+
     this.serverless.cli.log('Packaging Python WSGI handler...');
 
     return BbPromise.all([
@@ -34,20 +35,24 @@ class ServerlessWSGI {
 
   packRequirements() {
     const requirementsFile = path.join(this.serverless.config.servicePath, 'requirements.txt');
+    let args = [path.resolve(__dirname, 'requirements.py')];
 
-    if (!fse.existsSync(requirementsFile)) {
-      return BbPromise.resolve();
+    if (fse.existsSync(requirementsFile)) {
+      args.push(requirementsFile);
+    } else {
+      if (this.wsgiApp) {
+        args.push(path.resolve(__dirname, 'requirements.txt'));
+      } else {
+        return BbPromise.resolve();
+      }
     }
+
+    args.push(path.join(this.serverless.config.servicePath, '.requirements'));
 
     this.serverless.cli.log('Packaging required Python packages...');
 
     return new BbPromise((resolve, reject) => {
-      const res = child_process.spawnSync('python', [
-        path.resolve(__dirname, 'requirements.py'),
-        path.resolve(__dirname, 'requirements.txt'),
-        requirementsFile,
-        path.join(this.serverless.config.servicePath, '.requirements')
-      ]);
+      const res = child_process.spawnSync('python', args);
       if (res.error) {
         return reject(res.error);
       }
@@ -66,6 +71,11 @@ class ServerlessWSGI {
   };
 
   serve() {
+    if (!this.wsgiApp) {
+      throw new this.serverless.classes.Error(
+        'Missing WSGI app, please specify custom.wsgi.app. For instance, if you have a Flask application "app" in "api.py", set the Serverless custom.wsgi.app configuration option to: api.app');
+    }
+
     const port = this.options.port || 5000;
 
     return new BbPromise((resolve, reject) => {
