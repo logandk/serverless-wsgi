@@ -70,6 +70,20 @@ class ServerlessWSGI {
       fse.removeAsync(path.join(this.serverless.config.servicePath, artifact))));;
   };
 
+  loadEnvVars() {
+    const providerEnvVars = this.serverless.service.provider.environment || {};
+    _.merge(process.env, providerEnvVars);
+
+    _.each(this.serverless.service.functions, function (func) {
+      if (func.handler == 'wsgi.handler') {
+        const functionEnvVars = func.environment || {};
+        _.merge(process.env, functionEnvVars);
+      }
+    });
+
+    return BbPromise.resolve();
+  };
+
   serve() {
     if (!this.wsgiApp) {
       throw new this.serverless.classes.Error(
@@ -123,6 +137,7 @@ class ServerlessWSGI {
 
       'wsgi:serve:serve': () => BbPromise.bind(this)
         .then(this.validate)
+        .then(this.loadEnvVars)
         .then(this.serve)
     };
   }
