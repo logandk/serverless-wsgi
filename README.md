@@ -64,7 +64,9 @@ Load the plugin and set the `custom.wsgi.app` configuration in `serverless.yml` 
 module path of your Flask application.
 
 All functions that will use WSGI need to have `wsgi.handler` set as the Lambda handler and
-use the `lambda-proxy` integration for API Gateway.
+use the default `lambda-proxy` integration for API Gateway. This configuration example treats
+API Gateway as a transparent proxy, passing all requests directly to your Flask application,
+and letting the application handle errors, 404s etc.
 
 ```yaml
 service: example
@@ -80,19 +82,13 @@ functions:
   api:
     handler: wsgi.handler
     events:
-      - http:
-          path: cats
-          method: get
-          integration: lambda-proxy
-      - http:
-          path: dogs/{id}
-          method: get
-          integration: lambda-proxy
+      - http: ANY {proxy+}
 
 custom:
   wsgi:
     app: api.app
 ```
+
 
 ### requirements.txt
 
@@ -146,6 +142,21 @@ requests==2.11.1
 
 For more information, see [https://pip.readthedocs.io/en/1.1/requirements.html](https://pip.readthedocs.io/en/1.1/requirements.html).
 
+You can use the requirement packaging functionality of *serverless-wsgi* without the WSGI
+handler itself by including the plugin in your `serverless.yml` configuration, without specifying
+the `custom.wsgi.app` setting. This will omit the WSGI handler from the package, but include
+any requirements specified in `requirements.txt`.
+
+If you do not include the WSGI handler, you'll need to add `.requirements` to the Python search path
+manually in your handler, before importing any packages:
+
+```
+import os
+import sys
+root = os.path.abspath(os.path.join(os.path.dirname(__file__)))
+sys.path.insert(0, os.path.join(root, '.requirements'))
+```
+
 ### Local server
 
 For convenience, a `sls wsgi serve` command is provided to run your WSGI application
@@ -168,4 +179,38 @@ $ sls wsgi serve -p 8000
  * Running on http://localhost:8000/ (Press CTRL+C to quit)
  * Restarting with stat
  * Debugger is active!
+```
+
+
+### Explicit routes
+
+If you'd like to be explicit about which routes and HTTP methods should pass through to your
+application, see the following example:
+
+```yaml
+service: example
+
+provider:
+  name: aws
+  runtime: python2.7
+
+plugins:
+  - serverless-wsgi
+
+functions:
+  api:
+    handler: wsgi.handler
+    events:
+      - http:
+          path: cats
+          method: get
+          integration: lambda-proxy
+      - http:
+          path: dogs/{id}
+          method: get
+          integration: lambda-proxy
+
+custom:
+  wsgi:
+    app: api.app
 ```
