@@ -2,7 +2,7 @@
 
 [![serverless](http://public.serverless.com/badges/v3.svg)](http://www.serverless.com)
 
-A Serverless v1.0 plugin to build your deploy Python WSGI applications using Serverless. Compatible
+A Serverless v1.3 plugin to build your deploy Python WSGI applications using Serverless. Compatible
 WSGI application frameworks include Flask, Django and Pyramid - for a complete list, see:
 [http://wsgi.readthedocs.io/en/latest/frameworks.html](http://wsgi.readthedocs.io/en/latest/frameworks.html).
 

@@ -1,5 +1,5 @@
-/* jshint ignore:start */
 'use strict';
+
 const BbPromise = require('bluebird');
 const _ = require('lodash');
 const path = require('path');
@@ -37,12 +37,14 @@ class ServerlessWSGI {
     const requirementsFile = path.join(this.serverless.config.servicePath, 'requirements.txt');
     let args = [path.resolve(__dirname, 'requirements.py')];
 
+    if (this.wsgiApp) {
+      args.push(path.resolve(__dirname, 'requirements.txt'));
+    }
+
     if (fse.existsSync(requirementsFile)) {
       args.push(requirementsFile);
     } else {
-      if (this.wsgiApp) {
-        args.push(path.resolve(__dirname, 'requirements.txt'));
-      } else {
+      if (!this.wsgiApp) {
         return BbPromise.resolve();
       }
     }
