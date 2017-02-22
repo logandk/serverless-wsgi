@@ -12,6 +12,7 @@ class ServerlessWSGI {
   validate() {
     if (this.serverless.service.custom && this.serverless.service.custom.wsgi && this.serverless.service.custom.wsgi.app) {
       this.wsgiApp = this.serverless.service.custom.wsgi.app;
+      this.appPath = path.dirname(path.join(this.serverless.config.servicePath, this.wsgiApp))
     }
   };
 
@@ -34,7 +35,8 @@ class ServerlessWSGI {
   };
 
   packRequirements() {
-    const requirementsFile = path.join(this.serverless.config.servicePath, 'requirements.txt');
+    const requirementsPath = this.appPath || this.serverless.config.servicePath
+    const requirementsFile = path.join(requirementsPath, 'requirements.txt');
     let args = [path.resolve(__dirname, 'requirements.py')];
 
     if (this.wsgiApp) {

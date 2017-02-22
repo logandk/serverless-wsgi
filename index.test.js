@@ -140,6 +140,39 @@ describe('serverless-wsgi', function() {
       });
     });
 
+    it('packages user requirements for wsgi app inside directory', function() {
+      var plugin = new Plugin({
+        config: { servicePath: '/tmp' },
+        service: {
+          custom: { wsgi: { app: 'api/api.app' } }
+        },
+        classes: { Error: Error },
+        cli: { log: function () {} }
+      }, {});
+
+      var sandbox = sinon.sandbox.create();
+      var copy_stub = sandbox.stub(fse, 'copyAsync');
+      var write_stub = sandbox.stub(fse, 'writeFileAsync');
+      var exists_stub = sandbox.stub(fse, 'existsSync', function () { return true; });
+      var proc_stub = sandbox.stub(child_process, 'spawnSync', function () {
+        return { status: 0 };
+      });
+      plugin.hooks['before:deploy:createDeploymentArtifacts']().then(function () {
+        expect(copy_stub.called).to.be.true;
+        expect(write_stub.called).to.be.true;
+        expect(proc_stub.calledWith(
+          'python',
+          [
+            path.resolve(__dirname, 'requirements.py'),
+            path.resolve(__dirname, 'requirements.txt'),
+            '/tmp/api/requirements.txt',
+            '/tmp/.requirements'
+          ]
+        )).to.be.ok;
+        sandbox.restore();
+      });
+    });
+
     it('packages user requirements for non-wsgi app', function() {
       var plugin = new Plugin({
         config: { servicePath: '/tmp' },
