@@ -52,7 +52,7 @@
   },
   "dependencies": {
     "bluebird": "^3.0.6",
-    "fs-extra": "^1.0.0",
+    "fs-extra": "^2.0.0",
     "lodash": "^4.17.2"
   }
 }
