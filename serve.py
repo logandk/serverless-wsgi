@@ -25,7 +25,7 @@ PORT = int(sys.argv[3])
 sys.path.insert(0, CWD)
 
 wsgi_fqn = APP.rsplit('.', 1)
-wsgi_module = importlib.import_module(wsgi_fqn[0])
+wsgi_module = importlib.import_module(wsgi_fqn[0].replace('/', '.'))
 wsgi_app = getattr(wsgi_module, wsgi_fqn[1])
 
 # Attempt to force Flask into debug mode
