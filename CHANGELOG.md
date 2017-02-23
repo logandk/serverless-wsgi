@@ -1,3 +1,10 @@
+# 1.0.3
+## Features
+* Adds support for packaging handlers inside directories (i.e. setting the wsgi handler to something like `dir/app.handler`).
+
+  *Lucas Costa*
+
+
 # 1.0.2
 ## Features
 * Added unit tests.
