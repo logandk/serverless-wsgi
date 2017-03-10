@@ -39,6 +39,10 @@ class ServerlessWSGI {
     const requirementsFile = path.join(requirementsPath, 'requirements.txt');
     let args = [path.resolve(__dirname, 'requirements.py')];
 
+    if (this.serverless.service.custom && this.serverless.service.custom.wsgi && this.serverless.service.custom.wsgi.packRequirements == false) {
+      return BbPromise.resolve();
+    }
+
     if (this.wsgiApp) {
       args.push(path.resolve(__dirname, 'requirements.txt'));
     }

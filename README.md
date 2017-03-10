@@ -161,6 +161,15 @@ root = os.path.abspath(os.path.join(os.path.dirname(__file__)))
 sys.path.insert(0, os.path.join(root, '.requirements'))
 ```
 
+If you don't want to use automatic requirement packaging you can set `custom.wsgi.packRequirements` to false:
+
+```yaml
+custom:
+  wsgi:
+    app: api.app
+    packRequirements: false
+```
+
 ### Local server
 
 For convenience, a `sls wsgi serve` command is provided to run your WSGI application
