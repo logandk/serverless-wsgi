@@ -147,7 +147,21 @@ class ServerlessWSGI {
       'wsgi:serve:serve': () => BbPromise.bind(this)
         .then(this.validate)
         .then(this.loadEnvVars)
-        .then(this.serve)
+        .then(this.serve),
+
+      'before:deploy:function:packageFunction': () => BbPromise.bind(this)
+          .then(() => {
+            if (this.options.functionObj.handler != 'wsgi.handler') {
+              return BbPromise.reject();
+            }
+          })
+        .then(this.validate)
+        .then(this.packWsgiHandler)
+        .then(this.packRequirements)
+        .catch(() => {}),
+
+      'after:deploy:function:packageFunction': () => BbPromise.bind(this)
+        .then(this.cleanup)
     };
   }
 }
