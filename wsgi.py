@@ -11,8 +11,14 @@ Author: Logan Raarup <logan@logan.dk>
 """
 import os
 import sys
+
 root = os.path.abspath(os.path.join(os.path.dirname(__file__)))
-sys.path.insert(0, os.path.join(root, '.requirements'))
+with open(os.path.join(root, '.wsgi_app'), 'r') as f:
+    app_path = f.read()
+    wsgi_fqn = app_path.rsplit('.', 1)
+app_dir = os.path.dirname(os.path.abspath(app_path))
+requirements_path = os.path.join(root, app_dir, '.requirements')
+sys.path.insert(0, requirements_path)
 
 import importlib  # noqa: E402
 from StringIO import StringIO  # noqa: E402
@@ -21,10 +27,8 @@ from werkzeug.wrappers import Response  # noqa: E402
 from werkzeug.urls import url_encode  # noqa: E402
 from werkzeug._compat import wsgi_encoding_dance  # noqa: E402
 
-with open(os.path.join(root, '.wsgi_app'), 'r') as f:
-    wsgi_fqn = f.read().rsplit('.', 1)
-    wsgi_module = importlib.import_module(wsgi_fqn[0].replace('/', '.'))
-    wsgi_app = getattr(wsgi_module, wsgi_fqn[1])
+wsgi_module = importlib.import_module(wsgi_fqn[0].replace('/', '.'))
+wsgi_app = getattr(wsgi_module, wsgi_fqn[1])
 
 
 def handler(event, context):

@@ -166,7 +166,7 @@ describe('serverless-wsgi', function() {
             path.resolve(__dirname, 'requirements.py'),
             path.resolve(__dirname, 'requirements.txt'),
             '/tmp/api/requirements.txt',
-            '/tmp/.requirements'
+            '/tmp/api/.requirements'
           ]
         )).to.be.ok;
         sandbox.restore();

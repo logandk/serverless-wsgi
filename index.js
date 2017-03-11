@@ -37,6 +37,7 @@ class ServerlessWSGI {
   packRequirements() {
     const requirementsPath = this.appPath || this.serverless.config.servicePath;
     const requirementsFile = path.join(requirementsPath, 'requirements.txt');
+    const requirementsInstallPath = this.appPath ? this.appPath : this.serverless.config.servicePath;
     let args = [path.resolve(__dirname, 'requirements.py')];
 
     if (this.serverless.service.custom && this.serverless.service.custom.wsgi && this.serverless.service.custom.wsgi.packRequirements == false) {
@@ -55,7 +56,7 @@ class ServerlessWSGI {
       }
     }
 
-    args.push(path.join(this.serverless.config.servicePath, '.requirements'));
+    args.push(path.join(requirementsInstallPath, '.requirements'));
 
     this.serverless.cli.log('Packaging required Python packages...');
 
