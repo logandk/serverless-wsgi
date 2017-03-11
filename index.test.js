@@ -263,6 +263,32 @@ describe('serverless-wsgi', function() {
         sandbox.restore();
       });
     });
+
+    it('skips packaging if chosen', function() {
+      var plugin = new Plugin({
+        config: { servicePath: '/tmp' },
+        service: {
+          custom: { wsgi: { app: 'api.app', packRequirements: false } }
+        },
+        classes: { Error: Error },
+        cli: { log: function () {} }
+      }, {});
+
+      var sandbox = sinon.sandbox.create();
+      var copy_stub = sandbox.stub(fse, 'copyAsync');
+      var write_stub = sandbox.stub(fse, 'writeFileAsync');
+      var exists_stub = sandbox.stub(fse, 'existsSync', function () { return true; });
+      var proc_stub = sandbox.stub(child_process, 'spawnSync', function () {
+        return { status: 0 };
+      });
+      plugin.hooks['before:deploy:createDeploymentArtifacts']().then(function () {
+        expect(copy_stub.called).to.be.true;
+        expect(write_stub.called).to.be.true;
+        expect(exists_stub.called).to.be.false;
+        expect(proc_stub.called).to.be.false;
+        sandbox.restore();
+      });
+    });
   });
 
   describe('serve', function() {
