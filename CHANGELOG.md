@@ -1,4 +1,4 @@
-# 1.0.4-dev
+# 1.0.4
 ## Features
 * Optional requirement packaging: Skips requirement packaging if `custom.wsgi.packRequirements` is set to false
 
