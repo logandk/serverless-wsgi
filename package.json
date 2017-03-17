@@ -45,10 +45,10 @@
   "devDependencies": {
     "chai": "^3.5.0",
     "chai-as-promised": "^6.0.0",
-    "coveralls": "2.11.12",
+    "coveralls": "^2.12.0",
     "istanbul": "^0.4.4",
     "mocha": "^3.0.2",
-    "sinon": "^1.17.5"
+    "sinon": "^2.0.0"
   },
   "dependencies": {
     "bluebird": "^3.0.6",

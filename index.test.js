@@ -62,7 +62,7 @@ describe('serverless-wsgi', function() {
       var sandbox = sinon.sandbox.create();
       var copy_stub = sandbox.stub(fse, 'copyAsync');
       var write_stub = sandbox.stub(fse, 'writeFileAsync');
-      var proc_stub = sandbox.stub(child_process, 'spawnSync', function () {
+      var proc_stub = sandbox.stub(child_process, 'spawnSync').callsFake(function () {
         return { status: 0 };
       });
       plugin.hooks['before:deploy:createDeploymentArtifacts']().then(function () {
@@ -120,8 +120,8 @@ describe('serverless-wsgi', function() {
       var sandbox = sinon.sandbox.create();
       var copy_stub = sandbox.stub(fse, 'copyAsync');
       var write_stub = sandbox.stub(fse, 'writeFileAsync');
-      var exists_stub = sandbox.stub(fse, 'existsSync', function () { return true; });
-      var proc_stub = sandbox.stub(child_process, 'spawnSync', function () {
+      var exists_stub = sandbox.stub(fse, 'existsSync').callsFake(function () { return true; });
+      var proc_stub = sandbox.stub(child_process, 'spawnSync').callsFake(function () {
         return { status: 0 };
       });
       plugin.hooks['before:deploy:createDeploymentArtifacts']().then(function () {
@@ -153,8 +153,8 @@ describe('serverless-wsgi', function() {
       var sandbox = sinon.sandbox.create();
       var copy_stub = sandbox.stub(fse, 'copyAsync');
       var write_stub = sandbox.stub(fse, 'writeFileAsync');
-      var exists_stub = sandbox.stub(fse, 'existsSync', function () { return true; });
-      var proc_stub = sandbox.stub(child_process, 'spawnSync', function () {
+      var exists_stub = sandbox.stub(fse, 'existsSync').callsFake(function () { return true; });
+      var proc_stub = sandbox.stub(child_process, 'spawnSync').callsFake(function () {
         return { status: 0 };
       });
       plugin.hooks['before:deploy:createDeploymentArtifacts']().then(function () {
@@ -184,8 +184,8 @@ describe('serverless-wsgi', function() {
       var sandbox = sinon.sandbox.create();
       var copy_stub = sandbox.stub(fse, 'copyAsync');
       var write_stub = sandbox.stub(fse, 'writeFileAsync');
-      var exists_stub = sandbox.stub(fse, 'existsSync', function () { return true; });
-      var proc_stub = sandbox.stub(child_process, 'spawnSync', function () {
+      var exists_stub = sandbox.stub(fse, 'existsSync').callsFake(function () { return true; });
+      var proc_stub = sandbox.stub(child_process, 'spawnSync').callsFake(function () {
         return { status: 0 };
       });
       plugin.hooks['before:deploy:createDeploymentArtifacts']().then(function () {
@@ -214,8 +214,8 @@ describe('serverless-wsgi', function() {
       var sandbox = sinon.sandbox.create();
       var copy_stub = sandbox.stub(fse, 'copyAsync');
       var write_stub = sandbox.stub(fse, 'writeFileAsync');
-      var exists_stub = sandbox.stub(fse, 'existsSync', function () { return false; });
-      var proc_stub = sandbox.stub(child_process, 'spawnSync', function () {
+      var exists_stub = sandbox.stub(fse, 'existsSync').callsFake(function () { return false; });
+      var proc_stub = sandbox.stub(child_process, 'spawnSync').callsFake(function () {
         return { status: 0 };
       });
       plugin.hooks['before:deploy:createDeploymentArtifacts']().then(function () {
@@ -235,8 +235,8 @@ describe('serverless-wsgi', function() {
       }, {});
 
       var sandbox = sinon.sandbox.create();
-      var exists_stub = sandbox.stub(fse, 'existsSync', function () { return true; });
-      var proc_stub = sandbox.stub(child_process, 'spawnSync', function () {
+      var exists_stub = sandbox.stub(fse, 'existsSync').callsFake(function () { return true; });
+      var proc_stub = sandbox.stub(child_process, 'spawnSync').callsFake(function () {
         return { status: 1 };
       });
 
@@ -254,8 +254,8 @@ describe('serverless-wsgi', function() {
       }, {});
 
       var sandbox = sinon.sandbox.create();
-      var exists_stub = sandbox.stub(fse, 'existsSync', function () { return true; });
-      var proc_stub = sandbox.stub(child_process, 'spawnSync', function () {
+      var exists_stub = sandbox.stub(fse, 'existsSync').callsFake(function () { return true; });
+      var proc_stub = sandbox.stub(child_process, 'spawnSync').callsFake(function () {
         return { status: 0, error: 'fail' };
       });
 
@@ -277,8 +277,8 @@ describe('serverless-wsgi', function() {
       var sandbox = sinon.sandbox.create();
       var copy_stub = sandbox.stub(fse, 'copyAsync');
       var write_stub = sandbox.stub(fse, 'writeFileAsync');
-      var exists_stub = sandbox.stub(fse, 'existsSync', function () { return true; });
-      var proc_stub = sandbox.stub(child_process, 'spawnSync', function () {
+      var exists_stub = sandbox.stub(fse, 'existsSync').callsFake(function () { return true; });
+      var proc_stub = sandbox.stub(child_process, 'spawnSync').callsFake(function () {
         return { status: 0 };
       });
       plugin.hooks['before:deploy:createDeploymentArtifacts']().then(function () {
@@ -335,7 +335,7 @@ describe('serverless-wsgi', function() {
       var sandbox = sinon.sandbox.create();
       var copy_stub = sandbox.stub(fse, 'copyAsync');
       var write_stub = sandbox.stub(fse, 'writeFileAsync');
-      var proc_stub = sandbox.stub(child_process, 'spawnSync', function () {
+      var proc_stub = sandbox.stub(child_process, 'spawnSync').callsFake(function () {
         return { status: 0 };
       });
       plugin.hooks['before:deploy:function:packageFunction']().then(function () {
