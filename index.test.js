@@ -291,6 +291,98 @@ describe('serverless-wsgi', function() {
     });
   });
 
+  describe('function deployment', function() {
+    it('skips packaging for non-wsgi function', function() {
+      var functions = {
+        app: {}
+      };
+      var plugin = new Plugin({
+        config: { servicePath: '/tmp' },
+        service: {
+          custom: { wsgi: { app: 'api.app' } },
+          functions: functions
+        },
+        classes: { Error: Error },
+        cli: { log: function () {} }
+      }, { functionObj: functions.app });
+
+      var sandbox = sinon.sandbox.create();
+      var copy_stub = sandbox.stub(fse, 'copyAsync');
+      var write_stub = sandbox.stub(fse, 'writeFileAsync');
+      var proc_stub = sandbox.stub(child_process, 'spawnSync');
+      plugin.hooks['before:deploy:function:packageFunction']().then(function () {
+        expect(copy_stub.called).to.be.false;
+        expect(write_stub.called).to.be.false;
+        expect(proc_stub.called).to.be.false;
+        sandbox.restore();
+      });
+    });
+
+    it('packages wsgi handler', function() {
+      var functions = {
+        app: { handler: 'wsgi.handler' }
+      };
+      var plugin = new Plugin({
+        config: { servicePath: '/tmp' },
+        service: {
+          custom: { wsgi: { app: 'api.app' } },
+          functions: functions
+        },
+        classes: { Error: Error },
+        cli: { log: function () {} }
+      }, { functionObj: functions.app });
+
+      var sandbox = sinon.sandbox.create();
+      var copy_stub = sandbox.stub(fse, 'copyAsync');
+      var write_stub = sandbox.stub(fse, 'writeFileAsync');
+      var proc_stub = sandbox.stub(child_process, 'spawnSync', function () {
+        return { status: 0 };
+      });
+      plugin.hooks['before:deploy:function:packageFunction']().then(function () {
+        expect(copy_stub.calledWith(
+          path.resolve(__dirname, 'wsgi.py'),
+          '/tmp/wsgi.py'
+        )).to.be.ok;
+        expect(write_stub.calledWith(
+          '/tmp/.wsgi_app', 'api.app'
+        )).to.be.ok;
+        expect(proc_stub.calledWith(
+          'python',
+          [
+            path.resolve(__dirname, 'requirements.py'),
+            path.resolve(__dirname, 'requirements.txt'),
+            '/tmp/.requirements'
+          ]
+        )).to.be.ok;
+        sandbox.restore();
+      });
+    });
+
+    it('cleans up after deployment', function() {
+      var functions = {
+        app: { handler: 'wsgi.handler' }
+      };
+      var plugin = new Plugin({
+        config: { servicePath: '/tmp' },
+        service: {
+          custom: { wsgi: { app: 'api.app' } },
+          functions: functions
+        },
+        classes: { Error: Error },
+        cli: { log: function () {} }
+      }, { functionObj: functions.app });
+
+      var sandbox = sinon.sandbox.create();
+      var remove_stub = sandbox.stub(fse, 'removeAsync');
+      plugin.hooks['after:deploy:function:packageFunction']().then(function () {
+        expect(remove_stub.calledWith('/tmp/wsgi.py')).to.be.ok;
+        expect(remove_stub.calledWith('/tmp/.wsgi_app')).to.be.ok;
+        expect(remove_stub.calledWith('/tmp/.requirements')).to.be.ok;
+        sandbox.restore();
+      });
+    });
+  });
+
   describe('serve', function() {
     it('fails for non-wsgi app', function() {
       var error = sinon.spy();
@@ -362,11 +454,11 @@ describe('serverless-wsgi', function() {
           provider: {
             environment: { SOME_ENV_VAR: 42 }
           },
-          functions: [
-            { handler: 'wsgi.handler', environment: { SECOND_VAR: 33 } },
-            { handler: 'x.x', environment: { THIRD_VAR: 66 } },
-            { handler: 'wsgi.handler' }
-          ],
+          functions: {
+            func1: { handler: 'wsgi.handler', environment: { SECOND_VAR: 33 } },
+            func2: { handler: 'x.x', environment: { THIRD_VAR: 66 } },
+            func3: { handler: 'wsgi.handler' }
+          },
           custom: { wsgi: { app: 'api.app' } }
         },
         classes: { Error: Error }

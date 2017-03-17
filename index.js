@@ -150,15 +150,14 @@ class ServerlessWSGI {
         .then(this.serve),
 
       'before:deploy:function:packageFunction': () => BbPromise.bind(this)
-          .then(() => {
-            if (this.options.functionObj.handler != 'wsgi.handler') {
-              return BbPromise.reject();
-            }
-          })
-        .then(this.validate)
-        .then(this.packWsgiHandler)
-        .then(this.packRequirements)
-        .catch(() => {}),
+        .then(() => {
+          if (this.options.functionObj.handler == 'wsgi.handler') {
+            return BbPromise.bind(this)
+              .then(this.validate)
+              .then(this.packWsgiHandler)
+              .then(this.packRequirements);
+          }
+        }),
 
       'after:deploy:function:packageFunction': () => BbPromise.bind(this)
         .then(this.cleanup)
