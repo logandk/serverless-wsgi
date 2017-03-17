@@ -8,6 +8,10 @@
 
   *Lucas Costa*
 
+* Package WSGI handler and requirements on single-function deployment
+
+  *Lucas Costa*
+
 
 # 1.0.3
 ## Features
