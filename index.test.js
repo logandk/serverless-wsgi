@@ -1,6 +1,7 @@
 'use strict';
 
-const chai = require("chai");
+/* global describe it */
+const chai = require('chai');
 const expect = chai.expect;
 const sinon = require('sinon');
 const Plugin = require('./index');
@@ -8,7 +9,7 @@ const child_process = require('child_process');
 const path = require('path');
 const fse = require('fs-extra');
 
-const chaiAsPromised = require("chai-as-promised");
+const chaiAsPromised = require('chai-as-promised');
 chai.use(chaiAsPromised);
 
 describe('serverless-wsgi', function() {
@@ -120,7 +121,7 @@ describe('serverless-wsgi', function() {
       var sandbox = sinon.sandbox.create();
       var copy_stub = sandbox.stub(fse, 'copyAsync');
       var write_stub = sandbox.stub(fse, 'writeFileAsync');
-      var exists_stub = sandbox.stub(fse, 'existsSync').callsFake(function () { return true; });
+      sandbox.stub(fse, 'existsSync').callsFake(function () { return true; });
       var proc_stub = sandbox.stub(child_process, 'spawnSync').callsFake(function () {
         return { status: 0 };
       });
@@ -153,7 +154,7 @@ describe('serverless-wsgi', function() {
       var sandbox = sinon.sandbox.create();
       var copy_stub = sandbox.stub(fse, 'copyAsync');
       var write_stub = sandbox.stub(fse, 'writeFileAsync');
-      var exists_stub = sandbox.stub(fse, 'existsSync').callsFake(function () { return true; });
+      sandbox.stub(fse, 'existsSync').callsFake(function () { return true; });
       var proc_stub = sandbox.stub(child_process, 'spawnSync').callsFake(function () {
         return { status: 0 };
       });
@@ -184,7 +185,7 @@ describe('serverless-wsgi', function() {
       var sandbox = sinon.sandbox.create();
       var copy_stub = sandbox.stub(fse, 'copyAsync');
       var write_stub = sandbox.stub(fse, 'writeFileAsync');
-      var exists_stub = sandbox.stub(fse, 'existsSync').callsFake(function () { return true; });
+      sandbox.stub(fse, 'existsSync').callsFake(function () { return true; });
       var proc_stub = sandbox.stub(child_process, 'spawnSync').callsFake(function () {
         return { status: 0 };
       });
@@ -214,7 +215,7 @@ describe('serverless-wsgi', function() {
       var sandbox = sinon.sandbox.create();
       var copy_stub = sandbox.stub(fse, 'copyAsync');
       var write_stub = sandbox.stub(fse, 'writeFileAsync');
-      var exists_stub = sandbox.stub(fse, 'existsSync').callsFake(function () { return false; });
+      sandbox.stub(fse, 'existsSync').callsFake(function () { return false; });
       var proc_stub = sandbox.stub(child_process, 'spawnSync').callsFake(function () {
         return { status: 0 };
       });
@@ -235,8 +236,8 @@ describe('serverless-wsgi', function() {
       }, {});
 
       var sandbox = sinon.sandbox.create();
-      var exists_stub = sandbox.stub(fse, 'existsSync').callsFake(function () { return true; });
-      var proc_stub = sandbox.stub(child_process, 'spawnSync').callsFake(function () {
+      sandbox.stub(fse, 'existsSync').callsFake(function () { return true; });
+      sandbox.stub(child_process, 'spawnSync').callsFake(function () {
         return { status: 1 };
       });
 
@@ -254,8 +255,8 @@ describe('serverless-wsgi', function() {
       }, {});
 
       var sandbox = sinon.sandbox.create();
-      var exists_stub = sandbox.stub(fse, 'existsSync').callsFake(function () { return true; });
-      var proc_stub = sandbox.stub(child_process, 'spawnSync').callsFake(function () {
+      sandbox.stub(fse, 'existsSync').callsFake(function () { return true; });
+      sandbox.stub(child_process, 'spawnSync').callsFake(function () {
         return { status: 0, error: 'fail' };
       });
 
@@ -385,8 +386,6 @@ describe('serverless-wsgi', function() {
 
   describe('serve', function() {
     it('fails for non-wsgi app', function() {
-      var error = sinon.spy();
-
       var plugin = new Plugin({
         service: { provider: {} },
         classes: { Error: Error }
@@ -405,8 +404,34 @@ describe('serverless-wsgi', function() {
         classes: { Error: Error }
       }, {});
 
-      var stub = sinon.stub(child_process, 'spawnSync');
+      var stub = sinon.stub(child_process, 'spawnSync').callsFake(function() { return {}; });
       plugin.hooks['wsgi:serve:serve']().then(function () {
+        expect(stub.calledWith(
+          'python',
+          [
+            path.resolve(__dirname, 'serve.py'),
+            '/tmp',
+            'api.app',
+            5000
+          ],
+          { stdio: 'inherit' }
+        )).to.be.ok;
+        stub.restore();
+      });
+    });
+
+    it('handles errors', function() {
+      var plugin = new Plugin({
+        config: { servicePath: '/tmp' },
+        service: {
+          provider: {},
+          custom: { wsgi: { app: 'api.app' } }
+        },
+        classes: { Error: Error }
+      }, {});
+
+      var stub = sinon.stub(child_process, 'spawnSync').callsFake(function() { return { error: 'Something failed' }; });
+      expect(plugin.hooks['wsgi:serve:serve']()).to.eventually.be.rejected.and.notify(function () {
         expect(stub.calledWith(
           'python',
           [
@@ -431,7 +456,7 @@ describe('serverless-wsgi', function() {
         classes: { Error: Error }
       }, { port: 8000 });
 
-      var stub = sinon.stub(child_process, 'spawnSync');
+      var stub = sinon.stub(child_process, 'spawnSync').callsFake(function() { return {}; });
       plugin.hooks['wsgi:serve:serve']().then(function () {
         expect(stub.calledWith(
           'python',
@@ -465,7 +490,7 @@ describe('serverless-wsgi', function() {
       }, { port: 8000 });
 
       var sandbox = sinon.sandbox.create();
-      sandbox.stub(child_process, 'spawnSync');
+      sandbox.stub(child_process, 'spawnSync').callsFake(function() { return {}; });
       sandbox.stub(process, 'env', {});
       plugin.hooks['wsgi:serve:serve']().then(function () {
         expect(process.env.SOME_ENV_VAR).to.equal(42);

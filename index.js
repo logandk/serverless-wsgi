@@ -14,7 +14,7 @@ class ServerlessWSGI {
       this.wsgiApp = this.serverless.service.custom.wsgi.app;
       this.appPath = path.dirname(path.join(this.serverless.config.servicePath, this.wsgiApp));
     }
-  };
+  }
 
   packWsgiHandler() {
     if (!this.wsgiApp) {
@@ -32,7 +32,7 @@ class ServerlessWSGI {
         path.join(this.serverless.config.servicePath, '.wsgi_app'),
         this.wsgiApp)
     ]);
-  };
+  }
 
   packRequirements() {
     const requirementsPath = this.appPath || this.serverless.config.servicePath;
@@ -70,14 +70,14 @@ class ServerlessWSGI {
       }
       resolve();
     });
-  };
+  }
 
   cleanup() {
     const artifacts = ['wsgi.py', '.wsgi_app', '.requirements'];
 
     return BbPromise.all(_.map(artifacts, (artifact) =>
-      fse.removeAsync(path.join(this.serverless.config.servicePath, artifact))));;
-  };
+      fse.removeAsync(path.join(this.serverless.config.servicePath, artifact))));
+  }
 
   loadEnvVars() {
     const providerEnvVars = this.serverless.service.provider.environment || {};
@@ -91,7 +91,7 @@ class ServerlessWSGI {
     });
 
     return BbPromise.resolve();
-  };
+  }
 
   serve() {
     if (!this.wsgiApp) {
@@ -102,15 +102,19 @@ class ServerlessWSGI {
     const port = this.options.port || 5000;
 
     return new BbPromise((resolve, reject) => {
-      child_process.spawnSync('python', [
+      var status = child_process.spawnSync('python', [
         path.resolve(__dirname, 'serve.py'),
         this.serverless.config.servicePath,
         this.wsgiApp,
         port
       ], { stdio: 'inherit' });
-      resolve();
+      if (status.error) {
+        reject(status.error);
+      } else {
+        resolve();
+      }
     });
-  };
+  }
 
   constructor(serverless, options) {
     this.serverless = serverless;
