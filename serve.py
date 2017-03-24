@@ -10,29 +10,32 @@ import os
 import sys
 
 try:
-    from werkzeug.serving import run_simple
+    from werkzeug import serving
 except ImportError:
     sys.exit('Unable to import werkzeug (run: pip install werkzeug)')
 
-if len(sys.argv) != 4:
-    sys.exit('Usage: {} CWD APP PORT'.format(
-        os.path.basename(sys.argv[0])))
 
-CWD = sys.argv[1]
-APP = sys.argv[2]
-PORT = int(sys.argv[3])
+def serve(cwd, app, port):
+    sys.path.insert(0, cwd)
 
-sys.path.insert(0, CWD)
+    wsgi_fqn = app.rsplit('.', 1)
+    wsgi_module = importlib.import_module(wsgi_fqn[0].replace('/', '.'))
+    wsgi_app = getattr(wsgi_module, wsgi_fqn[1])
 
-wsgi_fqn = APP.rsplit('.', 1)
-wsgi_module = importlib.import_module(wsgi_fqn[0].replace('/', '.'))
-wsgi_app = getattr(wsgi_module, wsgi_fqn[1])
+    # Attempt to force Flask into debug mode
+    try:
+        wsgi_app.debug = True
+    except:
+        pass
 
-# Attempt to force Flask into debug mode
-try:
-    wsgi_app.debug = True
-except:
-    pass
+    serving.run_simple(
+        'localhost', int(port), wsgi_app,
+        use_debugger=True, use_reloader=True, use_evalex=True)
 
-run_simple('localhost', PORT, wsgi_app,
-           use_debugger=True, use_reloader=True, use_evalex=True)
+
+if __name__ == '__main__':
+    if len(sys.argv) != 4:
+        sys.exit('Usage: {} CWD APP PORT'.format(
+            os.path.basename(sys.argv[0])))
+
+    serve(*sys.argv[1:])
