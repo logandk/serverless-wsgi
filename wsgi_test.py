@@ -5,6 +5,12 @@ import importlib
 import os
 from werkzeug.wrappers import Response
 
+# This workaround is needed for coverage.py to pick up the wsgi module
+try:
+    import wsgi  # noqa: F401
+except:
+    pass
+
 
 class ModuleStub:
     pass
@@ -124,7 +130,7 @@ def test_handler(monkeypatch):
         'stageVariables': None
     }
 
-    import wsgi
+    import wsgi  # noqa: F811
     response = wsgi.handler(event, None)
 
     assert response == {

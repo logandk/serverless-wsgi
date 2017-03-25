@@ -41,12 +41,13 @@
   "bin": {},
   "scripts": {
     "test": "istanbul cover -x '*.test.js' node_modules/mocha/bin/_mocha '*.test.js' -- -R spec",
-    "lint": "eslint *.js"
+    "lint": "eslint *.js",
+    "pytest": "pytest --cov=serve --cov=requirements --cov=wsgi",
+    "pylint": "flake8"
   },
   "devDependencies": {
     "chai": "^3.5.0",
     "chai-as-promised": "^6.0.0",
-    "coveralls": "^2.12.0",
     "istanbul": "^0.4.4",
     "mocha": "^3.0.2",
     "sinon": "^2.0.0"

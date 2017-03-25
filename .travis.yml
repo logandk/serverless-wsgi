@@ -8,13 +8,17 @@ python:
 
 before_install:
   - if [[ `npm -v` != 3* ]]; then npm i -g npm@3; fi
-  - pip install --user pytest virtualenv
+  - gem install coveralls-lcov
+  - pip install --user pytest pytest-cov coveralls flake8 virtualenv
   - pip install --user -r requirements.txt
 
 script:
   - npm test
-  - pytest
+  - npm run lint
+  - npm run pytest
+  - npm run pylint
 
 # For code coverage:
 after_success:
-   cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js && rm -rf ./coverage
+  - coveralls-lcov -v -n coverage/lcov.info > coverage/coveralls.json
+  - coveralls --merge=coverage/coveralls.json
