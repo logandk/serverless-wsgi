@@ -227,3 +227,12 @@ custom:
   wsgi:
     app: api.app
 ```
+
+
+# Thanks
+
+Thanks to [Zappa](https://github.com/Miserlou/Zappa), which has been both the
+inspiration and source of several implementations that went into this project.
+
+Thanks to [chalice](https://github.com/awslabs/chalice) for the
+requirement packaging implementation.
