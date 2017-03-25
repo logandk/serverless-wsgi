@@ -131,6 +131,7 @@ def test_handler(monkeypatch):
                 'userAgent': 'PostmanRuntime/3.0.11-hotfix.2',
                 'userArn': None
             },
+            u'authorizer': {'principalId': u'wile_e_coyote'},
             'requestId': 'ad2db740-10a2-11e7-8ced-35048084babb',
             'resourceId': 'r4kza9',
             'resourcePath': '/{proxy+}',
@@ -156,6 +157,7 @@ def test_handler(monkeypatch):
     }
 
     assert mock_app.last_environ == {
+        'API_GATEWAY_AUTHORIZER': {'principalId': 'wile_e_coyote'},
         'CONTENT_LENGTH': '0',
         'CONTENT_TYPE': '',
         'HTTP_ACCEPT': '*/*',
@@ -181,7 +183,7 @@ def test_handler(monkeypatch):
         'PATH_INFO': '/some/path',
         'QUERY_STRING': 'param2=value2&param1=value1',
         'REMOTE_ADDR': '76.20.166.147',
-        'REMOTE_USER': '',
+        'REMOTE_USER': 'wile_e_coyote',
         'REQUEST_METHOD': 'GET',
         'SCRIPT_NAME': '/dev',
         'SERVER_NAME': '3z6kd9fbb1.execute-api.us-east-1.amazonaws.com',

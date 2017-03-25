@@ -59,6 +59,8 @@ def handler(event, context):
         script_name = ''
 
     environ = {
+        'API_GATEWAY_AUTHORIZER':
+            event[u'requestContext'].get(u'authorizer', None),
         'CONTENT_LENGTH':
             headers.get(u'Content-Length', str(len(event[u'body'] or ''))),
         'CONTENT_TYPE':
