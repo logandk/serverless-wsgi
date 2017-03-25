@@ -31,6 +31,25 @@ wsgi_module = importlib.import_module(wsgi_fqn[0].replace('/', '.'))
 wsgi_app = getattr(wsgi_module, wsgi_fqn[1])
 
 
+def all_casings(input_string):
+    """
+    Permute all casings of a given string.
+    A pretty algoritm, via @Amber
+    http://stackoverflow.com/questions/6792803/finding-all-possible-case-permutations-in-python
+    """
+    if not input_string:
+        yield ""
+    else:
+        first = input_string[:1]
+        if first.lower() == first.upper():
+            for sub_casing in all_casings(input_string[1:]):
+                yield first + sub_casing
+        else:
+            for sub_casing in all_casings(input_string[1:]):
+                yield first.lower() + sub_casing
+                yield first.upper() + sub_casing
+
+
 def handler(event, context):
     headers = Headers(event[u'headers'])
 
@@ -94,8 +113,20 @@ def handler(event, context):
     if errors:
         print errors
 
+    # If there are multiple Set-Cookie headers, create case-mutated variations
+    # in order to pass them through APIGW. This is a hack that's currently
+    # needed. See: https://github.com/logandk/serverless-wsgi/issues/11
+    # Source: https://github.com/Miserlou/Zappa/blob/master/zappa/middleware.py
+    new_headers = [x for x in response.headers if x[0] != 'Set-Cookie']
+    cookie_headers = [x for x in response.headers if x[0] == 'Set-Cookie']
+    if len(cookie_headers) > 1:
+        for header, new_name in zip(cookie_headers, all_casings('Set-Cookie')):
+            new_headers.append((new_name, header[1]))
+    elif len(cookie_headers) == 1:
+        new_headers.extend(cookie_headers)
+
     return {
         u'statusCode': response.status_code,
-        u'headers': dict(response.headers),
+        u'headers': dict(new_headers),
         u'body': response.data
     }

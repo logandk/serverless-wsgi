@@ -17,9 +17,19 @@ class ModuleStub:
 
 
 class MockApp:
+    def __init__(self):
+        self.cookie_count = 3
+
     def __call__(self, environ, start_response):
         self.last_environ = environ
         response = Response('Hello World!', mimetype='text/plain')
+        cookies = [
+            ('CUSTOMER', 'WILE_E_COYOTE'),
+            ('PART_NUMBER', 'ROCKET_LAUNCHER_0002'),
+            ('LOT_NUMBER', '42')
+        ]
+        for cookie in cookies[:self.cookie_count]:
+            response.set_cookie(cookie[0], cookie[1])
         return response(environ, start_response)
 
 
@@ -136,8 +146,11 @@ def test_handler(monkeypatch):
     assert response == {
         'body': 'Hello World!',
         'headers': {
+            'set-cookie': 'CUSTOMER=WILE_E_COYOTE; Path=/',
             'Content-Length': '12',
-            'Content-Type': 'text/plain; charset=utf-8'
+            'Content-Type': 'text/plain; charset=utf-8',
+            'sEt-cookie': 'LOT_NUMBER=42; Path=/',
+            'Set-cookie': 'PART_NUMBER=ROCKET_LAUNCHER_0002; Path=/'
         },
         'statusCode': 200
     }
@@ -181,4 +194,29 @@ def test_handler(monkeypatch):
         'wsgi.run_once': False,
         'wsgi.url_scheme': 'https',
         'wsgi.version': (1, 0)
+    }
+
+    mock_app.cookie_count = 1
+    response = wsgi.handler(event, None)
+
+    assert response == {
+        'body': 'Hello World!',
+        'headers': {
+            'Set-Cookie': 'CUSTOMER=WILE_E_COYOTE; Path=/',
+            'Content-Length': '12',
+            'Content-Type': 'text/plain; charset=utf-8'
+        },
+        'statusCode': 200
+    }
+
+    mock_app.cookie_count = 0
+    response = wsgi.handler(event, None)
+
+    assert response == {
+        'body': 'Hello World!',
+        'headers': {
+            'Content-Length': '12',
+            'Content-Type': 'text/plain; charset=utf-8'
+        },
+        'statusCode': 200
     }
