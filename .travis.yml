@@ -9,7 +9,7 @@ python:
 before_install:
   - if [[ `npm -v` != 3* ]]; then npm i -g npm@3; fi
   - gem install coveralls-lcov
-  - pip install --user pytest pytest-cov coveralls flake8 virtualenv
+  - pip install --user pytest pytest-cov coveralls flake8 virtualenv urllib3[secure]
   - pip install --user -r requirements.txt
 
 script:
