@@ -8,7 +8,7 @@ python:
 
 before_install:
   - if [[ `npm -v` != 3* ]]; then npm i -g npm@3; fi
-  - pip install --user pytest
+  - pip install --user pytest virtualenv
   - pip install --user -r requirements.txt
 
 script:
