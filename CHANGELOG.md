@@ -2,6 +2,8 @@
 ## Features
 * Support for multiple Set-Cookie headers (#11). *Thanks to Ben Bangert for creating an issue and providing an implementation.*
 
+* Forward API Gateway authorizer information as API_GATEWAY_AUTHORIZER in the WSGI request environment (#7). *Thanks to Greg Zapp for reporting.*
+
 
 # 1.0.4
 ## Features
