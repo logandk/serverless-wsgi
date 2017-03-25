@@ -1,3 +1,8 @@
+# 1.1.0
+## Features
+* Support for multiple Set-Cookie headers (#11). *Thanks to Ben Bangert for creating an issue and providing an implementation.*
+
+
 # 1.0.4
 ## Features
 * Optional requirement packaging: Skips requirement packaging if `custom.wsgi.packRequirements` is set to false
