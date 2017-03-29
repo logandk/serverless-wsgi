@@ -3,6 +3,7 @@
 import __builtin__
 import importlib
 import os
+import pytest
 from werkzeug.wrappers import Response
 
 # This workaround is needed for coverage.py to pick up the wsgi module
@@ -12,8 +13,9 @@ except:
     pass
 
 
-class ModuleStub:
-    pass
+class ObjectStub:
+    def __init__(self, **kwds):
+        self.__dict__.update(kwds)
 
 
 class MockApp:
@@ -30,6 +32,7 @@ class MockApp:
         ]
         for cookie in cookies[:self.cookie_count]:
             response.set_cookie(cookie[0], cookie[1])
+        print >> environ['wsgi.errors'], "application debug #1"
         return response(environ, start_response)
 
 
@@ -64,7 +67,22 @@ class MockFileManager():
         return self.files[name]
 
 
-def test_handler(monkeypatch):
+@pytest.fixture
+def mock_app(monkeypatch):
+    mock_app = MockApp()
+
+    def mock_importlib(module):
+        app = ObjectStub
+        app.app = mock_app
+        return app
+
+    monkeypatch.setattr(importlib, 'import_module', mock_importlib)
+
+    return mock_app
+
+
+@pytest.fixture
+def mock_wsgi_app_file(monkeypatch):
     monkeypatch.setattr(os.path, 'abspath', lambda x: '/tmp')
 
     manager = MockFileManager()
@@ -72,15 +90,10 @@ def test_handler(monkeypatch):
         f.write('app.app')
     monkeypatch.setattr(__builtin__, 'open', manager.open)
 
-    mock_app = MockApp()
 
-    def mock_importlib(module):
-        app = ModuleStub
-        app.app = mock_app
-        return app
-
-    monkeypatch.setattr(importlib, 'import_module', mock_importlib)
-    event = {
+@pytest.fixture
+def event():
+    return {
         'body': None,
         'headers': {
             'Accept': '*/*',
@@ -141,6 +154,8 @@ def test_handler(monkeypatch):
         'stageVariables': None
     }
 
+
+def test_handler(mock_wsgi_app_file, mock_app, event, capsys):
     import wsgi  # noqa: F811
     response = wsgi.handler(event, None)
 
@@ -156,7 +171,7 @@ def test_handler(monkeypatch):
         'statusCode': 200
     }
 
-    assert mock_app.last_environ == {
+    assert wsgi.wsgi_app.last_environ == {
         'API_GATEWAY_AUTHORIZER': {'principalId': 'wile_e_coyote'},
         'CONTENT_LENGTH': '0',
         'CONTENT_TYPE': '',
@@ -189,8 +204,8 @@ def test_handler(monkeypatch):
         'SERVER_NAME': '3z6kd9fbb1.execute-api.us-east-1.amazonaws.com',
         'SERVER_PORT': '443',
         'SERVER_PROTOCOL': 'HTTP/1.1',
-        'wsgi.errors': mock_app.last_environ['wsgi.errors'],
-        'wsgi.input': mock_app.last_environ['wsgi.input'],
+        'wsgi.errors': wsgi.wsgi_app.last_environ['wsgi.errors'],
+        'wsgi.input': wsgi.wsgi_app.last_environ['wsgi.input'],
         'wsgi.multiprocess': False,
         'wsgi.multithread': False,
         'wsgi.run_once': False,
@@ -198,7 +213,14 @@ def test_handler(monkeypatch):
         'wsgi.version': (1, 0)
     }
 
-    mock_app.cookie_count = 1
+    out, err = capsys.readouterr()
+    assert out == "application debug #1\n\n"
+    assert err == ""
+
+
+def test_handler_single_cookie(mock_wsgi_app_file, mock_app, event):
+    import wsgi  # noqa: F811
+    wsgi.wsgi_app.cookie_count = 1
     response = wsgi.handler(event, None)
 
     assert response == {
@@ -211,7 +233,10 @@ def test_handler(monkeypatch):
         'statusCode': 200
     }
 
-    mock_app.cookie_count = 0
+
+def test_handler_no_cookie(mock_wsgi_app_file, mock_app, event):
+    import wsgi  # noqa: F811
+    wsgi.wsgi_app.cookie_count = 0
     response = wsgi.handler(event, None)
 
     assert response == {
@@ -221,4 +246,52 @@ def test_handler(monkeypatch):
             'Content-Type': 'text/plain; charset=utf-8'
         },
         'statusCode': 200
+    }
+
+
+def test_handler_custom_domain(mock_wsgi_app_file, mock_app, event):
+    import wsgi  # noqa: F811
+    event['headers']['Host'] = 'custom.domain.com'
+    wsgi.handler(event, None)
+
+    assert wsgi.wsgi_app.last_environ == {
+        'API_GATEWAY_AUTHORIZER': {'principalId': 'wile_e_coyote'},
+        'CONTENT_LENGTH': '0',
+        'CONTENT_TYPE': '',
+        'HTTP_ACCEPT': '*/*',
+        'HTTP_ACCEPT_ENCODING': 'gzip, deflate',
+        'HTTP_CACHE_CONTROL': 'no-cache',
+        'HTTP_CLOUDFRONT_FORWARDED_PROTO': 'https',
+        'HTTP_CLOUDFRONT_IS_DESKTOP_VIEWER': 'true',
+        'HTTP_CLOUDFRONT_IS_MOBILE_VIEWER': 'false',
+        'HTTP_CLOUDFRONT_IS_SMARTTV_VIEWER': 'false',
+        'HTTP_CLOUDFRONT_IS_TABLET_VIEWER': 'false',
+        'HTTP_CLOUDFRONT_VIEWER_COUNTRY': 'DK',
+        'HTTP_COOKIE':
+            'CUSTOMER=WILE_E_COYOTE; PART_NUMBER=ROCKET_LAUNCHER_0001',
+        'HTTP_HOST': 'custom.domain.com',
+        'HTTP_POSTMAN_TOKEN': '778a706e-d6b0-48d5-94dd-9e98c22f12fe',
+        'HTTP_USER_AGENT': 'PostmanRuntime/3.0.11-hotfix.2',
+        'HTTP_VIA': '1.1 b8fa.cloudfront.net (CloudFront)',
+        'HTTP_X_AMZN_TRACE_ID': 'Root=1-58d534a5-1e7cffe644b086304dce7a1e',
+        'HTTP_X_AMZ_CF_ID': 'jx0Bvz9rm--Mz3wAj4i46FdOQQK3RHF4H0moJjBsQ==',
+        'HTTP_X_FORWARDED_FOR': '76.20.166.147, 205.251.218.72',
+        'HTTP_X_FORWARDED_PORT': '443',
+        'HTTP_X_FORWARDED_PROTO': 'https',
+        'PATH_INFO': '/some/path',
+        'QUERY_STRING': 'param2=value2&param1=value1',
+        'REMOTE_ADDR': '76.20.166.147',
+        'REMOTE_USER': 'wile_e_coyote',
+        'REQUEST_METHOD': 'GET',
+        'SCRIPT_NAME': '',
+        'SERVER_NAME': 'custom.domain.com',
+        'SERVER_PORT': '443',
+        'SERVER_PROTOCOL': 'HTTP/1.1',
+        'wsgi.errors': wsgi.wsgi_app.last_environ['wsgi.errors'],
+        'wsgi.input': wsgi.wsgi_app.last_environ['wsgi.input'],
+        'wsgi.multiprocess': False,
+        'wsgi.multithread': False,
+        'wsgi.run_once': False,
+        'wsgi.url_scheme': 'https',
+        'wsgi.version': (1, 0)
     }

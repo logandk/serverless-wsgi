@@ -22,3 +22,4 @@ script:
 after_success:
   - coveralls-lcov -v -n coverage/lcov.info > coverage/coveralls.json
   - coveralls --merge=coverage/coveralls.json
+  - rm -rf ./.coverage ./coverage ./htmlcov

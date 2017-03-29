@@ -42,7 +42,7 @@
   "scripts": {
     "test": "istanbul cover -x '*.test.js' node_modules/mocha/bin/_mocha '*.test.js' -- -R spec",
     "lint": "eslint *.js",
-    "pytest": "pytest --cov=serve --cov=requirements --cov=wsgi",
+    "pytest": "pytest --cov=serve --cov=requirements --cov=wsgi --cov-report=html",
     "pylint": "flake8"
   },
   "devDependencies": {

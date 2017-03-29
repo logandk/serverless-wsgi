@@ -16,7 +16,7 @@ import sys
 
 try:
     import virtualenv
-except ImportError:
+except ImportError:  # pragma: no cover
     sys.exit('Unable to load virtualenv, please install')
 
 
@@ -86,7 +86,7 @@ def package(req_files, target_dir):
     shutil.rmtree(tmp_dir)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     if len(sys.argv) < 3:
         sys.exit('Usage: {} REQ_FILE... TARGET_DIR'.format(
             os.path.basename(sys.argv[0])))

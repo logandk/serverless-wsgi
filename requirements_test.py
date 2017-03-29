@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 import os
 import platform
+import pytest
 import requirements
 import shutil
 import subprocess
@@ -11,11 +12,27 @@ from functools import partial
 
 
 class PopenStub:
+    def __init__(self, returncode):
+        self.returncode = returncode
+
     def communicate(self):
-        self.returncode = 0
+        self.returncode = self.returncode
 
 
-def test_package(monkeypatch):
+@pytest.fixture
+def mock_virtualenv(monkeypatch):
+    virtualenv_calls = []
+
+    def mock_virtualenv_main():
+        virtualenv_calls.append(sys.argv[:])
+
+    monkeypatch.setattr(virtualenv, 'main', mock_virtualenv_main)
+
+    return virtualenv_calls
+
+
+@pytest.fixture
+def mock_system(monkeypatch):
     calls = []
 
     def mock_any(func, retval, *args, **kwargs):
@@ -44,81 +61,119 @@ def test_package(monkeypatch):
         platform, 'system', partial(mock_any, 'platform.system', 'Linux'))
     monkeypatch.setattr(
         subprocess, 'Popen', partial(
-            mock_any, 'subprocess.Popen', PopenStub()))
+            mock_any, 'subprocess.Popen', PopenStub(0)))
 
-    virtualenv_calls = []
+    return calls
 
-    def mock_virtualenv():
-        virtualenv_calls.append(sys.argv[:])
 
-    monkeypatch.setattr(virtualenv, 'main', mock_virtualenv)
-
+def test_package(mock_system, mock_virtualenv):
     requirements.package(
         ['/path1/requirements.txt', '/path2/requirements.txt'],
         '/tmp')
 
-    assert len(virtualenv_calls) == 1
-    assert virtualenv_calls[0] == ['', '/tmp/.venv', '--quiet']
+    assert len(mock_virtualenv) == 1
+    assert mock_virtualenv[0] == ['', '/tmp/.venv', '--quiet']
 
     # Checks that requirements files exist
-    assert calls.pop(0) == (
+    assert mock_system.pop(0) == (
         'os.path.isfile', ('/path1/requirements.txt',))
-    assert calls.pop(0) == (
+    assert mock_system.pop(0) == (
         'os.path.isfile', ('/path2/requirements.txt',))
 
     # Checks that output dir exists
-    assert calls.pop(0) == ('os.path.exists', ('/tmp',))
-    assert calls.pop(0) == ('os.path.isdir', ('/tmp',))
+    assert mock_system.pop(0) == ('os.path.exists', ('/tmp',))
+    assert mock_system.pop(0) == ('os.path.isdir', ('/tmp',))
 
     # Checks and removes existing venv/tmp dirs
-    assert calls.pop(0) == ('os.path.exists', ('/tmp/.venv',))
-    assert calls.pop(0) == ('shutil.rmtree', ('/tmp/.venv',))
-    assert calls.pop(0) == ('os.path.exists', ('/tmp/.tmp',))
-    assert calls.pop(0) == ('shutil.rmtree', ('/tmp/.tmp',))
+    assert mock_system.pop(0) == ('os.path.exists', ('/tmp/.venv',))
+    assert mock_system.pop(0) == ('shutil.rmtree', ('/tmp/.venv',))
+    assert mock_system.pop(0) == ('os.path.exists', ('/tmp/.tmp',))
+    assert mock_system.pop(0) == ('shutil.rmtree', ('/tmp/.tmp',))
 
     # Looks up system type
-    assert calls.pop(0) == ('platform.system', ())
+    assert mock_system.pop(0) == ('platform.system', ())
 
     # Looks for pip installation
-    assert calls.pop(0) == ('os.listdir', ('/tmp/.venv/lib',))
-    assert calls.pop(0) == ('os.path.isfile', ('/tmp/.venv/bin/pip',))
+    assert mock_system.pop(0) == ('os.listdir', ('/tmp/.venv/lib',))
+    assert mock_system.pop(0) == ('os.path.isfile', ('/tmp/.venv/bin/pip',))
 
     # Invokes pip for package installation
-    assert calls.pop(0) == (
+    assert mock_system.pop(0) == (
         'subprocess.Popen', ([
             '/tmp/.venv/bin/pip',
             'install', '-r', '/path1/requirements.txt'],))
-    assert calls.pop(0) == (
+    assert mock_system.pop(0) == (
         'subprocess.Popen', ([
             '/tmp/.venv/bin/pip',
             'install', '-r', '/path2/requirements.txt'],))
 
     # Copies installed packages to temporary directory
-    assert calls.pop(0) == (
+    assert mock_system.pop(0) == (
         'os.path.isdir', ('/tmp/.venv/lib/dir1/site-packages',))
-    assert calls.pop(0) == (
+    assert mock_system.pop(0) == (
         'shutil.copytree', (
             '/tmp/.venv/lib/dir1/site-packages', '/tmp/.tmp'))
 
     # Lists installed packages
-    assert calls.pop(0) == ('os.listdir', ('/tmp/.tmp',))
+    assert mock_system.pop(0) == ('os.listdir', ('/tmp/.tmp',))
 
     # Clears existing installation of package 1
-    assert calls.pop(0) == ('os.path.isdir', ('/tmp/dir1',))
-    assert calls.pop(0) == ('shutil.rmtree', ('/tmp/dir1',))
+    assert mock_system.pop(0) == ('os.path.isdir', ('/tmp/dir1',))
+    assert mock_system.pop(0) == ('shutil.rmtree', ('/tmp/dir1',))
 
     # Moves package 1 into place
-    assert calls.pop(0) == (
+    assert mock_system.pop(0) == (
         'shutil.move', ('/tmp/.tmp/dir1', '/tmp'))
 
     # Clears existing installation of package 2
-    assert calls.pop(0) == ('os.path.isdir', ('/tmp/dir2',))
-    assert calls.pop(0) == ('shutil.rmtree', ('/tmp/dir2',))
+    assert mock_system.pop(0) == ('os.path.isdir', ('/tmp/dir2',))
+    assert mock_system.pop(0) == ('shutil.rmtree', ('/tmp/dir2',))
 
     # Moves package 2 into place
-    assert calls.pop(0) == (
+    assert mock_system.pop(0) == (
         'shutil.move', ('/tmp/.tmp/dir2', '/tmp'))
 
     # Performs final cleanup
-    assert calls.pop(0) == ('shutil.rmtree', ('/tmp/.venv',))
-    assert calls.pop(0) == ('shutil.rmtree', ('/tmp/.tmp',))
+    assert mock_system.pop(0) == ('shutil.rmtree', ('/tmp/.venv',))
+    assert mock_system.pop(0) == ('shutil.rmtree', ('/tmp/.tmp',))
+
+
+def test_package_missing_requirements_file(mock_system, mock_virtualenv,
+                                           monkeypatch):
+    monkeypatch.setattr(os.path, 'isfile', lambda f: False)
+
+    with pytest.raises(SystemExit):
+        requirements.package(
+            ['/path1/requirements.txt'], '/tmp')
+
+
+def test_package_existing_target_file(mock_system, mock_virtualenv,
+                                      monkeypatch):
+    monkeypatch.setattr(os.path, 'isdir', lambda f: False)
+
+    with pytest.raises(SystemExit):
+        requirements.package(
+            ['/path1/requirements.txt'], '/tmp')
+
+
+def test_package_windows(mock_system, mock_virtualenv, monkeypatch):
+    monkeypatch.setattr(platform, 'system', lambda: 'Windows')
+
+    requirements.package(
+            ['/path1/requirements.txt'], '/tmp')
+
+    pip_calls = [c for c in mock_system if c[0] == 'subprocess.Popen']
+
+    assert pip_calls[0] == (
+        'subprocess.Popen', ([
+            '/tmp/.venv/Scripts/pip.exe',
+            'install', '-r', '/path1/requirements.txt'],))
+
+
+def test_pip_error(mock_system, mock_virtualenv, monkeypatch):
+    monkeypatch.setattr(
+        subprocess, 'Popen', lambda *args, **kwargs: PopenStub(1))
+
+    with pytest.raises(SystemExit):
+        requirements.package(
+            ['/path1/requirements.txt'], '/tmp')
