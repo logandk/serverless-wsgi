@@ -157,7 +157,7 @@ def event():
 
 def test_handler(mock_wsgi_app_file, mock_app, event, capsys):
     import wsgi  # noqa: F811
-    response = wsgi.handler(event, None)
+    response = wsgi.handler(event, {'memory_limit_in_mb': '128'})
 
     assert response == {
         'body': 'Hello World!',
@@ -210,7 +210,8 @@ def test_handler(mock_wsgi_app_file, mock_app, event, capsys):
         'wsgi.multithread': False,
         'wsgi.run_once': False,
         'wsgi.url_scheme': 'https',
-        'wsgi.version': (1, 0)
+        'wsgi.version': (1, 0),
+        'context': {'memory_limit_in_mb': '128'}
     }
 
     out, err = capsys.readouterr()
@@ -221,7 +222,7 @@ def test_handler(mock_wsgi_app_file, mock_app, event, capsys):
 def test_handler_single_cookie(mock_wsgi_app_file, mock_app, event):
     import wsgi  # noqa: F811
     wsgi.wsgi_app.cookie_count = 1
-    response = wsgi.handler(event, None)
+    response = wsgi.handler(event, {'memory_limit_in_mb': '128'})
 
     assert response == {
         'body': 'Hello World!',
@@ -237,7 +238,7 @@ def test_handler_single_cookie(mock_wsgi_app_file, mock_app, event):
 def test_handler_no_cookie(mock_wsgi_app_file, mock_app, event):
     import wsgi  # noqa: F811
     wsgi.wsgi_app.cookie_count = 0
-    response = wsgi.handler(event, None)
+    response = wsgi.handler(event, {'memory_limit_in_mb': '128'})
 
     assert response == {
         'body': 'Hello World!',
@@ -252,7 +253,7 @@ def test_handler_no_cookie(mock_wsgi_app_file, mock_app, event):
 def test_handler_custom_domain(mock_wsgi_app_file, mock_app, event):
     import wsgi  # noqa: F811
     event['headers']['Host'] = 'custom.domain.com'
-    wsgi.handler(event, None)
+    wsgi.handler(event, {'memory_limit_in_mb': '128'})
 
     assert wsgi.wsgi_app.last_environ == {
         'API_GATEWAY_AUTHORIZER': {'principalId': 'wile_e_coyote'},
@@ -293,5 +294,6 @@ def test_handler_custom_domain(mock_wsgi_app_file, mock_app, event):
         'wsgi.multithread': False,
         'wsgi.run_once': False,
         'wsgi.url_scheme': 'https',
-        'wsgi.version': (1, 0)
+        'wsgi.version': (1, 0),
+        'context': {'memory_limit_in_mb': '128'}
     }
