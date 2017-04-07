@@ -1,3 +1,10 @@
+# 1.1.1
+## Features
+* Pass Lambda context in the `context` property of the WSGI environment.
+
+  *Lucas Costa*
+
+
 # 1.1.0
 ## Features
 * Support for multiple Set-Cookie headers (#11). *Thanks to Ben Bangert for creating an issue and providing an implementation.*
