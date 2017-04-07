@@ -84,6 +84,8 @@ def handler(event, context):
             headers.get(u'X-Forwarded-Port', '80'),
         'SERVER_PROTOCOL':
             'HTTP/1.1',
+        'context':
+            context,
         'wsgi.errors':
             StringIO(),
         'wsgi.input':
