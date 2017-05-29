@@ -1,3 +1,8 @@
+# 1.2.0
+## Features
+* Python 3 support
+
+
 # 1.1.1
 ## Features
 * Pass Lambda context in the `context` property of the WSGI environment.
