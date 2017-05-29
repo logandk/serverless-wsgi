@@ -1,14 +1,15 @@
-language: node_js
-# 4.3.2 is what AWS Lambda currently uses
-node_js:
-  - "5"
-  - "4.3.2"
+language: python
 python:
   - "2.7"
   - "3.6"
 
-before_install:
-  - if [[ `npm -v` != 3* ]]; then npm i -g npm@3; fi
+env:
+  - TRAVIS_NODE_VERSION="4.3.2"
+  - TRAVIS_NODE_VERSION="5"
+
+install:
+  - rm -rf ~/.nvm && git clone https://github.com/creationix/nvm.git ~/.nvm && (cd ~/.nvm && git checkout `git describe --abbrev=0 --tags`) && source ~/.nvm/nvm.sh && nvm install $TRAVIS_NODE_VERSION
+  - npm install
   - gem install coveralls-lcov
   - pip install --user pytest pytest-cov coveralls flake8 virtualenv urllib3[secure]
   - pip install --user -r requirements.txt
