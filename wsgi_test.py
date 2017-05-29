@@ -1,10 +1,19 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-import __builtin__
+from __future__ import print_function
+try:
+    import __builtin__ as builtins
+except ImportError:
+    import builtins
 import importlib
 import os
 import pytest
 from werkzeug.wrappers import Response
+from werkzeug.urls import url_encode
+
+# Reference to open() before monkeypatching
+original_open = open
+
 
 # This workaround is needed for coverage.py to pick up the wsgi module
 try:
@@ -32,7 +41,7 @@ class MockApp:
         ]
         for cookie in cookies[:self.cookie_count]:
             response.set_cookie(cookie[0], cookie[1])
-        print >> environ['wsgi.errors'], "application debug #1"
+        print("application debug #1", file=environ['wsgi.errors'])
         return response(environ, start_response)
 
 
@@ -60,7 +69,7 @@ class MockFileManager():
     def open(self, name, mode='r', buffering=-1, **options):
         if name not in self.files:
             if mode.startswith('r'):
-                raise IOError(2, "No such file or directory: '%s'" % name)
+                return original_open(name, mode, buffering, **options)
             else:
                 self.files[name] = MockFile()
 
@@ -88,7 +97,7 @@ def mock_wsgi_app_file(monkeypatch):
     manager = MockFileManager()
     with manager.open('/tmp/.wsgi_app', 'w') as f:
         f.write('app.app')
-    monkeypatch.setattr(__builtin__, 'open', manager.open)
+    monkeypatch.setattr(builtins, 'open', manager.open)
 
 
 @pytest.fixture
@@ -160,7 +169,7 @@ def test_handler(mock_wsgi_app_file, mock_app, event, capsys):
     response = wsgi.handler(event, {'memory_limit_in_mb': '128'})
 
     assert response == {
-        'body': 'Hello World!',
+        'body': b'Hello World!',
         'headers': {
             'set-cookie': 'CUSTOMER=WILE_E_COYOTE; Path=/',
             'Content-Length': '12',
@@ -196,7 +205,7 @@ def test_handler(mock_wsgi_app_file, mock_app, event, capsys):
         'HTTP_X_FORWARDED_PORT': '443',
         'HTTP_X_FORWARDED_PROTO': 'https',
         'PATH_INFO': '/some/path',
-        'QUERY_STRING': 'param2=value2&param1=value1',
+        'QUERY_STRING': url_encode(event['queryStringParameters']),
         'REMOTE_ADDR': '76.20.166.147',
         'REMOTE_USER': 'wile_e_coyote',
         'REQUEST_METHOD': 'GET',
@@ -225,7 +234,7 @@ def test_handler_single_cookie(mock_wsgi_app_file, mock_app, event):
     response = wsgi.handler(event, {'memory_limit_in_mb': '128'})
 
     assert response == {
-        'body': 'Hello World!',
+        'body': b'Hello World!',
         'headers': {
             'Set-Cookie': 'CUSTOMER=WILE_E_COYOTE; Path=/',
             'Content-Length': '12',
@@ -241,7 +250,7 @@ def test_handler_no_cookie(mock_wsgi_app_file, mock_app, event):
     response = wsgi.handler(event, {'memory_limit_in_mb': '128'})
 
     assert response == {
-        'body': 'Hello World!',
+        'body': b'Hello World!',
         'headers': {
             'Content-Length': '12',
             'Content-Type': 'text/plain; charset=utf-8'
@@ -280,7 +289,7 @@ def test_handler_custom_domain(mock_wsgi_app_file, mock_app, event):
         'HTTP_X_FORWARDED_PORT': '443',
         'HTTP_X_FORWARDED_PROTO': 'https',
         'PATH_INFO': '/some/path',
-        'QUERY_STRING': 'param2=value2&param1=value1',
+        'QUERY_STRING': url_encode(event['queryStringParameters']),
         'REMOTE_ADDR': '76.20.166.147',
         'REMOTE_USER': 'wile_e_coyote',
         'REQUEST_METHOD': 'GET',

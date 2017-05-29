@@ -12,6 +12,8 @@ Author: Logan Raarup <logan@logan.dk>
 import os
 import sys
 
+PY2 = sys.version_info[0] == 2
+
 root = os.path.abspath(os.path.dirname(__file__))
 with open(os.path.join(root, '.wsgi_app'), 'r') as f:
     app_path = f.read()
@@ -20,7 +22,10 @@ requirements_path = os.path.join(root, app_dir, '.requirements')
 sys.path.insert(0, requirements_path)
 
 import importlib  # noqa: E402
-from StringIO import StringIO  # noqa: E402
+if PY2:
+    from StringIO import StringIO  # noqa: E402
+else:
+    from io import StringIO  # noqa: E402
 from werkzeug.datastructures import Headers  # noqa: E402
 from werkzeug.wrappers import Response  # noqa: E402
 from werkzeug.urls import url_encode  # noqa: E402
@@ -103,8 +108,12 @@ def handler(event, context):
     }
 
     for key, value in environ.items():
-        if isinstance(value, basestring):
-            environ[key] = wsgi_encoding_dance(value)
+        if PY2:
+            if isinstance(value, basestring):
+                environ[key] = wsgi_encoding_dance(value)
+        else:
+            if isinstance(value, str):
+                environ[key] = wsgi_encoding_dance(value)
 
     for key, value in headers.items():
         key = 'HTTP_' + key.upper().replace('-', '_')
@@ -115,7 +124,7 @@ def handler(event, context):
 
     errors = environ['wsgi.errors'].getvalue()
     if errors:
-        print errors
+        print(errors)
 
     # If there are multiple Set-Cookie headers, create case-mutated variations
     # in order to pass them through APIGW. This is a hack that's currently
