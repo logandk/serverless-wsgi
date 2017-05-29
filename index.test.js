@@ -491,7 +491,7 @@ describe('serverless-wsgi', function() {
 
       var sandbox = sinon.sandbox.create();
       sandbox.stub(child_process, 'spawnSync').callsFake(function() { return {}; });
-      sandbox.stub(process, 'env', {});
+      sandbox.stub(process, 'env').value({});
       plugin.hooks['wsgi:serve:serve']().then(function () {
         expect(process.env.SOME_ENV_VAR).to.equal(42);
         expect(process.env.SECOND_VAR).to.equal(33);

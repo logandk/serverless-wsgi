@@ -1,6 +1,6 @@
 {
   "name": "serverless-wsgi",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "engines": {
     "node": ">=4.0"
   },
@@ -42,7 +42,7 @@
   "scripts": {
     "test": "istanbul cover -x '*.test.js' node_modules/mocha/bin/_mocha '*.test.js' -- -R spec",
     "lint": "eslint *.js",
-    "pytest": "pytest --cov=serve --cov=requirements --cov=wsgi --cov-report=html",
+    "pytest": "py.test --cov=serve --cov=requirements --cov=wsgi --cov-report=html",
     "pylint": "flake8"
   },
   "devDependencies": {
@@ -54,8 +54,8 @@
     "sinon": "^2.0.0"
   },
   "dependencies": {
-    "bluebird": "^3.0.6",
-    "fs-extra": "^2.0.0",
-    "lodash": "^4.17.2"
+    "bluebird": "^3.5.0",
+    "fs-extra": "^3.0.1",
+    "lodash": "^4.17.4"
   }
 }

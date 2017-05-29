@@ -109,7 +109,7 @@ def handler(event, context):
 
     for key, value in environ.items():
         if PY2:
-            if isinstance(value, basestring):
+            if isinstance(value, basestring):  # noqa: F821
                 environ[key] = wsgi_encoding_dance(value)
         else:
             if isinstance(value, str):
