@@ -11,8 +11,8 @@ install:
   - rm -rf ~/.nvm && git clone https://github.com/creationix/nvm.git ~/.nvm && (cd ~/.nvm && git checkout `git describe --abbrev=0 --tags`) && source ~/.nvm/nvm.sh && nvm install $TRAVIS_NODE_VERSION
   - npm install
   - gem install coveralls-lcov
-  - pip install --user pytest pytest-cov coveralls flake8 virtualenv urllib3[secure]
-  - pip install --user -r requirements.txt
+  - pip install pytest pytest-cov coveralls flake8 virtualenv urllib3[secure]
+  - pip install -r requirements.txt
 
 script:
   - npm test
