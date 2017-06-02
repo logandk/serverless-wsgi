@@ -9,6 +9,7 @@ Inspired by: https://github.com/miserlou/zappa
 
 Author: Logan Raarup <logan@logan.dk>
 """
+import base64
 import os
 import sys
 
@@ -138,8 +139,16 @@ def handler(event, context):
     elif len(cookie_headers) == 1:
         new_headers.extend(cookie_headers)
 
-    return {
+    returndict = {
         u'statusCode': response.status_code,
-        u'headers': dict(new_headers),
-        u'body': response.data
+        u'headers': dict(new_headers)
     }
+
+    if response.data:
+        if isinstance(response.data, bytes):
+            returndict['body'] = base64.b64encode(response.data).decode('utf-8')
+            returndict["isBase64Encoded"] = "true"
+        else:
+            returndict['body'] = response.data
+
+    return returndict
