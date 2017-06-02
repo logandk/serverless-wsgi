@@ -14,6 +14,7 @@ import os
 import sys
 
 PY2 = sys.version_info[0] == 2
+TEXT_MIME_TYPES = ['application/json', 'application/xml']
 
 root = os.path.abspath(os.path.dirname(__file__))
 with open(os.path.join(root, '.wsgi_app'), 'r') as f:
@@ -144,11 +145,16 @@ def handler(event, context):
         u'headers': dict(new_headers)
     }
 
-    if response.data:
-        if isinstance(response.data, bytes):
-            returndict['body'] = base64.b64encode(response.data).decode('utf-8')
-            returndict["isBase64Encoded"] = "true"
+    data = response.data
+    if data:
+        if isinstance(data, bytes):
+            mimetype = response.mimetype or 'text/plain'
+            if mimetype.startswith('text/') or mimetype in TEXT_MIME_TYPES:
+                returndict['body'] = data.decode('utf-8')
+            else:
+                returndict['body'] = base64.b64encode(data).decode('utf-8')
+                returndict["isBase64Encoded"] = "true"
         else:
-            returndict['body'] = response.data
+            returndict['body'] = data
 
     return returndict
