@@ -9,10 +9,12 @@ Inspired by: https://github.com/miserlou/zappa
 
 Author: Logan Raarup <logan@logan.dk>
 """
+import base64
 import os
 import sys
 
 PY2 = sys.version_info[0] == 2
+TEXT_MIME_TYPES = ['application/json', 'application/xml']
 
 root = os.path.abspath(os.path.dirname(__file__))
 with open(os.path.join(root, '.wsgi_app'), 'r') as f:
@@ -138,8 +140,18 @@ def handler(event, context):
     elif len(cookie_headers) == 1:
         new_headers.extend(cookie_headers)
 
-    return {
+    returndict = {
         u'statusCode': response.status_code,
-        u'headers': dict(new_headers),
-        u'body': response.data
+        u'headers': dict(new_headers)
     }
+
+    if response.data:
+        mimetype = response.mimetype or 'text/plain'
+        if mimetype.startswith('text/') or mimetype in TEXT_MIME_TYPES:
+            returndict['body'] = response.get_data(as_text=True)
+        else:
+            returndict['body'] = base64.b64encode(response.data).decode(
+                'utf-8')
+            returndict["isBase64Encoded"] = "true"
+
+    return returndict
