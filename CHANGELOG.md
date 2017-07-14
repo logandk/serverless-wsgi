@@ -1,3 +1,15 @@
+# 1.2.1
+## Features
+* Support base64 encoding of binary responses automatically based on MIME type
+
+  *Andre de Cavaignac*
+
+## Bugs
+* Properly handle Python 3 bytestring response
+
+  *Andre de Cavaignac*
+
+
 # 1.2.0
 ## Features
 * Python 3 support
