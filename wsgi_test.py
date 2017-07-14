@@ -30,10 +30,15 @@ class ObjectStub:
 class MockApp:
     def __init__(self):
         self.cookie_count = 3
+        self.enable_binary = False
 
     def __call__(self, environ, start_response):
         self.last_environ = environ
-        response = Response('Hello World!', mimetype='text/plain')
+        if self.enable_binary:
+            mimetype = 'image/jpeg'
+        else:
+            mimetype = 'text/plain'
+        response = Response(u'Hello World ☃!', mimetype=mimetype)
         cookies = [
             ('CUSTOMER', 'WILE_E_COYOTE'),
             ('PART_NUMBER', 'ROCKET_LAUNCHER_0002'),
@@ -153,7 +158,7 @@ def event():
                 'userAgent': 'PostmanRuntime/3.0.11-hotfix.2',
                 'userArn': None
             },
-            u'authorizer': {'principalId': u'wile_e_coyote'},
+            'authorizer': {'principalId': 'wile_e_coyote'},
             'requestId': 'ad2db740-10a2-11e7-8ced-35048084babb',
             'resourceId': 'r4kza9',
             'resourcePath': '/{proxy+}',
@@ -169,10 +174,10 @@ def test_handler(mock_wsgi_app_file, mock_app, event, capsys):
     response = wsgi.handler(event, {'memory_limit_in_mb': '128'})
 
     assert response == {
-        'body': b'Hello World!',
+        'body': u'Hello World ☃!',
         'headers': {
             'set-cookie': 'CUSTOMER=WILE_E_COYOTE; Path=/',
-            'Content-Length': '12',
+            'Content-Length': '16',
             'Content-Type': 'text/plain; charset=utf-8',
             'sEt-cookie': 'LOT_NUMBER=42; Path=/',
             'Set-cookie': 'PART_NUMBER=ROCKET_LAUNCHER_0002; Path=/'
@@ -234,10 +239,10 @@ def test_handler_single_cookie(mock_wsgi_app_file, mock_app, event):
     response = wsgi.handler(event, {'memory_limit_in_mb': '128'})
 
     assert response == {
-        'body': b'Hello World!',
+        'body': u'Hello World ☃!',
         'headers': {
             'Set-Cookie': 'CUSTOMER=WILE_E_COYOTE; Path=/',
-            'Content-Length': '12',
+            'Content-Length': '16',
             'Content-Type': 'text/plain; charset=utf-8'
         },
         'statusCode': 200
@@ -250,9 +255,9 @@ def test_handler_no_cookie(mock_wsgi_app_file, mock_app, event):
     response = wsgi.handler(event, {'memory_limit_in_mb': '128'})
 
     assert response == {
-        'body': b'Hello World!',
+        'body': u'Hello World ☃!',
         'headers': {
-            'Content-Length': '12',
+            'Content-Length': '16',
             'Content-Type': 'text/plain; charset=utf-8'
         },
         'statusCode': 200
@@ -305,4 +310,22 @@ def test_handler_custom_domain(mock_wsgi_app_file, mock_app, event):
         'wsgi.url_scheme': 'https',
         'wsgi.version': (1, 0),
         'context': {'memory_limit_in_mb': '128'}
+    }
+
+
+def test_handler_base64(mock_wsgi_app_file, mock_app, event):
+    import wsgi  # noqa: F811
+    wsgi.wsgi_app.cookie_count = 1
+    wsgi.wsgi_app.enable_binary = True
+    response = wsgi.handler(event, {'memory_limit_in_mb': '128'})
+
+    assert response == {
+        'body': u'SGVsbG8gV29ybGQg4piDIQ==',
+        'headers': {
+            'Set-Cookie': 'CUSTOMER=WILE_E_COYOTE; Path=/',
+            'Content-Length': '16',
+            'Content-Type': 'image/jpeg'
+        },
+        'statusCode': 200,
+        'isBase64Encoded': 'true'
     }

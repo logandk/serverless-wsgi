@@ -145,16 +145,13 @@ def handler(event, context):
         u'headers': dict(new_headers)
     }
 
-    data = response.data
-    if data:
-        if isinstance(data, bytes):
-            mimetype = response.mimetype or 'text/plain'
-            if mimetype.startswith('text/') or mimetype in TEXT_MIME_TYPES:
-                returndict['body'] = data.decode('utf-8')
-            else:
-                returndict['body'] = base64.b64encode(data).decode('utf-8')
-                returndict["isBase64Encoded"] = "true"
+    if response.data:
+        mimetype = response.mimetype or 'text/plain'
+        if mimetype.startswith('text/') or mimetype in TEXT_MIME_TYPES:
+            returndict['body'] = response.get_data(as_text=True)
         else:
-            returndict['body'] = data
+            returndict['body'] = base64.b64encode(response.data).decode(
+                'utf-8')
+            returndict["isBase64Encoded"] = "true"
 
     return returndict
