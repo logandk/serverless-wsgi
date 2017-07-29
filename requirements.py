@@ -52,7 +52,15 @@ def package(req_files, target_dir):
         deps_dir = os.path.join(venv_dir, 'Lib', 'site-packages')
     else:
         pip_exe = os.path.join(venv_dir, 'bin', 'pip')
-        python_dir = os.listdir(os.path.join(venv_dir, 'lib'))[0]
+        lib_path = os.path.join(venv_dir, 'lib')
+        libs_dir_path_items = os.listdir(lib_path)
+        directories = [d for d in libs_dir_path_items
+                         if os.path.isdir(os.path.join(lib_path, d)) and
+                         'python' in d.lower()]
+        if len(directories) > 0:
+            python_dir = directories[0]
+        else:
+            sys.exit('No python directory')
         deps_dir = os.path.join(venv_dir, 'lib', python_dir, 'site-packages')
 
     if not os.path.isfile(pip_exe):
