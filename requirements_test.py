@@ -95,6 +95,10 @@ def test_package(mock_system, mock_virtualenv):
 
     # Looks for pip installation
     assert mock_system.pop(0) == ('os.listdir', ('/tmp/.venv/lib',))
+
+    assert mock_system.pop(0) == ('os.path.isdir', ('/tmp/.venv/lib/dir1',))
+    assert mock_system.pop(0) == ('os.path.isdir', ('/tmp/.venv/lib/dir2',))
+
     assert mock_system.pop(0) == ('os.path.isfile', ('/tmp/.venv/bin/pip',))
 
     # Invokes pip for package installation
