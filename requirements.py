@@ -55,7 +55,7 @@ def package(req_files, target_dir):
         lib_path = os.path.join(venv_dir, 'lib')
         libs_dir_path_items = os.listdir(lib_path)
         directories = [d for d in libs_dir_path_items
-                         if os.path.isdir(os.path.join(lib_path, d))]
+                       if os.path.isdir(os.path.join(lib_path, d))]
         if len(directories) > 0:
             python_dir = directories[0]
         else:
