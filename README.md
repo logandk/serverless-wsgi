@@ -102,7 +102,7 @@ custom:
 Add Flask to the application bundle.
 
 ```
-Flask==0.11.1
+Flask==0.12.2
 ```
 
 
@@ -143,8 +143,8 @@ as long as you specify your required packages in a `requirements.txt` file in th
 of your Serverless service path:
 
 ```
-Flask==0.11.1
-requests==2.11.1
+Flask==0.12.2
+requests==2.18.3
 ```
 
 For more information, see [https://pip.readthedocs.io/en/1.1/requirements.html](https://pip.readthedocs.io/en/1.1/requirements.html).
