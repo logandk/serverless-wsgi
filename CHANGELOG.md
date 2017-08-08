@@ -1,3 +1,10 @@
+# 1.2.2
+## Bugs
+* Fix requirement packaging on Mac OS with Python 3.6 (Anaconda)
+
+  *Vitaly Davydov*
+
+
 # 1.2.1
 ## Features
 * Support base64 encoding of binary responses automatically based on MIME type
