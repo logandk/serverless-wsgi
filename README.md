@@ -88,6 +88,7 @@ functions:
   api:
     handler: wsgi.handler
     events:
+      - http: ANY /
       - http: ANY {proxy+}
 
 custom:
