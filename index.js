@@ -14,6 +14,14 @@ class ServerlessWSGI {
       this.wsgiApp = this.serverless.service.custom.wsgi.app;
       this.appPath = path.dirname(path.join(this.serverless.config.servicePath, this.wsgiApp));
     }
+
+    this.serverless.service.package = this.serverless.service.package || {};
+    this.serverless.service.package.include = this.serverless.service.package.include || [];
+
+    this.serverless.service.package.include = _.union(
+      this.serverless.service.package.include,
+      ['.wsgi_app', '.requirements/**']
+    );
   }
 
   packWsgiHandler() {

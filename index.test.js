@@ -83,6 +83,7 @@ describe('serverless-wsgi', function() {
           ]
         )).to.be.ok;
         sandbox.restore();
+        expect(plugin.serverless.service.package.include).to.have.members(['.wsgi_app', '.requirements/**']);
       });
     });
 
@@ -112,7 +113,8 @@ describe('serverless-wsgi', function() {
       var plugin = new Plugin({
         config: { servicePath: '/tmp' },
         service: {
-          custom: { wsgi: { app: 'api.app' } }
+          custom: { wsgi: { app: 'api.app' } },
+          package: { include: ['sample.txt'] }
         },
         classes: { Error: Error },
         cli: { log: function () {} }
@@ -137,6 +139,7 @@ describe('serverless-wsgi', function() {
             '/tmp/.requirements'
           ]
         )).to.be.ok;
+        expect(plugin.serverless.service.package.include).to.have.members(['sample.txt', '.wsgi_app', '.requirements/**']);
         sandbox.restore();
       });
     });

@@ -1,4 +1,7 @@
 # 1.2.2
+## Features
+* Add default package includes for `.wsgi_app` and `.requirements`
+
 ## Bugs
 * Fix requirement packaging on Mac OS with Python 3.6 (Anaconda)
 
