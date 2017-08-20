@@ -100,7 +100,8 @@ def test_serve_from_subdir(mock_path, mock_importlib, mock_werkzeug):
     }
 
 
-def test_serve_from_non_package_subdir(mock_path, mock_once_failing_importlib, mock_werkzeug):
+def test_serve_from_non_package_subdir(
+        mock_path, mock_once_failing_importlib, mock_werkzeug):
     serve.serve('/tmp2', 'subdir/app.app', '5000')
     assert len(mock_path) == 2
     assert mock_path[0] == '/tmp2/subdir'
