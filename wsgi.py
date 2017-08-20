@@ -34,7 +34,19 @@ from werkzeug.urls import url_encode  # noqa: E402
 from werkzeug._compat import wsgi_encoding_dance  # noqa: E402
 
 wsgi_fqn = app_path.rsplit('.', 1)
-wsgi_module = importlib.import_module(wsgi_fqn[0].replace('/', '.'))
+try:
+    # Attempt to load directly as a package, considering path delimiters
+    # to be a nested import.
+    # See https://github.com/logandk/serverless-wsgi/pull/6
+    wsgi_module = importlib.import_module(wsgi_fqn[0].replace('/', '.'))
+except ImportError:
+    # Alternatively, try adding the a path delimited import to the search
+    # path.
+    # See https://github.com/logandk/serverless-wsgi/issues/24
+    wsgi_fqn_parts = wsgi_fqn[0].rsplit('/', 1)
+    if len(wsgi_fqn_parts) == 2:
+        sys.path.insert(0, os.path.join(root, wsgi_fqn_parts[0]))
+    wsgi_module = importlib.import_module(wsgi_fqn_parts[-1])
 wsgi_app = getattr(wsgi_module, wsgi_fqn[1])
 
 

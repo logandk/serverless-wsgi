@@ -1,3 +1,8 @@
+# 1.2.3
+## Features
+* Support loading the WSGI application from a non-package subdirectory (i.e. setting the wsgi handler to something like `dir/api.app.handler`) where `dir` contains no `__init__.py`.
+
+
 # 1.2.2
 ## Features
 * Add default package includes for `.wsgi_app` and `.requirements`

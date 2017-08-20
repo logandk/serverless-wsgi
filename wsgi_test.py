@@ -7,6 +7,7 @@ except ImportError:
     import builtins
 import importlib
 import os
+import sys
 import pytest
 from werkzeug.wrappers import Response
 from werkzeug.urls import url_encode
@@ -84,11 +85,17 @@ class MockFileManager():
 @pytest.fixture
 def mock_app(monkeypatch):
     mock_app = MockApp()
+    mock_app.should_fail_once = False
 
     def mock_importlib(module):
-        app = ObjectStub
-        app.app = mock_app
-        return app
+        if mock_app.should_fail_once:
+            mock_app.should_fail_once = False
+            raise ImportError
+        else:
+            app = ObjectStub
+            app.app = mock_app
+            app.app.module = module
+            return app
 
     monkeypatch.setattr(importlib, 'import_module', mock_importlib)
 
@@ -102,6 +109,16 @@ def mock_wsgi_app_file(monkeypatch):
     manager = MockFileManager()
     with manager.open('/tmp/.wsgi_app', 'w') as f:
         f.write('app.app')
+    monkeypatch.setattr(builtins, 'open', manager.open)
+
+
+@pytest.fixture
+def mock_subdir_wsgi_app_file(monkeypatch):
+    monkeypatch.setattr(os.path, 'abspath', lambda x: '/tmp')
+
+    manager = MockFileManager()
+    with manager.open('/tmp/.wsgi_app', 'w') as f:
+        f.write('subdir/app.app')
     monkeypatch.setattr(builtins, 'open', manager.open)
 
 
@@ -329,3 +346,10 @@ def test_handler_base64(mock_wsgi_app_file, mock_app, event):
         'statusCode': 200,
         'isBase64Encoded': 'true'
     }
+
+
+def test_non_package_subdir_app(mock_subdir_wsgi_app_file, mock_app):
+    mock_app.should_fail_once = True
+    del sys.modules['wsgi']
+    import wsgi  # noqa: F811
+    assert wsgi.wsgi_app.module == 'app'
