@@ -1,6 +1,8 @@
-# 1.2.3
+# 1.3.0
 ## Features
-* Support loading the WSGI application from a non-package subdirectory (i.e. setting the wsgi handler to something like `dir/api.app.handler`) where `dir` contains no `__init__.py`.
+* Load subdirectory packages by adding the subdirectory to the search path (i.e. setting the wsgi handler to something like `dir/api.app.handler`).
+
+  Previously, the subdirectory was expected to be a package (i.e. containing `__init__.py`)
 
 
 # 1.2.2

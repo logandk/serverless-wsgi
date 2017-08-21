@@ -19,19 +19,10 @@ def serve(cwd, app, port):
     sys.path.insert(0, cwd)
 
     wsgi_fqn = app.rsplit('.', 1)
-    try:
-        # Attempt to load directly as a package, considering path delimiters
-        # to be a nested import.
-        # See https://github.com/logandk/serverless-wsgi/pull/6
-        wsgi_module = importlib.import_module(wsgi_fqn[0].replace('/', '.'))
-    except ImportError:
-        # Alternatively, try adding the a path delimited import to the search
-        # path.
-        # See https://github.com/logandk/serverless-wsgi/issues/24
-        wsgi_fqn_parts = wsgi_fqn[0].rsplit('/', 1)
-        if len(wsgi_fqn_parts) == 2:
-            sys.path.insert(0, os.path.join(cwd, wsgi_fqn_parts[0]))
-        wsgi_module = importlib.import_module(wsgi_fqn_parts[-1])
+    wsgi_fqn_parts = wsgi_fqn[0].rsplit('/', 1)
+    if len(wsgi_fqn_parts) == 2:
+        sys.path.insert(0, os.path.join(cwd, wsgi_fqn_parts[0]))
+    wsgi_module = importlib.import_module(wsgi_fqn_parts[-1])
     wsgi_app = getattr(wsgi_module, wsgi_fqn[1])
 
     # Attempt to force Flask into debug mode
