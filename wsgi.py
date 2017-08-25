@@ -25,9 +25,10 @@ sys.path.insert(0, requirements_path)
 
 import importlib  # noqa: E402
 if PY2:
-    from StringIO import StringIO as BytesIO  # noqa: E402
+    from StringIO import StringIO  # noqa: E402
+    BytesIO = StringIO
 else:
-    from io import BytesIO  # noqa: E402
+    from io import StringIO, BytesIO  # noqa: E402
 from werkzeug.datastructures import Headers  # noqa: E402
 from werkzeug.wrappers import Response  # noqa: E402
 from werkzeug.urls import url_encode  # noqa: E402
@@ -97,7 +98,8 @@ def handler(event, context):
         'context':
             context,
         'wsgi.errors':
-            BytesIO(),
+            # Per PEP 333, this should be a "text mode" stream.
+            StringIO(),
         'wsgi.input':
             BytesIO(),
         'wsgi.multiprocess':
