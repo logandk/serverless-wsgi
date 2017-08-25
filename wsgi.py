@@ -25,9 +25,9 @@ sys.path.insert(0, requirements_path)
 
 import importlib  # noqa: E402
 if PY2:
-    from StringIO import StringIO  # noqa: E402
+    from StringIO import StringIO as BytesIO  # noqa: E402
 else:
-    from io import StringIO  # noqa: E402
+    from io import BytesIO  # noqa: E402
 from werkzeug.datastructures import Headers  # noqa: E402
 from werkzeug.wrappers import Response  # noqa: E402
 from werkzeug.urls import url_encode  # noqa: E402
@@ -97,9 +97,9 @@ def handler(event, context):
         'context':
             context,
         'wsgi.errors':
-            StringIO(),
+            BytesIO(),
         'wsgi.input':
-            StringIO(wsgi_encoding_dance(event[u'body'] or '')),
+            BytesIO(),
         'wsgi.multiprocess':
             False,
         'wsgi.multithread':
@@ -111,6 +111,15 @@ def handler(event, context):
         'wsgi.version':
             (1, 0),
     }
+
+    body = event[u'body'] or ''
+    encoded = wsgi_encoding_dance(body)
+    if not PY2:
+        encoded = bytes(encoded, 'utf-8', 'replace')
+
+    # XXX: why do we have to supply an encoding here?
+    # Doesn't wsgi_encoding_dance already do that?
+    environ['wsgi.input'] = BytesIO(encoded)
 
     for key, value in environ.items():
         if PY2:
