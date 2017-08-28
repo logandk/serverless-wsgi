@@ -293,6 +293,27 @@ describe('serverless-wsgi', function() {
         sandbox.restore();
       });
     });
+
+    it('skips requirements cleanup if chosen', function() {
+      var plugin = new Plugin({
+        config: { servicePath: '/tmp' },
+        service: {
+          custom: { wsgi: { app: 'api.app', packRequirements: false } }
+        },
+        classes: { Error: Error },
+        cli: { log: function () {} }
+      }, {});
+
+      var sandbox = sinon.sandbox.create();
+      var remove_stub = sandbox.stub(fse, 'removeAsync');
+      plugin.hooks['after:deploy:createDeploymentArtifacts']().then(function () {
+        expect(remove_stub.calledWith('/tmp/wsgi.py')).to.be.ok;
+        expect(remove_stub.calledWith('/tmp/.wsgi_app')).to.be.ok;
+        expect(remove_stub.calledWith('/tmp/.requirements')).to.be.false;
+        sandbox.restore();
+      });
+
+    });
   });
 
   describe('function deployment', function() {

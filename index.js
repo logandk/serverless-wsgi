@@ -81,7 +81,10 @@ class ServerlessWSGI {
   }
 
   cleanup() {
-    const artifacts = ['wsgi.py', '.wsgi_app', '.requirements'];
+    const artifacts = ['wsgi.py', '.wsgi_app'];
+    if (this.serverless.service.custom && this.serverless.service.custom.wsgi && (this.serverless.service.custom.wsgi.packRequirements !== false)) {
+      artifacts.push('.requirements');
+    }
 
     return BbPromise.all(_.map(artifacts, (artifact) =>
       fse.removeAsync(path.join(this.serverless.config.servicePath, artifact))));
