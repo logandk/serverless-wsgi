@@ -83,7 +83,7 @@ describe('serverless-wsgi', function() {
           ]
         )).to.be.ok;
         sandbox.restore();
-        expect(plugin.serverless.service.package.include).to.have.members(['.wsgi_app', '.requirements/**']);
+        expect(plugin.serverless.service.package.include).to.have.members(['wsgi.py', '.wsgi_app', '.requirements/**']);
       });
     });
 
@@ -139,7 +139,7 @@ describe('serverless-wsgi', function() {
             '/tmp/.requirements'
           ]
         )).to.be.ok;
-        expect(plugin.serverless.service.package.include).to.have.members(['sample.txt', '.wsgi_app', '.requirements/**']);
+        expect(plugin.serverless.service.package.include).to.have.members(['sample.txt', 'wsgi.py', '.wsgi_app', '.requirements/**']);
         sandbox.restore();
       });
     });

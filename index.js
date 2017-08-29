@@ -20,7 +20,7 @@ class ServerlessWSGI {
 
     this.serverless.service.package.include = _.union(
       this.serverless.service.package.include,
-      ['.wsgi_app', '.requirements/**']
+      ['wsgi.py', '.wsgi_app', '.requirements/**']
     );
   }
 
