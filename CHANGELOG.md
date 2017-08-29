@@ -4,6 +4,15 @@
 
   Previously, the subdirectory was expected to be a package (i.e. containing `__init__.py`)
 
+## Bugs
+* Skip removing `.requirements` if `packRequirements: false`
+
+  *Alex DeBrie*
+
+* Supply wsgi.input as BytesIO on Python 3
+
+  *Brett Higgins*
+
 
 # 1.2.2
 ## Features
