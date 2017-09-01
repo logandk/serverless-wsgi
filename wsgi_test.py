@@ -325,6 +325,57 @@ def test_handler_custom_domain(mock_wsgi_app_file, mock_app, event):
     }
 
 
+def test_handler_api_gateway_base_path(mock_wsgi_app_file, mock_app, event):
+    import wsgi  # noqa: F811
+    event['headers']['Host'] = 'custom.domain.com'
+    event['path'] = '/prod/some/path'
+    os.environ.update(API_GATEWAY_BASE_PATH='prod')
+    wsgi.handler(event, {'memory_limit_in_mb': '128'})
+
+    assert wsgi.wsgi_app.last_environ == {
+        'API_GATEWAY_AUTHORIZER': {'principalId': 'wile_e_coyote'},
+        'CONTENT_LENGTH': '0',
+        'CONTENT_TYPE': '',
+        'HTTP_ACCEPT': '*/*',
+        'HTTP_ACCEPT_ENCODING': 'gzip, deflate',
+        'HTTP_CACHE_CONTROL': 'no-cache',
+        'HTTP_CLOUDFRONT_FORWARDED_PROTO': 'https',
+        'HTTP_CLOUDFRONT_IS_DESKTOP_VIEWER': 'true',
+        'HTTP_CLOUDFRONT_IS_MOBILE_VIEWER': 'false',
+        'HTTP_CLOUDFRONT_IS_SMARTTV_VIEWER': 'false',
+        'HTTP_CLOUDFRONT_IS_TABLET_VIEWER': 'false',
+        'HTTP_CLOUDFRONT_VIEWER_COUNTRY': 'DK',
+        'HTTP_COOKIE':
+            'CUSTOMER=WILE_E_COYOTE; PART_NUMBER=ROCKET_LAUNCHER_0001',
+        'HTTP_HOST': 'custom.domain.com',
+        'HTTP_POSTMAN_TOKEN': '778a706e-d6b0-48d5-94dd-9e98c22f12fe',
+        'HTTP_USER_AGENT': 'PostmanRuntime/3.0.11-hotfix.2',
+        'HTTP_VIA': '1.1 b8fa.cloudfront.net (CloudFront)',
+        'HTTP_X_AMZN_TRACE_ID': 'Root=1-58d534a5-1e7cffe644b086304dce7a1e',
+        'HTTP_X_AMZ_CF_ID': 'jx0Bvz9rm--Mz3wAj4i46FdOQQK3RHF4H0moJjBsQ==',
+        'HTTP_X_FORWARDED_FOR': '76.20.166.147, 205.251.218.72',
+        'HTTP_X_FORWARDED_PORT': '443',
+        'HTTP_X_FORWARDED_PROTO': 'https',
+        'PATH_INFO': '/some/path',
+        'QUERY_STRING': url_encode(event['queryStringParameters']),
+        'REMOTE_ADDR': '76.20.166.147',
+        'REMOTE_USER': 'wile_e_coyote',
+        'REQUEST_METHOD': 'GET',
+        'SCRIPT_NAME': '/prod',
+        'SERVER_NAME': 'custom.domain.com',
+        'SERVER_PORT': '443',
+        'SERVER_PROTOCOL': 'HTTP/1.1',
+        'wsgi.errors': wsgi.wsgi_app.last_environ['wsgi.errors'],
+        'wsgi.input': wsgi.wsgi_app.last_environ['wsgi.input'],
+        'wsgi.multiprocess': False,
+        'wsgi.multithread': False,
+        'wsgi.run_once': False,
+        'wsgi.url_scheme': 'https',
+        'wsgi.version': (1, 0),
+        'context': {'memory_limit_in_mb': '128'}
+    }
+
+
 def test_handler_base64(mock_wsgi_app_file, mock_app, event):
     import wsgi  # noqa: F811
     wsgi.wsgi_app.cookie_count = 1

@@ -69,6 +69,17 @@ def handler(event, context):
     else:
         script_name = ''
 
+    # If a user is using a custom domain on API Gateway, they may have a base
+    # path in their URL. This allows us to strip it out via an optional
+    # environment variable.
+    path_info = event[u'path']
+    base_path = os.environ.get('API_GATEWAY_BASE_PATH', '')
+    if base_path:
+        script_name = '/' + base_path
+
+        if path_info.startswith(script_name):
+            path_info = path_info[len(script_name):]
+
     environ = {
         'API_GATEWAY_AUTHORIZER':
             event[u'requestContext'].get(u'authorizer', None),
@@ -77,7 +88,7 @@ def handler(event, context):
         'CONTENT_TYPE':
             headers.get(u'Content-Type', ''),
         'PATH_INFO':
-            event[u'path'],
+            path_info,
         'QUERY_STRING':
             url_encode(event.get(u'queryStringParameters', None) or {}),
         'REMOTE_ADDR':
