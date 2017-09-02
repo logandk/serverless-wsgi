@@ -231,6 +231,45 @@ custom:
     app: api.app
 ```
 
+### Custom domain names
+
+If you use custom domain names with API Gateway, you might have a base path that is
+at the beginning of your path, such as the stage (`/dev`, `/stage`, `/prod`). You
+can pass in an `API_GATEWAY_BASE_PATH` environment variable so your WSGI app can
+handle it correctly.
+
+The example below uses the [serverless-domain-manager](https://github.com/amplify-education/serverless-domain-manager)
+plugin to handle custom domains in API Gateway:
+
+```yaml
+service: example
+
+provider:
+  name: aws
+  runtime: python2.7
+  environment:
+    API_GATEWAY_BASE_PATH: ${self:custom.customDomain.basePath}
+
+plugins:
+  - serverless-wsgi
+  - serverless-domain-manager
+
+functions:
+  api:
+    handler: wsgi.handler
+    events:
+      - http: ANY /
+      - http: ANY {proxy+}
+
+custom:
+  wsgi:
+    app: api.app
+  customDomain:
+    basePath: ${opt:stage}
+    domainName: mydomain.name.com
+    stage: ${opt:stage}
+    createRoute53Record: true
+```
 
 # Thanks
 
