@@ -18,9 +18,15 @@ class ServerlessWSGI {
     this.serverless.service.package = this.serverless.service.package || {};
     this.serverless.service.package.include = this.serverless.service.package.include || [];
 
+    var includes = ['wsgi.py', '.wsgi_app'];
+    if (this.serverless.service.custom === undefined || this.serverless.service.custom.wsgi === undefined ||
+          (this.serverless.service.custom.wsgi.packRequirements !== false)) {
+      includes.push('.requirements/**');
+    }
+
     this.serverless.service.package.include = _.union(
       this.serverless.service.package.include,
-      ['wsgi.py', '.wsgi_app', '.requirements/**']
+      includes
     );
   }
 
