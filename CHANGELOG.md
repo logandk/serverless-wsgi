@@ -1,3 +1,15 @@
+# 1.3.1
+## Features
+* Add configuration for handling base path mappings (API_GATEWAY_BASE_PATH)
+
+  *Alex DeBrie*
+
+## Bugs
+* Only add .requirements folder to includes when packing enabled
+
+  *Darcy Rayner*
+
+
 # 1.3.0
 ## Features
 * Load subdirectory packages by adding the subdirectory to the search path (i.e. setting the wsgi handler to something like `dir/api.app.handler`).
