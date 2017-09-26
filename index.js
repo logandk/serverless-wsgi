@@ -10,24 +10,29 @@ BbPromise.promisifyAll(fse);
 
 class ServerlessWSGI {
   validate() {
-    if (this.serverless.service.custom && this.serverless.service.custom.wsgi && this.serverless.service.custom.wsgi.app) {
-      this.wsgiApp = this.serverless.service.custom.wsgi.app;
-      this.appPath = path.dirname(path.join(this.serverless.config.servicePath, this.wsgiApp));
+    this.enableRequirements = true;
+
+    if (this.serverless.service.custom && this.serverless.service.custom.wsgi) {
+      if (this.serverless.service.custom.wsgi.app) {
+        this.wsgiApp = this.serverless.service.custom.wsgi.app;
+        this.appPath = path.dirname(path.join(this.serverless.config.servicePath, this.wsgiApp));
+      }
+
+      if (this.serverless.service.custom.wsgi.packRequirements === false) {
+        this.enableRequirements = false;
+      }
     }
 
     this.serverless.service.package = this.serverless.service.package || {};
     this.serverless.service.package.include = this.serverless.service.package.include || [];
 
     var includes = ['wsgi.py', '.wsgi_app'];
-    if (this.serverless.service.custom === undefined || this.serverless.service.custom.wsgi === undefined ||
-          (this.serverless.service.custom.wsgi.packRequirements !== false)) {
+
+    if (this.enableRequirements) {
       includes.push('.requirements/**');
     }
 
-    this.serverless.service.package.include = _.union(
-      this.serverless.service.package.include,
-      includes
-    );
+    this.serverless.service.package.include = _.union(this.serverless.service.package.include, includes);
   }
 
   packWsgiHandler() {
@@ -54,7 +59,7 @@ class ServerlessWSGI {
     const requirementsInstallPath = this.appPath ? this.appPath : this.serverless.config.servicePath;
     let args = [path.resolve(__dirname, 'requirements.py')];
 
-    if (this.serverless.service.custom && this.serverless.service.custom.wsgi && this.serverless.service.custom.wsgi.packRequirements == false) {
+    if (!this.enableRequirements) {
       return BbPromise.resolve();
     }
 
@@ -88,7 +93,8 @@ class ServerlessWSGI {
 
   cleanup() {
     const artifacts = ['wsgi.py', '.wsgi_app'];
-    if (this.serverless.service.custom && this.serverless.service.custom.wsgi && (this.serverless.service.custom.wsgi.packRequirements !== false)) {
+
+    if (this.enableRequirements) {
       artifacts.push('.requirements');
     }
 
@@ -163,6 +169,7 @@ class ServerlessWSGI {
         .then(this.packRequirements),
 
       'after:deploy:createDeploymentArtifacts': () => BbPromise.bind(this)
+        .then(this.validate)
         .then(this.cleanup),
 
       'wsgi:serve:serve': () => BbPromise.bind(this)
@@ -181,6 +188,7 @@ class ServerlessWSGI {
         }),
 
       'after:deploy:function:packageFunction': () => BbPromise.bind(this)
+        .then(this.validate)
         .then(this.cleanup)
     };
   }

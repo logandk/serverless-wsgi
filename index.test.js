@@ -226,6 +226,7 @@ describe('serverless-wsgi', function() {
         expect(copy_stub.called).to.be.false;
         expect(write_stub.called).to.be.false;
         expect(proc_stub.called).to.be.false;
+        expect(plugin.serverless.service.package.include).not.to.have.members(['.requirements/**']);
         sandbox.restore();
       });
     });
@@ -268,7 +269,7 @@ describe('serverless-wsgi', function() {
       });
     });
 
-    it('skips packaging if chosen', function() {
+    it('skips packaging if disabled', function() {
       var plugin = new Plugin({
         config: { servicePath: '/tmp' },
         service: {
@@ -290,11 +291,12 @@ describe('serverless-wsgi', function() {
         expect(write_stub.called).to.be.true;
         expect(exists_stub.called).to.be.false;
         expect(proc_stub.called).to.be.false;
+        expect(plugin.serverless.service.package.include).not.to.have.members(['.requirements/**']);
         sandbox.restore();
       });
     });
 
-    it('skips requirements cleanup if chosen', function() {
+    it('skips requirements cleanup if disabled', function() {
       var plugin = new Plugin({
         config: { servicePath: '/tmp' },
         service: {
