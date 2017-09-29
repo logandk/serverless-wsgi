@@ -10,7 +10,7 @@
 
 A Serverless v1.x plugin to build your deploy Python WSGI applications using Serverless. Compatible
 WSGI application frameworks include Flask, Django and Pyramid - for a complete list, see:
-[http://wsgi.readthedocs.io/en/latest/frameworks.html](http://wsgi.readthedocs.io/en/latest/frameworks.html).
+http://wsgi.readthedocs.io/en/latest/frameworks.html.
 
 ### Features
 
@@ -130,7 +130,7 @@ Serverless: Stack update finished...
 Set `custom.wsgi.app` in `serverless.yml` according to your WSGI callable:
 
 * For Pyramid, use [make_wsgi_app](http://docs.pylonsproject.org/projects/pyramid/en/latest/api/config.html#pyramid.config.Configurator.make_wsgi_app) to intialize the callable
-* Django is configured for WSGI by default, set the callable to `<project_name>.wsgi.application`. See [https://docs.djangoproject.com/en/1.10/howto/deployment/wsgi/](https://docs.djangoproject.com/en/1.10/howto/deployment/wsgi/) for more information.
+* Django is configured for WSGI by default, set the callable to `<project_name>.wsgi.application`. See https://docs.djangoproject.com/en/1.10/howto/deployment/wsgi/ for more information.
 
 
 ## Usage
@@ -147,22 +147,12 @@ Flask==0.12.2
 requests==2.18.3
 ```
 
-For more information, see [https://pip.readthedocs.io/en/1.1/requirements.html](https://pip.readthedocs.io/en/1.1/requirements.html).
+For more information, see https://pip.readthedocs.io/en/1.1/requirements.html.
 
 You can use the requirement packaging functionality of *serverless-wsgi* without the WSGI
 handler itself by including the plugin in your `serverless.yml` configuration, without specifying
 the `custom.wsgi.app` setting. This will omit the WSGI handler from the package, but include
 any requirements specified in `requirements.txt`.
-
-If you do not include the WSGI handler, you'll need to add `.requirements` to the Python search path
-manually in your handler, before importing any packages:
-
-```
-import os
-import sys
-root = os.path.abspath(os.path.join(os.path.dirname(__file__)))
-sys.path.insert(0, os.path.join(root, '.requirements'))
-```
 
 If you don't want to use automatic requirement packaging you can set `custom.wsgi.packRequirements` to false:
 
@@ -172,6 +162,8 @@ custom:
     app: api.app
     packRequirements: false
 ```
+
+For a more advanced approach to packaging requirements, consider using https://github.com/UnitedIncome/serverless-python-requirements.
 
 ### Local server
 

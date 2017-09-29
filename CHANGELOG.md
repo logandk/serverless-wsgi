@@ -1,3 +1,9 @@
+# 1.4.0
+## Features
+* Package requirements into service root directory in order to avoid munging
+  sys.path to load requirements.
+
+
 # 1.3.1
 ## Features
 * Add configuration for handling base path mappings (API_GATEWAY_BASE_PATH)
