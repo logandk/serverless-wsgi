@@ -11,8 +11,11 @@ BbPromise.promisifyAll(fse);
 class ServerlessWSGI {
   validate() {
     this.enableRequirements = true;
+    this.pythonBin = this.serverless.service.provider.runtime;
 
     if (this.serverless.service.custom && this.serverless.service.custom.wsgi) {
+      this.pythonBin = this.serverless.service.custom.wsgi.pythonBin || this.pythonBin;
+
       if (this.serverless.service.custom.wsgi.app) {
         this.wsgiApp = this.serverless.service.custom.wsgi.app;
         this.appPath = path.dirname(path.join(this.serverless.config.servicePath, this.wsgiApp));
@@ -83,7 +86,7 @@ class ServerlessWSGI {
     this.serverless.cli.log('Packaging required Python packages...');
 
     return new BbPromise((resolve, reject) => {
-      const res = child_process.spawnSync('python', args);
+      const res = child_process.spawnSync(this.pythonBin, args);
       if (res.error) {
         return reject(res.error);
       }
@@ -179,7 +182,7 @@ class ServerlessWSGI {
     const port = this.options.port || 5000;
 
     return new BbPromise((resolve, reject) => {
-      var status = child_process.spawnSync('python', [
+      var status = child_process.spawnSync(this.pythonBin, [
         path.resolve(__dirname, 'serve.py'),
         this.serverless.config.servicePath,
         this.wsgiApp,

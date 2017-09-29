@@ -165,6 +165,20 @@ custom:
 
 For a more advanced approach to packaging requirements, consider using https://github.com/UnitedIncome/serverless-python-requirements.
 
+### Python version
+
+Python is used for packaging requirements and serving the app when invoking `sls wsgi serve`. By
+default, the current runtime setting is expected to be the name of the Python binary in `PATH`,
+for instance `python3.6`. If this is not the name of your Python binary, override it using the
+`pythonBin` option:
+
+```yaml
+custom:
+  wsgi:
+    app: api.app
+    pythonBin: python3
+```
+
 ### Local server
 
 For convenience, a `sls wsgi serve` command is provided to run your WSGI application

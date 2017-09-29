@@ -33,7 +33,7 @@ describe('serverless-wsgi', () => {
     it('skips packaging for non-wsgi app', () => {
       var plugin = new Plugin({
         config: { servicePath: '/tmp' },
-        service: {},
+        service: { provider: { runtime: 'python2.7' } },
         classes: { Error: Error },
         cli: { log: () => {} }
       }, {});
@@ -54,6 +54,7 @@ describe('serverless-wsgi', () => {
       var plugin = new Plugin({
         config: { servicePath: '/tmp' },
         service: {
+          provider: { runtime: 'python2.7' },
           custom: { wsgi: { app: 'api.app' } }
         },
         classes: { Error: Error },
@@ -73,7 +74,7 @@ describe('serverless-wsgi', () => {
           '/tmp/.wsgi_app', 'api.app'
         )).to.be.true;
         expect(procStub.calledWith(
-          'python',
+          'python2.7',
           [
             path.resolve(__dirname, 'requirements.py'),
             path.resolve(__dirname, 'requirements.txt'),
@@ -90,6 +91,7 @@ describe('serverless-wsgi', () => {
       var plugin = new Plugin({
         config: { servicePath: '/tmp' },
         service: {
+          provider: { runtime: 'python2.7' },
           custom: { wsgi: { app: 'api.app' } }
         },
         classes: { Error: Error },
@@ -112,6 +114,7 @@ describe('serverless-wsgi', () => {
       var plugin = new Plugin({
         config: { servicePath: '/tmp' },
         service: {
+          provider: { runtime: 'python2.7' },
           custom: { wsgi: { app: 'api.app' } },
           package: { include: ['sample.txt'] }
         },
@@ -131,7 +134,45 @@ describe('serverless-wsgi', () => {
         expect(writeStub.called).to.be.true;
         expect(symlinkStub.called).to.be.true;
         expect(procStub.calledWith(
-          'python',
+          'python2.7',
+          [
+            path.resolve(__dirname, 'requirements.py'),
+            path.resolve(__dirname, 'requirements.txt'),
+            '/tmp/requirements.txt',
+            '/tmp/.requirements'
+          ]
+        )).to.be.true;
+        expect(plugin.serverless.service.package.include).to.have.members(['sample.txt', 'wsgi.py', '.wsgi_app', 'flask', 'flask/**']);
+        expect(plugin.serverless.service.package.exclude).to.have.members(['.requirements/**']);
+        sandbox.restore();
+      });
+    });
+
+    it('allows setting the python binary', () => {
+      var plugin = new Plugin({
+        config: { servicePath: '/tmp' },
+        service: {
+          provider: { runtime: 'python2.7' },
+          custom: { wsgi: { app: 'api.app', pythonBin: 'my-python' } },
+          package: { include: ['sample.txt'] }
+        },
+        classes: { Error: Error },
+        cli: { log: () => {} }
+      }, {});
+
+      var sandbox = sinon.sandbox.create();
+      var copyStub = sandbox.stub(fse, 'copyAsync');
+      var writeStub = sandbox.stub(fse, 'writeFileAsync');
+      var symlinkStub = sandbox.stub(fse, 'symlinkSync');
+      sandbox.stub(fse, 'readdirSync').returns(['flask']);
+      sandbox.stub(fse, 'existsSync').returns(true);
+      var procStub = sandbox.stub(child_process, 'spawnSync').returns({ status: 0 });
+      plugin.hooks['before:deploy:createDeploymentArtifacts']().then(() => {
+        expect(copyStub.called).to.be.true;
+        expect(writeStub.called).to.be.true;
+        expect(symlinkStub.called).to.be.true;
+        expect(procStub.calledWith(
+          'my-python',
           [
             path.resolve(__dirname, 'requirements.py'),
             path.resolve(__dirname, 'requirements.txt'),
@@ -149,6 +190,7 @@ describe('serverless-wsgi', () => {
       var plugin = new Plugin({
         config: { servicePath: '/tmp' },
         service: {
+          provider: { runtime: 'python2.7' },
           custom: { wsgi: { app: 'api/api.app' } }
         },
         classes: { Error: Error },
@@ -165,7 +207,7 @@ describe('serverless-wsgi', () => {
         expect(copyStub.called).to.be.true;
         expect(writeStub.called).to.be.true;
         expect(procStub.calledWith(
-          'python',
+          'python2.7',
           [
             path.resolve(__dirname, 'requirements.py'),
             path.resolve(__dirname, 'requirements.txt'),
@@ -180,7 +222,7 @@ describe('serverless-wsgi', () => {
     it('throws an error when a file already exists in the service root', () => {
       var plugin = new Plugin({
         config: { servicePath: '/tmp' },
-        service: {},
+        service: { provider: { runtime: 'python2.7' } },
         classes: { Error: Error },
         cli: { log: () => {} }
       }, {});
@@ -201,7 +243,7 @@ describe('serverless-wsgi', () => {
     it('throws an error when a conflicting symlink already exists in the service root', () => {
       var plugin = new Plugin({
         config: { servicePath: '/tmp' },
-        service: {},
+        service: { provider: { runtime: 'python2.7' } },
         classes: { Error: Error },
         cli: { log: () => {} }
       }, {});
@@ -222,7 +264,7 @@ describe('serverless-wsgi', () => {
     it('packages user requirements for non-wsgi app', () => {
       var plugin = new Plugin({
         config: { servicePath: '/tmp' },
-        service: {},
+        service: { provider: { runtime: 'python2.7' } },
         classes: { Error: Error },
         cli: { log: () => {} }
       }, {});
@@ -239,7 +281,7 @@ describe('serverless-wsgi', () => {
         expect(copyStub.called).to.be.false;
         expect(writeStub.called).to.be.false;
         expect(procStub.calledWith(
-          'python',
+          'python2.7',
           [
             path.resolve(__dirname, 'requirements.py'),
             '/tmp/requirements.txt',
@@ -253,7 +295,7 @@ describe('serverless-wsgi', () => {
     it('skips packaging for non-wsgi app without user requirements', () => {
       var plugin = new Plugin({
         config: { servicePath: '/tmp' },
-        service: {},
+        service: { provider: { runtime: 'python2.7' } },
         classes: { Error: Error },
         cli: { log: () => {} }
       }, {});
@@ -275,7 +317,7 @@ describe('serverless-wsgi', () => {
     it('rejects with non successful exit code', () => {
       var plugin = new Plugin({
         config: { servicePath: '/tmp' },
-        service: {},
+        service: { provider: { runtime: 'python2.7' } },
         classes: { Error: Error },
         cli: { log: () => {} }
       }, {});
@@ -292,7 +334,7 @@ describe('serverless-wsgi', () => {
     it('rejects with stderr output', () => {
       var plugin = new Plugin({
         config: { servicePath: '/tmp' },
-        service: {},
+        service: { provider: { runtime: 'python2.7' } },
         classes: { Error: Error },
         cli: { log: () => {} }
       }, {});
@@ -310,6 +352,7 @@ describe('serverless-wsgi', () => {
       var plugin = new Plugin({
         config: { servicePath: '/tmp' },
         service: {
+          provider: { runtime: 'python2.7' },
           custom: { wsgi: { app: 'api.app', packRequirements: false } }
         },
         classes: { Error: Error },
@@ -335,6 +378,7 @@ describe('serverless-wsgi', () => {
       var plugin = new Plugin({
         config: { servicePath: '/tmp' },
         service: {
+          provider: { runtime: 'python2.7' },
           custom: { wsgi: { app: 'api.app', packRequirements: false } }
         },
         classes: { Error: Error },
@@ -361,6 +405,7 @@ describe('serverless-wsgi', () => {
       var plugin = new Plugin({
         config: { servicePath: '/tmp' },
         service: {
+          provider: { runtime: 'python2.7' },
           custom: { wsgi: { app: 'api.app' } },
           functions: functions
         },
@@ -387,6 +432,7 @@ describe('serverless-wsgi', () => {
       var plugin = new Plugin({
         config: { servicePath: '/tmp' },
         service: {
+          provider: { runtime: 'python2.7' },
           custom: { wsgi: { app: 'api.app' } },
           functions: functions
         },
@@ -409,7 +455,7 @@ describe('serverless-wsgi', () => {
           '/tmp/.wsgi_app', 'api.app'
         )).to.be.true;
         expect(procStub.calledWith(
-          'python',
+          'python2.7',
           [
             path.resolve(__dirname, 'requirements.py'),
             path.resolve(__dirname, 'requirements.txt'),
@@ -428,6 +474,7 @@ describe('serverless-wsgi', () => {
       var plugin = new Plugin({
         config: { servicePath: '/tmp' },
         service: {
+          provider: { runtime: 'python2.7' },
           custom: { wsgi: { app: 'api.app' } },
           functions: functions
         },
@@ -455,7 +502,7 @@ describe('serverless-wsgi', () => {
     it('fails for non-wsgi app', () => {
       var plugin = new Plugin({
         config: { servicePath: '/tmp' },
-        service: { provider: {} },
+        service: { provider: { runtime: 'python2.7' } },
         classes: { Error: Error }
       });
 
@@ -466,7 +513,7 @@ describe('serverless-wsgi', () => {
       var plugin = new Plugin({
         config: { servicePath: '/tmp' },
         service: {
-          provider: {},
+          provider: { runtime: 'python2.7' },
           custom: { wsgi: { app: 'api.app' } }
         },
         classes: { Error: Error }
@@ -475,7 +522,7 @@ describe('serverless-wsgi', () => {
       var stub = sinon.stub(child_process, 'spawnSync').returns({});
       plugin.hooks['wsgi:serve:serve']().then(() => {
         expect(stub.calledWith(
-          'python',
+          'python2.7',
           [
             path.resolve(__dirname, 'serve.py'),
             '/tmp',
@@ -492,7 +539,7 @@ describe('serverless-wsgi', () => {
       var plugin = new Plugin({
         config: { servicePath: '/tmp' },
         service: {
-          provider: {},
+          provider: { runtime: 'python2.7' },
           custom: { wsgi: { app: 'api.app' } }
         },
         classes: { Error: Error }
@@ -501,7 +548,7 @@ describe('serverless-wsgi', () => {
       var stub = sinon.stub(child_process, 'spawnSync').returns({ error: 'Something failed' });
       expect(plugin.hooks['wsgi:serve:serve']()).to.eventually.be.rejected.and.notify(() => {
         expect(stub.calledWith(
-          'python',
+          'python2.7',
           [
             path.resolve(__dirname, 'serve.py'),
             '/tmp',
@@ -518,7 +565,7 @@ describe('serverless-wsgi', () => {
       var plugin = new Plugin({
         config: { servicePath: '/tmp' },
         service: {
-          provider: {},
+          provider: { runtime: 'python2.7' },
           custom: { wsgi: { app: 'api.app' } }
         },
         classes: { Error: Error }
@@ -527,7 +574,7 @@ describe('serverless-wsgi', () => {
       var stub = sinon.stub(child_process, 'spawnSync').returns({});
       plugin.hooks['wsgi:serve:serve']().then(() => {
         expect(stub.calledWith(
-          'python',
+          'python2.7',
           [
             path.resolve(__dirname, 'serve.py'),
             '/tmp',
@@ -545,6 +592,7 @@ describe('serverless-wsgi', () => {
         config: { servicePath: '/tmp' },
         service: {
           provider: {
+            runtime: 'python2.7',
             environment: { SOME_ENV_VAR: 42 }
           },
           functions: {
@@ -577,6 +625,7 @@ describe('serverless-wsgi', () => {
       var plugin = new Plugin({
         config: { servicePath: '/tmp' },
         service: {
+          provider: { runtime: 'python2.7' },
           custom: { wsgi: { app: 'api.app' } },
           functions: functions
         },
@@ -606,6 +655,7 @@ describe('serverless-wsgi', () => {
       var plugin = new Plugin({
         config: { servicePath: '/tmp' },
         service: {
+          provider: { runtime: 'python2.7' },
           custom: { wsgi: { app: 'api.app', packRequirements: false } },
           functions: functions
         },

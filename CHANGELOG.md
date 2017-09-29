@@ -3,6 +3,7 @@
 * Package requirements into service root directory in order to avoid munging
   sys.path to load requirements (#30).
 * Package requirements when deploying individual non-WSGI functions (#30).
+* Added `pythonBin` option to set python executable, defaulting to current runtime version (#29).
 
 
 # 1.3.1
