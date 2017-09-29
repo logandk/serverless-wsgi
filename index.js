@@ -11,8 +11,11 @@ BbPromise.promisifyAll(fse);
 class ServerlessWSGI {
   validate() {
     this.enableRequirements = true;
+    this.pythonBin = this.serverless.service.provider.runtime;
 
     if (this.serverless.service.custom && this.serverless.service.custom.wsgi) {
+      this.pythonBin = this.serverless.service.custom.wsgi.pythonBin || this.pythonBin;
+
       if (this.serverless.service.custom.wsgi.app) {
         this.wsgiApp = this.serverless.service.custom.wsgi.app;
         this.appPath = path.dirname(path.join(this.serverless.config.servicePath, this.wsgiApp));
@@ -25,14 +28,18 @@ class ServerlessWSGI {
 
     this.serverless.service.package = this.serverless.service.package || {};
     this.serverless.service.package.include = this.serverless.service.package.include || [];
+    this.serverless.service.package.exclude = this.serverless.service.package.exclude || [];
 
-    var includes = ['wsgi.py', '.wsgi_app'];
+    this.serverless.service.package.include = _.union(
+      this.serverless.service.package.include,
+      ['wsgi.py', '.wsgi_app']);
 
     if (this.enableRequirements) {
-      includes.push('.requirements/**');
+      this.requirementsInstallPath = path.join(
+        this.appPath ? this.appPath : this.serverless.config.servicePath,
+        '.requirements');
+      this.serverless.service.package.exclude.push('.requirements/**');
     }
-
-    this.serverless.service.package.include = _.union(this.serverless.service.package.include, includes);
   }
 
   packWsgiHandler() {
@@ -56,7 +63,6 @@ class ServerlessWSGI {
   packRequirements() {
     const requirementsPath = this.appPath || this.serverless.config.servicePath;
     const requirementsFile = path.join(requirementsPath, 'requirements.txt');
-    const requirementsInstallPath = this.appPath ? this.appPath : this.serverless.config.servicePath;
     let args = [path.resolve(__dirname, 'requirements.py')];
 
     if (!this.enableRequirements) {
@@ -75,12 +81,12 @@ class ServerlessWSGI {
       }
     }
 
-    args.push(path.join(requirementsInstallPath, '.requirements'));
+    args.push(this.requirementsInstallPath);
 
     this.serverless.cli.log('Packaging required Python packages...');
 
     return new BbPromise((resolve, reject) => {
-      const res = child_process.spawnSync('python', args);
+      const res = child_process.spawnSync(this.pythonBin, args);
       if (res.error) {
         return reject(res.error);
       }
@@ -91,12 +97,63 @@ class ServerlessWSGI {
     });
   }
 
+  linkRequirements() {
+    if (!this.enableRequirements) {
+      return BbPromise.resolve();
+    }
+
+    if (fse.existsSync(this.requirementsInstallPath)) {
+      this.serverless.cli.log('Linking required Python packages...');
+
+      fse.readdirSync(this.requirementsInstallPath).map((file) => {
+        this.serverless.service.package.include.push(file);
+        this.serverless.service.package.include.push(`${file}/**`);
+
+        try {
+          fse.symlinkSync(`${this.requirementsInstallPath}/${file}`, file);
+        } catch (exception) {
+          let linkConflict = false;
+          try {
+            linkConflict = (fse.readlinkSync(file) !== `${this.requirementsInstallPath}/${file}`);
+          } catch (e) {
+            linkConflict = true;
+          }
+          if (linkConflict) {
+            throw new this.serverless.classes.Error(
+              `Unable to link dependency '${file}' ` +
+              'because a file by the same name exists in this service');
+          }
+        }
+      });
+    }
+  }
+
+  unlinkRequirements() {
+    if (!this.enableRequirements) {
+      return BbPromise.resolve();
+    }
+
+    if (fse.existsSync(this.requirementsInstallPath)) {
+      this.serverless.cli.log('Unlinking required Python packages...');
+
+      fse.readdirSync(this.requirementsInstallPath).map((file) => {
+        if (fse.existsSync(file)) {
+          fse.unlinkSync(file);
+        }
+      });
+    }
+  }
+
+  cleanRequirements() {
+    if (!this.enableRequirements) {
+      return BbPromise.resolve();
+    }
+
+    return fse.removeAsync(this.requirementsInstallPath);
+  }
+
   cleanup() {
     const artifacts = ['wsgi.py', '.wsgi_app'];
-
-    if (this.enableRequirements) {
-      artifacts.push('.requirements');
-    }
 
     return BbPromise.all(_.map(artifacts, (artifact) =>
       fse.removeAsync(path.join(this.serverless.config.servicePath, artifact))));
@@ -106,7 +163,7 @@ class ServerlessWSGI {
     const providerEnvVars = this.serverless.service.provider.environment || {};
     _.merge(process.env, providerEnvVars);
 
-    _.each(this.serverless.service.functions, function (func) {
+    _.each(this.serverless.service.functions, (func) => {
       if (func.handler == 'wsgi.handler') {
         const functionEnvVars = func.environment || {};
         _.merge(process.env, functionEnvVars);
@@ -125,7 +182,7 @@ class ServerlessWSGI {
     const port = this.options.port || 5000;
 
     return new BbPromise((resolve, reject) => {
-      var status = child_process.spawnSync('python', [
+      var status = child_process.spawnSync(this.pythonBin, [
         path.resolve(__dirname, 'serve.py'),
         this.serverless.config.servicePath,
         this.wsgiApp,
@@ -158,6 +215,12 @@ class ServerlessWSGI {
               },
             },
           },
+          clean: {
+            usage: 'Remove cached requirements.',
+            lifecycleEvents: [
+              'clean',
+            ],
+          },
         },
       },
     };
@@ -166,10 +229,12 @@ class ServerlessWSGI {
       'before:deploy:createDeploymentArtifacts': () => BbPromise.bind(this)
         .then(this.validate)
         .then(this.packWsgiHandler)
-        .then(this.packRequirements),
+        .then(this.packRequirements)
+        .then(this.linkRequirements),
 
       'after:deploy:createDeploymentArtifacts': () => BbPromise.bind(this)
         .then(this.validate)
+        .then(this.unlinkRequirements)
         .then(this.cleanup),
 
       'wsgi:serve:serve': () => BbPromise.bind(this)
@@ -177,18 +242,31 @@ class ServerlessWSGI {
         .then(this.loadEnvVars)
         .then(this.serve),
 
+      'wsgi:clean:clean': () => BbPromise.bind(this)
+        .then(this.validate)
+        .then(this.unlinkRequirements)
+        .then(this.cleanRequirements)
+        .then(this.cleanup),
+
       'before:deploy:function:packageFunction': () => BbPromise.bind(this)
         .then(() => {
           if (this.options.functionObj.handler == 'wsgi.handler') {
             return BbPromise.bind(this)
               .then(this.validate)
               .then(this.packWsgiHandler)
-              .then(this.packRequirements);
+              .then(this.packRequirements)
+              .then(this.linkRequirements);
+          } else {
+            return BbPromise.bind(this)
+              .then(this.validate)
+              .then(this.packRequirements)
+              .then(this.linkRequirements);
           }
         }),
 
       'after:deploy:function:packageFunction': () => BbPromise.bind(this)
         .then(this.validate)
+        .then(this.unlinkRequirements)
         .then(this.cleanup)
     };
   }

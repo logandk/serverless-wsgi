@@ -16,13 +16,6 @@ import sys
 PY2 = sys.version_info[0] == 2
 TEXT_MIME_TYPES = ['application/json', 'application/xml']
 
-root = os.path.abspath(os.path.dirname(__file__))
-with open(os.path.join(root, '.wsgi_app'), 'r') as f:
-    app_path = f.read()
-app_dir = os.path.dirname(app_path)
-requirements_path = os.path.join(root, app_dir, '.requirements')
-sys.path.insert(0, requirements_path)
-
 import importlib  # noqa: E402
 if PY2:
     from StringIO import StringIO  # noqa: E402
@@ -33,6 +26,10 @@ from werkzeug.datastructures import Headers  # noqa: E402
 from werkzeug.wrappers import Response  # noqa: E402
 from werkzeug.urls import url_encode  # noqa: E402
 from werkzeug._compat import wsgi_encoding_dance  # noqa: E402
+
+root = os.path.abspath(os.path.dirname(__file__))
+with open(os.path.join(root, '.wsgi_app'), 'r') as f:
+    app_path = f.read()
 
 wsgi_fqn = app_path.rsplit('.', 1)
 wsgi_fqn_parts = wsgi_fqn[0].rsplit('/', 1)
