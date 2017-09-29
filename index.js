@@ -251,7 +251,13 @@ class ServerlessWSGI {
             return BbPromise.bind(this)
               .then(this.validate)
               .then(this.packWsgiHandler)
-              .then(this.packRequirements);
+              .then(this.packRequirements)
+              .then(this.linkRequirements);
+          } else {
+            return BbPromise.bind(this)
+              .then(this.validate)
+              .then(this.packRequirements)
+              .then(this.linkRequirements);
           }
         }),
 

@@ -371,11 +371,11 @@ describe('serverless-wsgi', () => {
       var sandbox = sinon.sandbox.create();
       var copyStub = sandbox.stub(fse, 'copyAsync');
       var writeStub = sandbox.stub(fse, 'writeFileAsync');
-      var procStub = sandbox.stub(child_process, 'spawnSync');
+      var procStub = sandbox.stub(child_process, 'spawnSync').returns({ status: 0 });
       plugin.hooks['before:deploy:function:packageFunction']().then(() => {
         expect(copyStub.called).to.be.false;
         expect(writeStub.called).to.be.false;
-        expect(procStub.called).to.be.false;
+        expect(procStub.called).to.be.true;
         sandbox.restore();
       });
     });
@@ -397,6 +397,8 @@ describe('serverless-wsgi', () => {
       var sandbox = sinon.sandbox.create();
       var copyStub = sandbox.stub(fse, 'copyAsync');
       var writeStub = sandbox.stub(fse, 'writeFileAsync');
+      sandbox.stub(fse, 'readdirSync').returns([]);
+      sandbox.stub(fse, 'existsSync').returns(true);
       var procStub = sandbox.stub(child_process, 'spawnSync').returns({ status: 0 });
       plugin.hooks['before:deploy:function:packageFunction']().then(() => {
         expect(copyStub.calledWith(
@@ -411,6 +413,7 @@ describe('serverless-wsgi', () => {
           [
             path.resolve(__dirname, 'requirements.py'),
             path.resolve(__dirname, 'requirements.txt'),
+            '/tmp/requirements.txt',
             '/tmp/.requirements'
           ]
         )).to.be.true;

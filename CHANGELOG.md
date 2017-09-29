@@ -1,7 +1,8 @@
 # 1.4.0
 ## Features
 * Package requirements into service root directory in order to avoid munging
-  sys.path to load requirements.
+  sys.path to load requirements (#30).
+* Package requirements when deploying individual non-WSGI functions (#30).
 
 
 # 1.3.1
