@@ -77,11 +77,14 @@ def handler(event, context):
         if path_info.startswith(script_name):
             path_info = path_info[len(script_name):]
 
+    body = event[u'body'] or ''
+    encoded = wsgi_encoding_dance(body)
+
     environ = {
         'API_GATEWAY_AUTHORIZER':
             event[u'requestContext'].get(u'authorizer', None),
         'CONTENT_LENGTH':
-            headers.get(u'Content-Length', str(len(event[u'body'] or ''))),
+            headers.get(u'Content-Length', str(len(encoded))),
         'CONTENT_TYPE':
             headers.get(u'Content-Type', ''),
         'PATH_INFO':
@@ -122,8 +125,6 @@ def handler(event, context):
             (1, 0),
     }
 
-    body = event[u'body'] or ''
-    encoded = wsgi_encoding_dance(body)
     if not PY2:
         encoded = bytes(encoded, 'utf-8', 'replace')
 
