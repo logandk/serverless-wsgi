@@ -409,8 +409,8 @@ def text_handler_base64_request(mock_wsgi_app_file, mock_app, event):
         'Content length calculated incorrectly'
     assert wsgi.wsgi_app.last_environ['REQUEST_METHOD'] == 'PUT', \
         'Request-Method set incorrectly'
-    assert wsgi.wsgi_app.last_environ['wsgi.input'].getvalue() == 'Hello world', \
-        'Request body decoded incorrectly'
+    assert wsgi.wsgi_app.last_environ['wsgi.input'].getvalue() == \
+        'Hello world', 'Request body decoded incorrectly'
 
 
 def test_non_package_subdir_app(mock_subdir_wsgi_app_file, mock_app):
