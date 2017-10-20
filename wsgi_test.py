@@ -394,7 +394,7 @@ def test_handler_base64(mock_wsgi_app_file, mock_app, event):
     }
 
 
-def text_handler_base64_request(mock_wsgi_app_file, mock_app, event):
+def test_handler_base64_request(mock_wsgi_app_file, mock_app, event):
     import wsgi  # noqa: F811
     event['body'] = 'SGVsbG8gd29ybGQ='
     event['headers']['Content-Type'] = 'text/plain'
@@ -405,7 +405,7 @@ def text_handler_base64_request(mock_wsgi_app_file, mock_app, event):
 
     assert wsgi.wsgi_app.last_environ['CONTENT_TYPE'] == 'text/plain', \
         'Content type set incorrectly'
-    assert wsgi.wsgi_app.last_environ['CONTENT_LENGTH'] == 11, \
+    assert wsgi.wsgi_app.last_environ['CONTENT_LENGTH'] == '11', \
         'Content length calculated incorrectly'
     assert wsgi.wsgi_app.last_environ['REQUEST_METHOD'] == 'PUT', \
         'Request-Method set incorrectly'
