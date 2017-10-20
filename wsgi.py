@@ -78,7 +78,11 @@ def handler(event, context):
             path_info = path_info[len(script_name):]
 
     body = event[u'body'] or ''
+    if event.get('isBase64Encoded', False):
+        body = base64.b64decode(body)
     encoded = wsgi_encoding_dance(body)
+    if not PY2:
+        encoded = bytes(encoded, 'utf-8', 'replace')
 
     environ = {
         'API_GATEWAY_AUTHORIZER':
@@ -125,9 +129,6 @@ def handler(event, context):
             (1, 0),
     }
 
-    if not PY2:
-        encoded = bytes(encoded, 'utf-8', 'replace')
-
     # XXX: why do we have to supply an encoding here?
     # Doesn't wsgi_encoding_dance already do that?
     environ['wsgi.input'] = BytesIO(encoded)
@@ -170,11 +171,12 @@ def handler(event, context):
 
     if response.data:
         mimetype = response.mimetype or 'text/plain'
-        if mimetype.startswith('text/') or mimetype in TEXT_MIME_TYPES:
+        if ((mimetype.startswith('text/') or mimetype in TEXT_MIME_TYPES) and
+                not response.headers.get('Content-Encoding', '')):
             returndict['body'] = response.get_data(as_text=True)
         else:
             returndict['body'] = base64.b64encode(response.data).decode(
                 'utf-8')
-            returndict["isBase64Encoded"] = "true"
+            returndict['isBase64Encoded'] = 'true'
 
     return returndict
