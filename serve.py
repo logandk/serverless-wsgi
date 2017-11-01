@@ -31,6 +31,8 @@ def serve(cwd, app, port):
     except:
         pass
 
+    os.environ['IS_OFFLINE'] = 'True'
+
     serving.run_simple(
         'localhost', int(port), wsgi_app,
         use_debugger=True, use_reloader=True, use_evalex=True)
