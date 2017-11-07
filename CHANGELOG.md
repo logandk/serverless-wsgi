@@ -4,6 +4,10 @@
 
   *Alex DeBrie*
 
+* Handle binary request payloads and compressed responses (#41).
+
+  *majones-amplify*
+
 ## Bugs
 * Fixed issue where CONTENT_LENGTH was computed differently than the wsgi.input (#40).
 
