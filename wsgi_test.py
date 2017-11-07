@@ -19,7 +19,7 @@ original_open = open
 # This workaround is needed for coverage.py to pick up the wsgi module
 try:
     import wsgi  # noqa: F401
-except:
+except:  # noqa: E722
     pass
 
 

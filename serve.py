@@ -28,7 +28,7 @@ def serve(cwd, app, port):
     # Attempt to force Flask into debug mode
     try:
         wsgi_app.debug = True
-    except:
+    except:  # noqa: E722
         pass
 
     os.environ['IS_OFFLINE'] = 'True'
