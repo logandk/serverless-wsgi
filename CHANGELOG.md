@@ -1,3 +1,15 @@
+# 1.4.1
+## Features
+* Add IS_OFFLINE environment variable to serve (#42).
+
+  *Alex DeBrie*
+
+## Bugs
+* Fixed issue where CONTENT_LENGTH was computed differently than the wsgi.input (#40).
+
+  *Phil Hachey*
+
+
 # 1.4.0
 ## Features
 * Package requirements into service root directory in order to avoid munging
