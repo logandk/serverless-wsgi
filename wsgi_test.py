@@ -394,6 +394,25 @@ def test_handler_base64(mock_wsgi_app_file, mock_app, event):
     }
 
 
+def test_handler_base64_request(mock_wsgi_app_file, mock_app, event):
+    import wsgi  # noqa: F811
+    event['body'] = 'SGVsbG8gd29ybGQ='
+    event['headers']['Content-Type'] = 'text/plain'
+    event['isBase64Encoded'] = True
+    event['httpMethod'] = 'PUT'
+
+    wsgi.handler(event, {'memory_limit_in_mb': '128'})
+
+    assert wsgi.wsgi_app.last_environ['CONTENT_TYPE'] == 'text/plain', \
+        'Content type set incorrectly'
+    assert wsgi.wsgi_app.last_environ['CONTENT_LENGTH'] == '11', \
+        'Content length calculated incorrectly'
+    assert wsgi.wsgi_app.last_environ['REQUEST_METHOD'] == 'PUT', \
+        'Request-Method set incorrectly'
+    assert wsgi.wsgi_app.last_environ['wsgi.input'].getvalue().decode() == \
+        'Hello world', 'Request body decoded incorrectly'
+
+
 def test_non_package_subdir_app(mock_subdir_wsgi_app_file, mock_app):
     del sys.modules['wsgi']
     import wsgi  # noqa: F811
