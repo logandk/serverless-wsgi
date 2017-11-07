@@ -13,19 +13,15 @@ import base64
 import os
 import sys
 
-PY2 = sys.version_info[0] == 2
 TEXT_MIME_TYPES = ['application/json', 'application/xml']
 
 import importlib  # noqa: E402
-if PY2:
-    from StringIO import StringIO  # noqa: E402
-    BytesIO = StringIO
-else:
-    from io import StringIO, BytesIO  # noqa: E402
 from werkzeug.datastructures import Headers  # noqa: E402
 from werkzeug.wrappers import Response  # noqa: E402
 from werkzeug.urls import url_encode  # noqa: E402
-from werkzeug._compat import wsgi_encoding_dance  # noqa: E402
+from werkzeug._compat import (
+    StringIO, BytesIO, string_types, to_bytes,
+    wsgi_encoding_dance)  # noqa: E402
 
 root = os.path.abspath(os.path.dirname(__file__))
 with open(os.path.join(root, '.wsgi_app'), 'r') as f:
@@ -125,20 +121,11 @@ def handler(event, context):
             (1, 0),
     }
 
-    if not PY2:
-        encoded = bytes(encoded, 'utf-8', 'replace')
-
-    # XXX: why do we have to supply an encoding here?
-    # Doesn't wsgi_encoding_dance already do that?
-    environ['wsgi.input'] = BytesIO(encoded)
+    environ['wsgi.input'] = BytesIO(to_bytes(encoded))
 
     for key, value in environ.items():
-        if PY2:
-            if isinstance(value, basestring):  # noqa: F821
-                environ[key] = wsgi_encoding_dance(value)
-        else:
-            if isinstance(value, str):
-                environ[key] = wsgi_encoding_dance(value)
+        if isinstance(value, string_types):
+            environ[key] = wsgi_encoding_dance(value)
 
     for key, value in headers.items():
         key = 'HTTP_' + key.upper().replace('-', '_')
