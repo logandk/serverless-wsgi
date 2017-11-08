@@ -13,6 +13,10 @@
 
   *Phil Hachey*
 
+* Fix deprecation warnings for the before:deploy:createDeploymentArtifacts and after:deploy:createDeploymentArtifacts hooks (#43).
+
+  *majones-amplify*
+
 
 # 1.4.0
 ## Features
