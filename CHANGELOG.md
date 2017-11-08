@@ -19,6 +19,8 @@
 
   *Malcolm Jones*
 
+* Blacklist `__pycache__` from requirements packaging in order to avoid conflicts (#35).
+
 
 # 1.4.0
 ## Features
