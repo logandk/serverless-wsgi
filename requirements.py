@@ -78,7 +78,7 @@ def package(req_files, target_dir):
 
     blacklist = [
         'pip', 'pip-*', 'wheel', 'wheel-*', 'setuptools',
-        'setuptools-*', 'easy_install.*']
+        'setuptools-*', 'easy_install.*', '__pycache__']
 
     shutil.copytree(deps_dir, tmp_dir, symlinks=False,
                     ignore=shutil.ignore_patterns(*blacklist))
