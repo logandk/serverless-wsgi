@@ -6,7 +6,7 @@
 
 * Handle binary request payloads and compressed responses (#41).
 
-  *majones-amplify*
+  *Malcolm Jones*
 
 ## Bugs
 * Fixed issue where CONTENT_LENGTH was computed differently than the wsgi.input (#40).
@@ -15,7 +15,7 @@
 
 * Fix deprecation warnings for the before:deploy:createDeploymentArtifacts and after:deploy:createDeploymentArtifacts hooks (#43).
 
-  *majones-amplify*
+  *Malcolm Jones*
 
 
 # 1.4.0
