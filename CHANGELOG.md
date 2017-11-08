@@ -20,6 +20,7 @@
   *Malcolm Jones*
 
 * Blacklist `__pycache__` from requirements packaging in order to avoid conflicts (#35).
+* Fix insecure usage of X-Forwarded-For (#36).
 
 
 # 1.4.0

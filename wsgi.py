@@ -90,7 +90,8 @@ def handler(event, context):
         'QUERY_STRING':
             url_encode(event.get(u'queryStringParameters', None) or {}),
         'REMOTE_ADDR':
-            headers.get(u'X-Forwarded-For', '').split(', ')[0],
+            event[u'requestContext'].get(u'identity', {}).get(
+                u'sourceIp', ''),
         'REMOTE_USER':
             event[u'requestContext'].get(u'authorizer', {}).get(
                 u'principalId', ''),
