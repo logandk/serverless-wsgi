@@ -23,8 +23,8 @@ describe('serverless-wsgi', () => {
     it('registers hooks', () => {
       var plugin = new Plugin();
 
-      expect(plugin.hooks['before:deploy:createDeploymentArtifacts']).to.be.a('function');
-      expect(plugin.hooks['after:deploy:createDeploymentArtifacts']).to.be.a('function');
+      expect(plugin.hooks['before:package:createDeploymentArtifacts']).to.be.a('function');
+      expect(plugin.hooks['after:package:createDeploymentArtifacts']).to.be.a('function');
       expect(plugin.hooks['wsgi:serve:serve']).to.be.a('function');
     });
   });
@@ -42,7 +42,7 @@ describe('serverless-wsgi', () => {
       var copyStub = sandbox.stub(fse, 'copyAsync');
       var writeStub = sandbox.stub(fse, 'writeFileAsync');
       var procStub = sandbox.stub(child_process, 'spawnSync');
-      plugin.hooks['before:deploy:createDeploymentArtifacts']().then(() => {
+      plugin.hooks['before:package:createDeploymentArtifacts']().then(() => {
         expect(copyStub.called).to.be.false;
         expect(writeStub.called).to.be.false;
         expect(procStub.called).to.be.false;
@@ -65,7 +65,7 @@ describe('serverless-wsgi', () => {
       var copyStub = sandbox.stub(fse, 'copyAsync');
       var writeStub = sandbox.stub(fse, 'writeFileAsync');
       var procStub = sandbox.stub(child_process, 'spawnSync').returns({ status: 0 });
-      plugin.hooks['before:deploy:createDeploymentArtifacts']().then(() => {
+      plugin.hooks['before:package:createDeploymentArtifacts']().then(() => {
         expect(copyStub.calledWith(
           path.resolve(__dirname, 'wsgi.py'),
           '/tmp/wsgi.py'
@@ -100,7 +100,7 @@ describe('serverless-wsgi', () => {
 
       var sandbox = sinon.sandbox.create();
       var removeStub = sandbox.stub(fse, 'removeAsync');
-      plugin.hooks['after:deploy:createDeploymentArtifacts']().then(() => {
+      plugin.hooks['after:package:createDeploymentArtifacts']().then(() => {
         expect(removeStub.calledWith('/tmp/wsgi.py')).to.be.true;
         expect(removeStub.calledWith('/tmp/.wsgi_app')).to.be.true;
         expect(removeStub.calledWith('/tmp/.requirements')).to.be.false;
@@ -129,7 +129,7 @@ describe('serverless-wsgi', () => {
       sandbox.stub(fse, 'readdirSync').returns(['flask']);
       sandbox.stub(fse, 'existsSync').returns(true);
       var procStub = sandbox.stub(child_process, 'spawnSync').returns({ status: 0 });
-      plugin.hooks['before:deploy:createDeploymentArtifacts']().then(() => {
+      plugin.hooks['before:package:createDeploymentArtifacts']().then(() => {
         expect(copyStub.called).to.be.true;
         expect(writeStub.called).to.be.true;
         expect(symlinkStub.called).to.be.true;
@@ -167,7 +167,7 @@ describe('serverless-wsgi', () => {
       sandbox.stub(fse, 'readdirSync').returns(['flask']);
       sandbox.stub(fse, 'existsSync').returns(true);
       var procStub = sandbox.stub(child_process, 'spawnSync').returns({ status: 0 });
-      plugin.hooks['before:deploy:createDeploymentArtifacts']().then(() => {
+      plugin.hooks['before:package:createDeploymentArtifacts']().then(() => {
         expect(copyStub.called).to.be.true;
         expect(writeStub.called).to.be.true;
         expect(symlinkStub.called).to.be.true;
@@ -203,7 +203,7 @@ describe('serverless-wsgi', () => {
       sandbox.stub(fse, 'readdirSync').returns([]);
       sandbox.stub(fse, 'existsSync').returns(true);
       var procStub = sandbox.stub(child_process, 'spawnSync').returns({ status: 0 });
-      plugin.hooks['before:deploy:createDeploymentArtifacts']().then(() => {
+      plugin.hooks['before:package:createDeploymentArtifacts']().then(() => {
         expect(copyStub.called).to.be.true;
         expect(writeStub.called).to.be.true;
         expect(procStub.calledWith(
@@ -235,7 +235,7 @@ describe('serverless-wsgi', () => {
       sandbox.stub(fse, 'readdirSync').returns(['flask']);
       sandbox.stub(fse, 'existsSync').returns(true);
       sandbox.stub(child_process, 'spawnSync').returns({ status: 0 });
-      expect(plugin.hooks['before:deploy:createDeploymentArtifacts']()).to.be.rejected.and.notify(() => {
+      expect(plugin.hooks['before:package:createDeploymentArtifacts']()).to.be.rejected.and.notify(() => {
         sandbox.restore();
       });
     });
@@ -256,7 +256,7 @@ describe('serverless-wsgi', () => {
       sandbox.stub(fse, 'readdirSync').returns(['flask']);
       sandbox.stub(fse, 'existsSync').returns(true);
       sandbox.stub(child_process, 'spawnSync').returns({ status: 0 });
-      expect(plugin.hooks['before:deploy:createDeploymentArtifacts']()).to.be.rejected.and.notify(() => {
+      expect(plugin.hooks['before:package:createDeploymentArtifacts']()).to.be.rejected.and.notify(() => {
         sandbox.restore();
       });
     });
@@ -277,7 +277,7 @@ describe('serverless-wsgi', () => {
       sandbox.stub(fse, 'readdirSync').returns(['flask']);
       sandbox.stub(fse, 'existsSync').returns(true);
       var procStub = sandbox.stub(child_process, 'spawnSync').returns({ status: 0 });
-      plugin.hooks['before:deploy:createDeploymentArtifacts']().then(() => {
+      plugin.hooks['before:package:createDeploymentArtifacts']().then(() => {
         expect(copyStub.called).to.be.false;
         expect(writeStub.called).to.be.false;
         expect(procStub.calledWith(
@@ -305,7 +305,7 @@ describe('serverless-wsgi', () => {
       var writeStub = sandbox.stub(fse, 'writeFileAsync');
       sandbox.stub(fse, 'existsSync').returns(false);
       var procStub = sandbox.stub(child_process, 'spawnSync').returns({ status: 0 });
-      plugin.hooks['before:deploy:createDeploymentArtifacts']().then(() => {
+      plugin.hooks['before:package:createDeploymentArtifacts']().then(() => {
         expect(copyStub.called).to.be.false;
         expect(writeStub.called).to.be.false;
         expect(procStub.called).to.be.false;
@@ -326,7 +326,7 @@ describe('serverless-wsgi', () => {
       sandbox.stub(fse, 'existsSync').returns(true);
       sandbox.stub(child_process, 'spawnSync').returns({ status: 1 });
 
-      expect(plugin.hooks['before:deploy:createDeploymentArtifacts']()).to.eventually.be.rejected.and.notify(() => {
+      expect(plugin.hooks['before:package:createDeploymentArtifacts']()).to.eventually.be.rejected.and.notify(() => {
         sandbox.restore();
       });
     });
@@ -343,7 +343,7 @@ describe('serverless-wsgi', () => {
       sandbox.stub(fse, 'existsSync').returns(true);
       sandbox.stub(child_process, 'spawnSync').returns({ status: 0, error: 'fail' });
 
-      expect(plugin.hooks['before:deploy:createDeploymentArtifacts']()).to.eventually.be.rejected.and.notify(() => {
+      expect(plugin.hooks['before:package:createDeploymentArtifacts']()).to.eventually.be.rejected.and.notify(() => {
         sandbox.restore();
       });
     });
@@ -364,7 +364,7 @@ describe('serverless-wsgi', () => {
       var writeStub = sandbox.stub(fse, 'writeFileAsync');
       var existsStub = sandbox.stub(fse, 'existsSync').returns(true);
       var procStub = sandbox.stub(child_process, 'spawnSync').returns({ status: 0 });
-      plugin.hooks['before:deploy:createDeploymentArtifacts']().then(() => {
+      plugin.hooks['before:package:createDeploymentArtifacts']().then(() => {
         expect(copyStub.called).to.be.true;
         expect(writeStub.called).to.be.true;
         expect(existsStub.called).to.be.false;
@@ -387,7 +387,7 @@ describe('serverless-wsgi', () => {
 
       var sandbox = sinon.sandbox.create();
       var removeStub = sandbox.stub(fse, 'removeAsync');
-      plugin.hooks['after:deploy:createDeploymentArtifacts']().then(() => {
+      plugin.hooks['after:package:createDeploymentArtifacts']().then(() => {
         expect(removeStub.calledWith('/tmp/wsgi.py')).to.be.true;
         expect(removeStub.calledWith('/tmp/.wsgi_app')).to.be.true;
         expect(removeStub.calledWith('/tmp/.requirements')).to.be.false;

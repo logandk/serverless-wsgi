@@ -226,13 +226,13 @@ class ServerlessWSGI {
     };
 
     this.hooks = {
-      'before:deploy:createDeploymentArtifacts': () => BbPromise.bind(this)
+      'before:package:createDeploymentArtifacts': () => BbPromise.bind(this)
         .then(this.validate)
         .then(this.packWsgiHandler)
         .then(this.packRequirements)
         .then(this.linkRequirements),
 
-      'after:deploy:createDeploymentArtifacts': () => BbPromise.bind(this)
+      'after:package:createDeploymentArtifacts': () => BbPromise.bind(this)
         .then(this.validate)
         .then(this.unlinkRequirements)
         .then(this.cleanup),
