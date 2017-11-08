@@ -8,6 +8,8 @@
 
   *Malcolm Jones*
 
+* Provide access to raw `event` through request environment (#37).
+
 ## Bugs
 * Fixed issue where CONTENT_LENGTH was computed differently than the wsgi.input (#40).
 
