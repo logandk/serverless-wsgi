@@ -72,7 +72,8 @@ def test_package(mock_system, mock_virtualenv):
         '/tmp')
 
     assert len(mock_virtualenv) == 1
-    assert mock_virtualenv[0] == ['', '/tmp/.venv', '--quiet']
+    assert mock_virtualenv[0] == [
+        '', '/tmp/.venv', '--quiet', '-p', sys.executable]
 
     # Checks that requirements files exist
     assert mock_system.pop(0) == (

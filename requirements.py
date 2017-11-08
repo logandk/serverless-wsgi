@@ -41,7 +41,7 @@ def package(req_files, target_dir):
         shutil.rmtree(tmp_dir)
 
     original = sys.argv
-    sys.argv = ['', venv_dir, '--quiet']
+    sys.argv = ['', venv_dir, '--quiet', '-p', sys.executable]
     try:
         virtualenv.main()
     finally:

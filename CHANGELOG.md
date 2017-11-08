@@ -21,6 +21,7 @@
 
 * Blacklist `__pycache__` from requirements packaging in order to avoid conflicts (#35).
 * Fix insecure usage of X-Forwarded-For (#36).
+* Explicitly set virtualenv interpreter when packaging requirements (#34).
 
 
 # 1.4.0
