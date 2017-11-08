@@ -237,7 +237,8 @@ def test_handler(mock_wsgi_app_file, mock_app, event, capsys):
         'wsgi.run_once': False,
         'wsgi.url_scheme': 'https',
         'wsgi.version': (1, 0),
-        'context': {'memory_limit_in_mb': '128'}
+        'context': {'memory_limit_in_mb': '128'},
+        'event': event
     }
 
     out, err = capsys.readouterr()
@@ -321,7 +322,8 @@ def test_handler_custom_domain(mock_wsgi_app_file, mock_app, event):
         'wsgi.run_once': False,
         'wsgi.url_scheme': 'https',
         'wsgi.version': (1, 0),
-        'context': {'memory_limit_in_mb': '128'}
+        'context': {'memory_limit_in_mb': '128'},
+        'event': event
     }
 
 
@@ -372,7 +374,8 @@ def test_handler_api_gateway_base_path(mock_wsgi_app_file, mock_app, event):
         'wsgi.run_once': False,
         'wsgi.url_scheme': 'https',
         'wsgi.version': (1, 0),
-        'context': {'memory_limit_in_mb': '128'}
+        'context': {'memory_limit_in_mb': '128'},
+        'event': event
     }
 
 

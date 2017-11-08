@@ -104,6 +104,8 @@ def handler(event, context):
             headers.get(u'X-Forwarded-Port', '80'),
         'SERVER_PROTOCOL':
             'HTTP/1.1',
+        'event':
+            event,
         'context':
             context,
         'wsgi.errors':
