@@ -277,6 +277,18 @@ custom:
     createRoute53Record: true
 ```
 
+### File uploads
+
+In order to accept file uploads from HTML forms, make sure to add `multipart/form-data` to
+the list of content types with *Binary Support* in your API Gateway API. The
+[serverless-apigw-binary](https://github.com/maciejtreder/serverless-apigw-binary)
+Serverless plugin can be used to automate this process.
+
+Keep in mind that, when building Serverless applications, uploading
+[directly to S3](http://docs.aws.amazon.com/AmazonS3/latest/dev/UsingHTTPPOST.html)
+from the browser is usually the preferred approach.
+
+
 # Thanks
 
 Thanks to [Zappa](https://github.com/Miserlou/Zappa), which has been both the
