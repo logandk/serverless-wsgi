@@ -1,6 +1,6 @@
 {
   "name": "serverless-wsgi",
-  "version": "1.4.1",
+  "version": "1.4.2",
   "engines": {
     "node": ">=4.0"
   },
