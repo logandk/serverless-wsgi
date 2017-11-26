@@ -20,8 +20,7 @@ from werkzeug.datastructures import Headers  # noqa: E402
 from werkzeug.wrappers import Response  # noqa: E402
 from werkzeug.urls import url_encode  # noqa: E402
 from werkzeug._compat import (
-    StringIO, BytesIO, string_types, to_bytes,
-    wsgi_encoding_dance)  # noqa: E402
+    BytesIO, string_types, to_bytes, wsgi_encoding_dance)  # noqa: E402
 
 root = os.path.abspath(os.path.dirname(__file__))
 with open(os.path.join(root, '.wsgi_app'), 'r') as f:
@@ -76,13 +75,13 @@ def handler(event, context):
     body = event[u'body'] or ''
     if event.get('isBase64Encoded', False):
         body = base64.b64decode(body)
-    encoded = wsgi_encoding_dance(body)
+    body = to_bytes(wsgi_encoding_dance(body))
 
     environ = {
         'API_GATEWAY_AUTHORIZER':
             event[u'requestContext'].get(u'authorizer', None),
         'CONTENT_LENGTH':
-            headers.get(u'Content-Length', str(len(encoded))),
+            str(len(body)),
         'CONTENT_TYPE':
             headers.get(u'Content-Type', ''),
         'PATH_INFO':
@@ -110,10 +109,9 @@ def handler(event, context):
         'context':
             context,
         'wsgi.errors':
-            # Per PEP 333, this should be a "text mode" stream.
-            StringIO(),
+            sys.stderr,
         'wsgi.input':
-            BytesIO(),
+            BytesIO(body),
         'wsgi.multiprocess':
             False,
         'wsgi.multithread':
@@ -126,8 +124,6 @@ def handler(event, context):
             (1, 0),
     }
 
-    environ['wsgi.input'] = BytesIO(to_bytes(encoded))
-
     for key, value in environ.items():
         if isinstance(value, string_types):
             environ[key] = wsgi_encoding_dance(value)
@@ -138,10 +134,6 @@ def handler(event, context):
             environ[key] = value
 
     response = Response.from_app(wsgi_app, environ)
-
-    errors = environ['wsgi.errors'].getvalue()
-    if errors:
-        print(errors)
 
     # If there are multiple Set-Cookie headers, create case-mutated variations
     # in order to pass them through APIGW. This is a hack that's currently

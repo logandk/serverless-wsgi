@@ -12,6 +12,8 @@ import pytest
 from werkzeug.wrappers import Response
 from werkzeug.urls import url_encode
 
+PY2 = sys.version_info[0] == 2
+
 # Reference to open() before monkeypatching
 original_open = open
 
@@ -242,8 +244,8 @@ def test_handler(mock_wsgi_app_file, mock_app, event, capsys):
     }
 
     out, err = capsys.readouterr()
-    assert out == "application debug #1\n\n"
-    assert err == ""
+    assert out == ""
+    assert err == "application debug #1\n"
 
 
 def test_handler_single_cookie(mock_wsgi_app_file, mock_app, event):
@@ -406,17 +408,44 @@ def test_handler_base64_request(mock_wsgi_app_file, mock_app, event):
 
     wsgi.handler(event, {'memory_limit_in_mb': '128'})
 
-    assert wsgi.wsgi_app.last_environ['CONTENT_TYPE'] == 'text/plain', \
-        'Content type set incorrectly'
-    assert wsgi.wsgi_app.last_environ['CONTENT_LENGTH'] == '11', \
-        'Content length calculated incorrectly'
-    assert wsgi.wsgi_app.last_environ['REQUEST_METHOD'] == 'PUT', \
-        'Request-Method set incorrectly'
-    assert wsgi.wsgi_app.last_environ['wsgi.input'].getvalue().decode() == \
-        'Hello world', 'Request body decoded incorrectly'
+    environ = wsgi.wsgi_app.last_environ
+
+    assert environ['CONTENT_TYPE'] == 'text/plain'
+    assert environ['CONTENT_LENGTH'] == '11'
+    assert environ['REQUEST_METHOD'] == 'PUT'
+    assert environ['wsgi.input'].getvalue().decode() == 'Hello world'
 
 
 def test_non_package_subdir_app(mock_subdir_wsgi_app_file, mock_app):
     del sys.modules['wsgi']
     import wsgi  # noqa: F811
     assert wsgi.wsgi_app.module == 'app'
+
+
+def test_handler_binary_request_body(mock_wsgi_app_file, mock_app, event):
+    import wsgi  # noqa: F811
+    event['body'] = (
+        u'LS0tLS0tV2ViS2l0Rm9ybUJvdW5kYXJ5VTRDZE5CRWVLQWxIaGRRcQ0KQ29udGVu'
+        u'dC1EaXNwb3NpdGlvbjogZm9ybS1kYXRhOyBuYW1lPSJ3YXQiDQoNCmhleW9vb3Bw'
+        u'cHBwDQotLS0tLS1XZWJLaXRGb3JtQm91bmRhcnlVNENkTkJFZUtBbEhoZFFxDQpD'
+        u'b250ZW50LURpc3Bvc2l0aW9uOiBmb3JtLWRhdGE7IG5hbWU9ImZpbGVUb1VwbG9h'
+        u'ZCI7IGZpbGVuYW1lPSJGRjREMDAtMC44LnBuZyINCkNvbnRlbnQtVHlwZTogaW1h'
+        u'Z2UvcG5nDQoNColQTkcNChoKAAAADUlIRFIAAAABAAAAAQEDAAAAJdtWygAAAANQ'
+        u'TFRF/00AXDU4fwAAAAF0Uk5TzNI0Vv0AAAAKSURBVHicY2IAAAAGAAM2N3yoAAAA'
+        u'AElFTkSuQmCCDQotLS0tLS1XZWJLaXRGb3JtQm91bmRhcnlVNENkTkJFZUtBbEho'
+        u'ZFFxDQpDb250ZW50LURpc3Bvc2l0aW9uOiBmb3JtLWRhdGE7IG5hbWU9InN1Ym1p'
+        u'dCINCg0KVXBsb2FkIEltYWdlDQotLS0tLS1XZWJLaXRGb3JtQm91bmRhcnlVNENk'
+        u'TkJFZUtBbEhoZFFxLS0NCg==')
+    event['headers']['Content-Type'] = (
+        'multipart/form-data; boundary=----WebKitFormBoundaryU4CdNBEeKAlHhdQq')
+    event['isBase64Encoded'] = True
+    event['httpMethod'] = 'POST'
+
+    wsgi.handler(event, {'memory_limit_in_mb': '128'})
+
+    environ = wsgi.wsgi_app.last_environ
+
+    if PY2:
+        assert environ['CONTENT_LENGTH'] == '496'
+    else:
+        assert environ['CONTENT_LENGTH'] == '507'

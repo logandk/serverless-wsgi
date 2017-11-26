@@ -1,3 +1,9 @@
+# 1.4.2
+## Bugs
+* Fix calculation of content length for binary payloads on Python 3
+* WSGI error stream was output to stdout instead of stderr
+
+
 # 1.4.1
 ## Features
 * Add IS_OFFLINE environment variable to serve (#42).
