@@ -11,6 +11,7 @@ Author: Logan Raarup <logan@logan.dk>
 """
 import base64
 import os
+import six
 import sys
 
 TEXT_MIME_TYPES = ['application/json', 'application/xml']
@@ -75,7 +76,8 @@ def handler(event, context):
     body = event[u'body'] or ''
     if event.get('isBase64Encoded', False):
         body = base64.b64decode(body)
-    body = to_bytes(wsgi_encoding_dance(body))
+    if isinstance(body, six.string_types):
+        body = to_bytes(wsgi_encoding_dance(body))
 
     environ = {
         'API_GATEWAY_AUTHORIZER':
