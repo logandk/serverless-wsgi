@@ -1,3 +1,10 @@
+# 1.4.3
+## Bugs
+* Fix double conversion issue for binary payloads
+
+  *Alex DeBrie*
+
+
 # 1.4.2
 ## Bugs
 * Fix calculation of content length for binary payloads on Python 3
