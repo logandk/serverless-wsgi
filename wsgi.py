@@ -75,7 +75,8 @@ def handler(event, context):
     body = event[u'body'] or ''
     if event.get('isBase64Encoded', False):
         body = base64.b64decode(body)
-    body = to_bytes(wsgi_encoding_dance(body))
+    if isinstance(body, string_types):
+        body = to_bytes(wsgi_encoding_dance(body))
 
     environ = {
         'API_GATEWAY_AUTHORIZER':

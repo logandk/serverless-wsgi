@@ -445,7 +445,4 @@ def test_handler_binary_request_body(mock_wsgi_app_file, mock_app, event):
 
     environ = wsgi.wsgi_app.last_environ
 
-    if PY2:
-        assert environ['CONTENT_LENGTH'] == '496'
-    else:
-        assert environ['CONTENT_LENGTH'] == '507'
+    assert environ['CONTENT_LENGTH'] == '496'
