@@ -180,7 +180,7 @@ class ServerlessWSGI {
     }
 
     const port = this.options.port || 5000;
-    const host = this.options.host || 'localhost';
+    const hostname = this.options.hostname || 'localhost';
 
     return new BbPromise((resolve, reject) => {
       var status = child_process.spawnSync(this.pythonBin, [
@@ -188,7 +188,7 @@ class ServerlessWSGI {
         this.serverless.config.servicePath,
         this.wsgiApp,
         port,
-        host
+        hostname
       ], { stdio: 'inherit' });
       if (status.error) {
         reject(status.error);
@@ -215,8 +215,8 @@ class ServerlessWSGI {
                 usage: 'The local server port, defaults to 5000.',
                 shortcut: 'p',
               },
-              host: {
-                usage: 'The server host, defaults to \'localhost\'.',
+              hostname: {
+                usage: 'The server hostname, defaults to \'localhost\'.',
                 shortcut: 'h',
               },
             },
