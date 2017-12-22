@@ -553,7 +553,8 @@ describe('serverless-wsgi', () => {
             path.resolve(__dirname, 'serve.py'),
             '/tmp',
             'api.app',
-            5000
+            5000,
+            'localhost'
           ],
           { stdio: 'inherit' }
         )).to.be.true;
@@ -579,7 +580,8 @@ describe('serverless-wsgi', () => {
             path.resolve(__dirname, 'serve.py'),
             '/tmp',
             'api.app',
-            8000
+            8000,
+            'localhost'
           ],
           { stdio: 'inherit' }
         )).to.be.true;
