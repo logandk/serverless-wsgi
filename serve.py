@@ -39,7 +39,7 @@ def serve(cwd, app, port, host='localhost'):
 
 
 if __name__ == '__main__':  # pragma: no cover
-    if len(sys.argv) != 4:
+    if len(sys.argv) != 5:
         sys.exit('Usage: {} CWD APP PORT'.format(
             os.path.basename(sys.argv[0])))
 
