@@ -187,7 +187,8 @@ class ServerlessWSGI {
         path.resolve(__dirname, 'serve.py'),
         this.serverless.config.servicePath,
         this.wsgiApp,
-        port
+        port,
+        host
       ], { stdio: 'inherit' });
       if (status.error) {
         reject(status.error);
