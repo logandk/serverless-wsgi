@@ -180,6 +180,7 @@ class ServerlessWSGI {
     }
 
     const port = this.options.port || 5000;
+    const host = this.options.host || 'localhost';
 
     return new BbPromise((resolve, reject) => {
       var status = child_process.spawnSync(this.pythonBin, [

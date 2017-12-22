@@ -15,7 +15,7 @@ except ImportError:  # pragma: no cover
     sys.exit('Unable to import werkzeug (run: pip install werkzeug)')
 
 
-def serve(cwd, app, port, host='localhost'):
+def serve(cwd, app, port, host):
     sys.path.insert(0, cwd)
 
     wsgi_fqn = app.rsplit('.', 1)
