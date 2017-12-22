@@ -213,6 +213,10 @@ class ServerlessWSGI {
                 usage: 'The local server port, defaults to 5000.',
                 shortcut: 'p',
               },
+              host: {
+                usage: 'The server host, defaults to localhost.',
+                shortcut: 'h',
+              },
             },
           },
           clean: {
