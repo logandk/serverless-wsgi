@@ -216,7 +216,7 @@ class ServerlessWSGI {
                 shortcut: 'p',
               },
               host: {
-                usage: 'The server host, defaults to \'localhost\'.'
+                usage: 'The server host, defaults to \'localhost\'.',
               },
             },
           },
