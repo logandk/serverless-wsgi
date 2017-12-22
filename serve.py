@@ -34,13 +34,18 @@ def serve(cwd, app, port, host):
     os.environ['IS_OFFLINE'] = 'True'
 
     serving.run_simple(
-        str(host), int(port), wsgi_app,
-        use_debugger=True, use_reloader=True, use_evalex=True)
+                       str(host),
+                       int(port),
+                       wsgi_app,
+                       use_debugger=True,
+                       use_reloader=True,
+                       use_evalex=True
+                      )
 
 
 if __name__ == '__main__':  # pragma: no cover
     if len(sys.argv) != 5:
-        sys.exit('Usage: {} CWD APP PORT'.format(
+        sys.exit('Usage: {} CWD APP PORT HOST'.format(
             os.path.basename(sys.argv[0])))
 
     serve(*sys.argv[1:])
