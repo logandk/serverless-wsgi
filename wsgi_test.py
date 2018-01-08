@@ -247,7 +247,7 @@ def test_handler(mock_wsgi_app_file, mock_app, event, capsys):
 def test_handler_single_cookie(mock_wsgi_app_file, mock_app, event):
     import wsgi  # noqa: F811
     wsgi.wsgi_app.cookie_count = 1
-    response = wsgi.handler(event, {'memory_limit_in_mb': '128'})
+    response = wsgi.handler(event, {})
 
     assert response == {
         'body': u'Hello World ☃!',
@@ -263,7 +263,7 @@ def test_handler_single_cookie(mock_wsgi_app_file, mock_app, event):
 def test_handler_no_cookie(mock_wsgi_app_file, mock_app, event):
     import wsgi  # noqa: F811
     wsgi.wsgi_app.cookie_count = 0
-    response = wsgi.handler(event, {'memory_limit_in_mb': '128'})
+    response = wsgi.handler(event, {})
 
     assert response == {
         'body': u'Hello World ☃!',
@@ -278,7 +278,7 @@ def test_handler_no_cookie(mock_wsgi_app_file, mock_app, event):
 def test_handler_custom_domain(mock_wsgi_app_file, mock_app, event):
     import wsgi  # noqa: F811
     event['headers']['Host'] = 'custom.domain.com'
-    wsgi.handler(event, {'memory_limit_in_mb': '128'})
+    wsgi.handler(event, {})
 
     assert wsgi.wsgi_app.last_environ == {
         'API_GATEWAY_AUTHORIZER': {'principalId': 'wile_e_coyote'},
@@ -320,7 +320,7 @@ def test_handler_custom_domain(mock_wsgi_app_file, mock_app, event):
         'wsgi.run_once': False,
         'wsgi.url_scheme': 'https',
         'wsgi.version': (1, 0),
-        'context': {'memory_limit_in_mb': '128'},
+        'context': {},
         'event': event
     }
 
@@ -330,7 +330,7 @@ def test_handler_api_gateway_base_path(mock_wsgi_app_file, mock_app, event):
     event['headers']['Host'] = 'custom.domain.com'
     event['path'] = '/prod/some/path'
     os.environ.update(API_GATEWAY_BASE_PATH='prod')
-    wsgi.handler(event, {'memory_limit_in_mb': '128'})
+    wsgi.handler(event, {})
 
     assert wsgi.wsgi_app.last_environ == {
         'API_GATEWAY_AUTHORIZER': {'principalId': 'wile_e_coyote'},
@@ -372,7 +372,7 @@ def test_handler_api_gateway_base_path(mock_wsgi_app_file, mock_app, event):
         'wsgi.run_once': False,
         'wsgi.url_scheme': 'https',
         'wsgi.version': (1, 0),
-        'context': {'memory_limit_in_mb': '128'},
+        'context': {},
         'event': event
     }
 
@@ -381,7 +381,7 @@ def test_handler_base64(mock_wsgi_app_file, mock_app, event):
     import wsgi  # noqa: F811
     wsgi.wsgi_app.cookie_count = 1
     wsgi.wsgi_app.response_mimetype = 'image/jpeg'
-    response = wsgi.handler(event, {'memory_limit_in_mb': '128'})
+    response = wsgi.handler(event, {})
 
     assert response == {
         'body': u'SGVsbG8gV29ybGQg4piDIQ==',
@@ -399,7 +399,7 @@ def test_handler_plain(mock_wsgi_app_file, mock_app, event):
     import wsgi  # noqa: F811
     wsgi.wsgi_app.cookie_count = 1
     wsgi.wsgi_app.response_mimetype = 'application/vnd.api+json'
-    response = wsgi.handler(event, {'memory_limit_in_mb': '128'})
+    response = wsgi.handler(event, {})
 
     assert response == {
         'body': u'Hello World ☃!',
@@ -419,7 +419,7 @@ def test_handler_base64_request(mock_wsgi_app_file, mock_app, event):
     event['isBase64Encoded'] = True
     event['httpMethod'] = 'PUT'
 
-    wsgi.handler(event, {'memory_limit_in_mb': '128'})
+    wsgi.handler(event, {})
 
     environ = wsgi.wsgi_app.last_environ
 
@@ -454,7 +454,7 @@ def test_handler_binary_request_body(mock_wsgi_app_file, mock_app, event):
     event['isBase64Encoded'] = True
     event['httpMethod'] = 'POST'
 
-    wsgi.handler(event, {'memory_limit_in_mb': '128'})
+    wsgi.handler(event, {})
 
     environ = wsgi.wsgi_app.last_environ
 
