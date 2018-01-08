@@ -15,7 +15,7 @@ except ImportError:  # pragma: no cover
     sys.exit('Unable to import werkzeug (run: pip install werkzeug)')
 
 
-def serve(cwd, app, port):
+def serve(cwd, app, port, host='localhost'):
     sys.path.insert(0, cwd)
 
     wsgi_fqn = app.rsplit('.', 1)
@@ -34,13 +34,18 @@ def serve(cwd, app, port):
     os.environ['IS_OFFLINE'] = 'True'
 
     serving.run_simple(
-        'localhost', int(port), wsgi_app,
-        use_debugger=True, use_reloader=True, use_evalex=True)
+                       str(host),
+                       int(port),
+                       wsgi_app,
+                       use_debugger=True,
+                       use_reloader=True,
+                       use_evalex=True
+                      )
 
 
 if __name__ == '__main__':  # pragma: no cover
-    if len(sys.argv) != 4:
-        sys.exit('Usage: {} CWD APP PORT'.format(
+    if len(sys.argv) != 5:
+        sys.exit('Usage: {} CWD APP PORT HOST'.format(
             os.path.basename(sys.argv[0])))
 
     serve(*sys.argv[1:])
