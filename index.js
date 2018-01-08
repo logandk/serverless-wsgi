@@ -191,7 +191,7 @@ class ServerlessWSGI {
         host
       ], { stdio: 'inherit' });
       if (status.error) {
-        reject(status.stdout.toString());
+        reject(status.error);
       } else {
         resolve();
       }
