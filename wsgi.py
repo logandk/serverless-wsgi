@@ -13,7 +13,11 @@ import base64
 import os
 import sys
 
-TEXT_MIME_TYPES = ['application/json', 'application/xml', 'application/vnd.api+json']
+TEXT_MIME_TYPES = [
+    'application/json',
+    'application/xml',
+    'application/vnd.api+json'
+]
 
 import importlib  # noqa: E402
 from werkzeug.datastructures import Headers  # noqa: E402
