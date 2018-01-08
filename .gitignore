@@ -45,3 +45,5 @@ admin.env
 *.pyc
 __pycache__
 .cache
+
+env/

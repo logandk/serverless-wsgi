@@ -1,3 +1,14 @@
+# 1.4.4
+## Features
+* Make binding host configurable when invoking `sls wsgi serve`
+
+  *Eric Magalhães*
+
+* Add `application/vnd.api+json` to list of non-binary MIME types
+
+  *Marshal Newrock*
+
+
 # 1.4.3
 ## Bugs
 * Fix double conversion issue for binary payloads
