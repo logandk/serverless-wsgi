@@ -33,15 +33,11 @@ class ObjectStub:
 class MockApp:
     def __init__(self):
         self.cookie_count = 3
-        self.enable_binary = False
+        self.response_mimetype = 'text/plain'
 
     def __call__(self, environ, start_response):
         self.last_environ = environ
-        if self.enable_binary:
-            mimetype = 'image/jpeg'
-        else:
-            mimetype = 'text/plain'
-        response = Response(u'Hello World ☃!', mimetype=mimetype)
+        response = Response(u'Hello World ☃!', mimetype=self.response_mimetype)
         cookies = [
             ('CUSTOMER', 'WILE_E_COYOTE'),
             ('PART_NUMBER', 'ROCKET_LAUNCHER_0002'),
@@ -384,7 +380,7 @@ def test_handler_api_gateway_base_path(mock_wsgi_app_file, mock_app, event):
 def test_handler_base64(mock_wsgi_app_file, mock_app, event):
     import wsgi  # noqa: F811
     wsgi.wsgi_app.cookie_count = 1
-    wsgi.wsgi_app.enable_binary = True
+    wsgi.wsgi_app.response_mimetype = 'image/jpeg'
     response = wsgi.handler(event, {'memory_limit_in_mb': '128'})
 
     assert response == {
@@ -396,6 +392,23 @@ def test_handler_base64(mock_wsgi_app_file, mock_app, event):
         },
         'statusCode': 200,
         'isBase64Encoded': 'true'
+    }
+
+
+def test_handler_plain(mock_wsgi_app_file, mock_app, event):
+    import wsgi  # noqa: F811
+    wsgi.wsgi_app.cookie_count = 1
+    wsgi.wsgi_app.response_mimetype = 'application/vnd.api+json'
+    response = wsgi.handler(event, {'memory_limit_in_mb': '128'})
+
+    assert response == {
+        'body': u'Hello World ☃!',
+        'headers': {
+            'Set-Cookie': 'CUSTOMER=WILE_E_COYOTE; Path=/',
+            'Content-Length': '16',
+            'Content-Type': 'application/vnd.api+json'
+        },
+        'statusCode': 200
     }
 
 
