@@ -1,3 +1,10 @@
+# 1.4.5
+## Features
+* Ignore `*.dist-info` and `*.pyc` when packaging requirements
+* Remove `.requirements` prior to packaging to avoid deploying packages
+  that are no longer required
+
+
 # 1.4.4
 ## Features
 * Make binding host configurable when invoking `sls wsgi serve`
