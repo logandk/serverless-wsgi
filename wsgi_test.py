@@ -459,3 +459,24 @@ def test_handler_binary_request_body(mock_wsgi_app_file, mock_app, event):
     environ = wsgi.wsgi_app.last_environ
 
     assert environ['CONTENT_LENGTH'] == '496'
+
+
+def test_handler_request_body_undecodable_with_latin1(
+        mock_wsgi_app_file, mock_app, event):
+    import wsgi  # noqa: F811
+    from werkzeug._compat import wsgi_encoding_dance  # noqa: E402, F811
+
+    event['body'] = wsgi_encoding_dance(
+        u'------WebKitFormBoundary3vA72kRLuq9D3NdL'
+        u'Content-Disposition: form-data; name="text"'
+        u'テスト 테스트 测试')
+    event['headers']['Content-Type'] = (
+        'multipart/form-data; boundary=----WebKitFormBoundary3vA72kRLuq9D3NdL')
+    event['httpMethod'] = 'POST'
+
+    wsgi.handler(event, {})
+
+    environ = wsgi.wsgi_app.last_environ
+    raw_wsgi_input = environ['wsgi.input'].read().decode('latin1')
+
+    assert raw_wsgi_input != event['body']
