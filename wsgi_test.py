@@ -9,7 +9,7 @@ import importlib
 import os
 import sys
 import pytest
-from werkzeug.wrappers import Response
+from werkzeug.wrappers import Request, Response
 from werkzeug.urls import url_encode
 
 PY2 = sys.version_info[0] == 2
@@ -459,17 +459,18 @@ def test_handler_binary_request_body(mock_wsgi_app_file, mock_app, event):
     environ = wsgi.wsgi_app.last_environ
 
     assert environ['CONTENT_LENGTH'] == '496'
+    assert Request(environ).form['submit'] == u'Upload Image'
 
 
 def test_handler_request_body_undecodable_with_latin1(
         mock_wsgi_app_file, mock_app, event):
     import wsgi  # noqa: F811
-    from werkzeug._compat import wsgi_encoding_dance  # noqa: E402, F811
 
-    event['body'] = wsgi_encoding_dance(
-        u'------WebKitFormBoundary3vA72kRLuq9D3NdL'
-        u'Content-Disposition: form-data; name="text"'
-        u'テスト 테스트 测试')
+    event['body'] = (
+        u'------WebKitFormBoundary3vA72kRLuq9D3NdL\r\n'
+        u'Content-Disposition: form-data; name="text"\r\n\r\n'
+        u'テスト 테스트 测试\r\n'
+        u'------WebKitFormBoundary3vA72kRLuq9D3NdL--')
     event['headers']['Content-Type'] = (
         'multipart/form-data; boundary=----WebKitFormBoundary3vA72kRLuq9D3NdL')
     event['httpMethod'] = 'POST'
@@ -477,6 +478,4 @@ def test_handler_request_body_undecodable_with_latin1(
     wsgi.handler(event, {})
 
     environ = wsgi.wsgi_app.last_environ
-    raw_wsgi_input = environ['wsgi.input'].read().decode('latin1')
-
-    assert raw_wsgi_input != event['body']
+    assert Request(environ).form['text'] == u'テスト 테스트 测试'
