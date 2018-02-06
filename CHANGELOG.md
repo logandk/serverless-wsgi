@@ -1,3 +1,10 @@
+# 1.4.6
+## Bugs
+* Skip WSGI encoding dance for request body to avoid garbling UTF-8 characters
+
+  *sin-tanaka*
+
+
 # 1.4.5
 ## Features
 * Ignore `*.dist-info` and `*.pyc` when packaging requirements
