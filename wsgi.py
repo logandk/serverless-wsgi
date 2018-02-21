@@ -58,6 +58,9 @@ def all_casings(input_string):
 
 
 def handler(event, context):
+    if event['source'] == 'serverless-plugin-warmup':
+        return {}
+
     headers = Headers(event[u'headers'])
 
     if headers.get(u'Host', u'').endswith(u'.amazonaws.com'):
