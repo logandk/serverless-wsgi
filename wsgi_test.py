@@ -275,6 +275,13 @@ def test_handler_no_cookie(mock_wsgi_app_file, mock_app, event):
     }
 
 
+def test_handler_warmup_plugin(mock_wsgi_app_file, mock_app, event):
+    import wsgi  # noqa: F811
+    event = {'source': 'serverless-plugin-warmup'}
+    response = wsgi.handler(event, {})
+    assert response == {}
+
+
 def test_handler_custom_domain(mock_wsgi_app_file, mock_app, event):
     import wsgi  # noqa: F811
     event['headers']['Host'] = 'custom.domain.com'
