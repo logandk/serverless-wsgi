@@ -84,6 +84,8 @@ def test_package(mock_system, mock_virtualenv):
     # Checks that output dir exists
     assert mock_system.pop(0) == ('os.path.exists', ('/tmp',))
     assert mock_system.pop(0) == ('os.path.isdir', ('/tmp',))
+    assert mock_system.pop(0) == ('shutil.rmtree', ('/tmp',))
+    assert mock_system.pop(0) == ('os.mkdir', ('/tmp',))
 
     # Checks and removes existing venv/tmp dirs
     assert mock_system.pop(0) == ('os.path.exists', ('/tmp/.venv',))

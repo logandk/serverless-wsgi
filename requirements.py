@@ -31,8 +31,8 @@ def package(req_files, target_dir):
     if os.path.exists(target_dir):
         if not os.path.isdir(target_dir):
             sys.exit('Existing non-directory found at: {}'.format(target_dir))
-    else:
-        os.mkdir(target_dir)
+        shutil.rmtree(target_dir)
+    os.mkdir(target_dir)
 
     if os.path.exists(venv_dir):
         shutil.rmtree(venv_dir)
@@ -77,8 +77,8 @@ def package(req_files, target_dir):
         sys.exit('Installed packages not found in: {}'.format(deps_dir))
 
     blacklist = [
-        'pip', 'pip-*', 'wheel', 'wheel-*', 'setuptools',
-        'setuptools-*', 'easy_install.*', '__pycache__']
+        'pip', 'pip-*', 'wheel', 'wheel-*', 'setuptools', 'setuptools-*',
+        '*.dist-info', 'easy_install.*', '*.pyc', '__pycache__']
 
     shutil.copytree(deps_dir, tmp_dir, symlinks=False,
                     ignore=shutil.ignore_patterns(*blacklist))

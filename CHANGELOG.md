@@ -1,3 +1,28 @@
+# 1.4.6
+## Bugs
+* Skip WSGI encoding dance for request body to avoid garbling UTF-8 characters
+
+  *sin-tanaka*
+
+
+# 1.4.5
+## Features
+* Ignore `*.dist-info` and `*.pyc` when packaging requirements
+* Remove `.requirements` prior to packaging to avoid deploying packages
+  that are no longer required
+
+
+# 1.4.4
+## Features
+* Make binding host configurable when invoking `sls wsgi serve`
+
+  *Eric Magalhães*
+
+* Add `application/vnd.api+json` to list of non-binary MIME types
+
+  *Marshal Newrock*
+
+
 # 1.4.3
 ## Bugs
 * Fix double conversion issue for binary payloads

@@ -14,11 +14,15 @@ import os
 import sys
 
 try:
-  import unzip_requirements
+    import unzip_requirements
 except ImportError:
-  pass
+    pass
 
-TEXT_MIME_TYPES = ['application/json', 'application/xml']
+TEXT_MIME_TYPES = [
+    'application/json',
+    'application/xml',
+    'application/vnd.api+json'
+]
 
 import importlib  # noqa: E402
 from werkzeug.datastructures import Headers  # noqa: E402
@@ -81,7 +85,7 @@ def handler(event, context):
     if event.get('isBase64Encoded', False):
         body = base64.b64decode(body)
     if isinstance(body, string_types):
-        body = to_bytes(wsgi_encoding_dance(body))
+        body = to_bytes(body, charset='utf-8')
 
     environ = {
         'API_GATEWAY_AUTHORIZER':
