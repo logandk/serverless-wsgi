@@ -13,6 +13,11 @@ import base64
 import os
 import sys
 
+try:
+  import unzip_requirements
+except ImportError:
+  pass
+
 TEXT_MIME_TYPES = ['application/json', 'application/xml']
 
 import importlib  # noqa: E402
