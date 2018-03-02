@@ -34,13 +34,12 @@ def serve(cwd, app, port, host='localhost'):
     os.environ['IS_OFFLINE'] = 'True'
 
     serving.run_simple(
-                       str(host),
-                       int(port),
-                       wsgi_app,
-                       use_debugger=True,
-                       use_reloader=True,
-                       use_evalex=True
-                      )
+        host,
+        int(port),
+        wsgi_app,
+        use_debugger=True,
+        use_reloader=True,
+        use_evalex=True)
 
 
 if __name__ == '__main__':  # pragma: no cover

@@ -590,6 +590,33 @@ describe('serverless-wsgi', () => {
       });
     });
 
+    it('allows changing host', () => {
+      var plugin = new Plugin({
+        config: { servicePath: '/tmp' },
+        service: {
+          provider: { runtime: 'python2.7' },
+          custom: { wsgi: { app: 'api.app' } }
+        },
+        classes: { Error: Error }
+      }, { host: '0.0.0.0' });
+
+      var stub = sinon.stub(child_process, 'spawnSync').returns({});
+      plugin.hooks['wsgi:serve:serve']().then(() => {
+        expect(stub.calledWith(
+          'python2.7',
+          [
+            path.resolve(__dirname, 'serve.py'),
+            '/tmp',
+            'api.app',
+            5000,
+            '0.0.0.0'
+          ],
+          { stdio: 'inherit' }
+        )).to.be.true;
+        stub.restore();
+      });
+    });
+
     it('loads environment variables', () => {
       var plugin = new Plugin({
         config: { servicePath: '/tmp' },
