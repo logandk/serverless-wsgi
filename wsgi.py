@@ -14,7 +14,7 @@ import os
 import sys
 
 try:
-    import unzip_requirements
+    import unzip_requirements  # pylint: disable=unused-import
 except ImportError:
     pass
 
