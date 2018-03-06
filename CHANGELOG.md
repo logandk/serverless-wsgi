@@ -1,3 +1,14 @@
+# 1.4.7
+## Features
+* Gracefully handle scheduled events and invocations from serverless-plugin-warmup
+
+  *Chao Xie*
+
+* Enable zip dependencies when using the serverless-python-requirements plugin
+
+  *Eric Magalhães*
+
+
 # 1.4.6
 ## Bugs
 * Skip WSGI encoding dance for request body to avoid garbling UTF-8 characters
