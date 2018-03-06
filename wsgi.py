@@ -13,6 +13,11 @@ import base64
 import os
 import sys
 
+try:
+    import unzip_requirements  # noqa # pylint: disable=unused-import
+except ImportError:
+    pass
+
 TEXT_MIME_TYPES = [
     'application/json',
     'application/xml',
