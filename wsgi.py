@@ -14,7 +14,7 @@ import os
 import sys
 
 try:
-    import unzip_requirements  # noqa # pylint: disable=unused-import
+    import unzip_requirements  # noqa
 except ImportError:
     pass
 
