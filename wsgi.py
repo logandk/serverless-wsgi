@@ -63,7 +63,7 @@ def all_casings(input_string):
 
 
 def handler(event, context):
-    if event.get('source') == 'serverless-plugin-warmup':
+    if event.get('source') in ['aws.events', 'serverless-plugin-warmup']:
         return {}
 
     headers = Headers(event[u'headers'])
@@ -92,7 +92,7 @@ def handler(event, context):
 
     environ = {
         'API_GATEWAY_AUTHORIZER':
-            event[u'requestContext'].get(u'authorizer', None),
+            event[u'requestContext'].get(u'authorizer'),
         'CONTENT_LENGTH':
             str(len(body)),
         'CONTENT_TYPE':
@@ -100,7 +100,7 @@ def handler(event, context):
         'PATH_INFO':
             path_info,
         'QUERY_STRING':
-            url_encode(event.get(u'queryStringParameters', None) or {}),
+            url_encode(event.get(u'queryStringParameters') or {}),
         'REMOTE_ADDR':
             event[u'requestContext'].get(u'identity', {}).get(
                 u'sourceIp', ''),
