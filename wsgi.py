@@ -13,6 +13,11 @@ import base64
 import os
 import sys
 
+try:
+    import unzip_requirements  # noqa
+except ImportError:
+    pass
+
 TEXT_MIME_TYPES = [
     'application/json',
     'application/xml',
