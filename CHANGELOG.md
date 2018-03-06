@@ -2,7 +2,7 @@
 ## Bugs
 * Skip WSGI encoding dance for request body to avoid garbling UTF-8 characters
 
-  *sin-tanaka*
+  *Shintaro Tanaka*
 
 
 # 1.4.5
