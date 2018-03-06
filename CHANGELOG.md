@@ -1,12 +1,16 @@
 # 1.4.7
 ## Features
-* Gracefully handle scheduled events and invocations from serverless-plugin-warmup
+* Gracefully handle scheduled events and invocations from serverless-plugin-warmup (#54)
 
   *Chao Xie*
 
-* Enable zip dependencies when using the serverless-python-requirements plugin
+* Enable zip dependencies when using the serverless-python-requirements plugin (#56)
 
   *Eric Magalhães*
+
+# Bugs
+
+* Skip setting CloudFormation-interpreted environment variables during local serving (#53)
 
 
 # 1.4.6

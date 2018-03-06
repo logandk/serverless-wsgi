@@ -623,7 +623,7 @@ describe('serverless-wsgi', () => {
         service: {
           provider: {
             runtime: 'python2.7',
-            environment: { SOME_ENV_VAR: 42 }
+            environment: { SOME_ENV_VAR: 42, ANOTHER_ONE: { Ref: 'AWS::StackId' } }
           },
           functions: {
             func1: { handler: 'wsgi.handler', environment: { SECOND_VAR: 33 } },
@@ -642,6 +642,7 @@ describe('serverless-wsgi', () => {
         expect(process.env.SOME_ENV_VAR).to.equal(42);
         expect(process.env.SECOND_VAR).to.equal(33);
         expect(process.env.THIRD_VAR).to.be.undefined;
+        expect(process.env.ANOTHER_ONE).to.be.undefined;
         sandbox.restore();
       });
     });

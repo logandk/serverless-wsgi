@@ -160,12 +160,12 @@ class ServerlessWSGI {
   }
 
   loadEnvVars() {
-    const providerEnvVars = this.serverless.service.provider.environment || {};
+    const providerEnvVars = _.omitBy(this.serverless.service.provider.environment || {}, _.isObject);
     _.merge(process.env, providerEnvVars);
 
     _.each(this.serverless.service.functions, (func) => {
       if (func.handler == 'wsgi.handler') {
-        const functionEnvVars = func.environment || {};
+        const functionEnvVars = _.omitBy(func.environment || {}, _.isObject);
         _.merge(process.env, functionEnvVars);
       }
     });
