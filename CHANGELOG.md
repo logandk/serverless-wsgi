@@ -11,6 +11,7 @@
 # Bugs
 
 * Skip setting CloudFormation-interpreted environment variables during local serving (#53)
+* Include `application/javascript` as a plain text MIME type (#55)
 
 
 # 1.4.6

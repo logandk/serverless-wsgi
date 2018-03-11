@@ -412,18 +412,22 @@ def test_handler_base64(mock_wsgi_app_file, mock_app, event):
 def test_handler_plain(mock_wsgi_app_file, mock_app, event):
     import wsgi  # noqa: F811
     wsgi.wsgi_app.cookie_count = 1
-    wsgi.wsgi_app.response_mimetype = 'application/vnd.api+json'
-    response = wsgi.handler(event, {})
 
-    assert response == {
-        'body': u'Hello World ☃!',
-        'headers': {
-            'Set-Cookie': 'CUSTOMER=WILE_E_COYOTE; Path=/',
-            'Content-Length': '16',
-            'Content-Type': 'application/vnd.api+json'
-        },
-        'statusCode': 200
-    }
+    plain_mimetypes = ['application/vnd.api+json', 'application/javascript']
+
+    for mimetype in plain_mimetypes:
+        wsgi.wsgi_app.response_mimetype = mimetype
+        response = wsgi.handler(event, {})
+
+        assert response == {
+            'body': u'Hello World ☃!',
+            'headers': {
+                'Set-Cookie': 'CUSTOMER=WILE_E_COYOTE; Path=/',
+                'Content-Length': '16',
+                'Content-Type': mimetype
+            },
+            'statusCode': 200
+        }
 
 
 def test_handler_base64_request(mock_wsgi_app_file, mock_app, event):

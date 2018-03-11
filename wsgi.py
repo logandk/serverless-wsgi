@@ -20,6 +20,7 @@ except ImportError:
 
 TEXT_MIME_TYPES = [
     'application/json',
+    'application/javascript',
     'application/xml',
     'application/vnd.api+json'
 ]
