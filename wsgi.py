@@ -69,10 +69,7 @@ def handler(event, context):
 
     headers = Headers(event[u'headers'])
 
-    if headers.get(u'Host', u'').endswith(u'.amazonaws.com'):
-        script_name = '/{}'.format(event[u'requestContext'].get(u'stage', ''))
-    else:
-        script_name = ''
+    script_name = '/{}'.format(event[u'requestContext'].get(u'stage', ''))
 
     # If a user is using a custom domain on API Gateway, they may have a base
     # path in their URL. This allows us to strip it out via an optional
