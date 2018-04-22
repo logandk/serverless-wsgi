@@ -19,7 +19,6 @@ http://wsgi.readthedocs.io/en/latest/frameworks.html.
 * Automatically downloads Python packages that you specify in `requirements.txt` and deploys them along with your application
 * Convenient `wsgi serve` command for serving your application locally during development
 
-
 ## Install
 
 ```
@@ -32,7 +31,6 @@ Add the plugin to your `serverless.yml` file and set the WSGI application:
 plugins:
   - serverless-wsgi
 ```
-
 
 ## Flask configuration example
 
@@ -96,7 +94,6 @@ custom:
     app: api.app
 ```
 
-
 ### requirements.txt
 
 Add Flask to the application bundle.
@@ -104,7 +101,6 @@ Add Flask to the application bundle.
 ```
 Flask==0.12.2
 ```
-
 
 ## Deployment
 
@@ -124,14 +120,12 @@ Serverless: Checking Stack update progress...
 Serverless: Stack update finished...
 ```
 
-
 ## Other frameworks
 
 Set `custom.wsgi.app` in `serverless.yml` according to your WSGI callable:
 
 * For Pyramid, use [make_wsgi_app](http://docs.pylonsproject.org/projects/pyramid/en/latest/api/config.html#pyramid.config.Configurator.make_wsgi_app) to intialize the callable
 * Django is configured for WSGI by default, set the callable to `<project_name>.wsgi.application`. See https://docs.djangoproject.com/en/1.10/howto/deployment/wsgi/ for more information.
-
 
 ## Usage
 
@@ -149,7 +143,7 @@ requests==2.18.3
 
 For more information, see https://pip.readthedocs.io/en/1.1/requirements.html.
 
-You can use the requirement packaging functionality of *serverless-wsgi* without the WSGI
+You can use the requirement packaging functionality of _serverless-wsgi_ without the WSGI
 handler itself by including the plugin in your `serverless.yml` configuration, without specifying
 the `custom.wsgi.app` setting. This will omit the WSGI handler from the package, but include
 any requirements specified in `requirements.txt`.
@@ -202,7 +196,6 @@ $ sls wsgi serve -p 8000
  * Restarting with stat
  * Debugger is active!
 ```
-
 
 ### Explicit routes
 
@@ -280,7 +273,7 @@ custom:
 ### File uploads
 
 In order to accept file uploads from HTML forms, make sure to add `multipart/form-data` to
-the list of content types with *Binary Support* in your API Gateway API. The
+the list of content types with _Binary Support_ in your API Gateway API. The
 [serverless-apigw-binary](https://github.com/maciejtreder/serverless-apigw-binary)
 Serverless plugin can be used to automate this process.
 
@@ -288,6 +281,21 @@ Keep in mind that, when building Serverless applications, uploading
 [directly to S3](http://docs.aws.amazon.com/AmazonS3/latest/dev/UsingHTTPPOST.html)
 from the browser is usually the preferred approach.
 
+### Raw context and event
+
+The raw context and event from AWS Lambda are both accessible through the WSGI
+request. The following example shows how to access them when using Flask:
+
+```python
+from flask import Flask, request
+app = Flask(__name__)
+
+
+@app.route("/")
+def index():
+    print(request.environ['context'])
+    print(request.environ['event'])
+```
 
 # Thanks
 
