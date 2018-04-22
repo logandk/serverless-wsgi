@@ -244,6 +244,14 @@ def test_handler(mock_wsgi_app_file, mock_app, event, capsys):
     assert err == "application debug #1\n"
 
 
+def test_handler_china(mock_wsgi_app_file, mock_app, event, capsys):
+    import wsgi  # noqa: F811
+    event['headers']['Host'] = 'x.amazonaws.com.cn'
+    wsgi.handler(event, {'memory_limit_in_mb': '128'})
+
+    assert wsgi.wsgi_app.last_environ['SCRIPT_NAME'] == '/dev'
+
+
 def test_handler_single_cookie(mock_wsgi_app_file, mock_app, event):
     import wsgi  # noqa: F811
     wsgi.wsgi_app.cookie_count = 1
