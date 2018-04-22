@@ -69,8 +69,7 @@ def handler(event, context):
 
     headers = Headers(event[u'headers'])
 
-    host = headers.get(u'Host', u'')
-    if u".amazonaws" in host:
+    if u"amazonaws.com" in headers.get(u'Host', u''):
         script_name = '/{}'.format(event[u'requestContext'].get(u'stage', ''))
     else:
         script_name = ''
