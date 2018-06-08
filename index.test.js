@@ -26,6 +26,8 @@ describe('serverless-wsgi', () => {
       expect(plugin.hooks['before:package:createDeploymentArtifacts']).to.be.a('function');
       expect(plugin.hooks['after:package:createDeploymentArtifacts']).to.be.a('function');
       expect(plugin.hooks['wsgi:serve:serve']).to.be.a('function');
+      expect(plugin.hooks['before:offline:start:init']).to.be.a('function');
+      expect(plugin.hooks['after:offline:start:end']).to.be.a('function');
     });
   });
 
