@@ -272,6 +272,17 @@ class ServerlessWSGI {
       'after:deploy:function:packageFunction': () => BbPromise.bind(this)
         .then(this.validate)
         .then(this.unlinkRequirements)
+        .then(this.cleanup),
+
+      'before:offline:start:init': () => BbPromise.bind(this)
+        .then(this.validate)
+        .then(this.packWsgiHandler)
+        .then(this.packRequirements)
+        .then(this.linkRequirements),
+
+      'after:offline:start:end': () => BbPromise.bind(this)
+        .then(this.validate)
+        .then(this.unlinkRequirements)
         .then(this.cleanup)
     };
   }
