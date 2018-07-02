@@ -197,6 +197,9 @@ $ sls wsgi serve -p 8000
  * Debugger is active!
 ```
 
+When running locally, an environment variable named `IS_OFFLINE` will be set to `"True"`.
+So, if you want to know when the application is running locally, check `os.environ["IS_OFFLINE"]`.
+
 ### Explicit routes
 
 If you'd like to be explicit about which routes and HTTP methods should pass through to your

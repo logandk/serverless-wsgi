@@ -18,6 +18,8 @@ except ImportError:  # pragma: no cover
 def serve(cwd, app, port, host="localhost"):
     sys.path.insert(0, cwd)
 
+    os.environ["IS_OFFLINE"] = "True"
+
     wsgi_fqn = app.rsplit(".", 1)
     wsgi_fqn_parts = wsgi_fqn[0].rsplit("/", 1)
     if len(wsgi_fqn_parts) == 2:
@@ -30,8 +32,6 @@ def serve(cwd, app, port, host="localhost"):
         wsgi_app.debug = True
     except:  # noqa: E722
         pass
-
-    os.environ["IS_OFFLINE"] = "True"
 
     serving.run_simple(
         host, int(port), wsgi_app, use_debugger=True, use_reloader=True, use_evalex=True
