@@ -1,3 +1,15 @@
+# 1.4.9
+
+## Features
+
+* Add compatibility with serverless-offline (#61)
+
+  _Matthew Hardwick_
+
+## Bugs
+
+* Set `IS_OFFLINE` before importing application when running under `sls wsgi serve` (#65)
+
 # 1.4.8
 
 ## Bugs
@@ -181,7 +193,9 @@
 
 * Support for multiple Set-Cookie headers (#11). _Thanks to Ben Bangert for creating an issue and providing an implementation._
 
-* Forward API Gateway authorizer information as API_GATEWAY_AUTHORIZER in the WSGI request environment (#7). _Thanks to Greg Zapp for reporting._
+* Forward API Gateway authorizer information as API_GATEWAY_AUTHORIZER in the WSGI request environment (#7)
+
+  _Thanks to Greg Zapp for reporting_
 
 # 1.0.4
 
