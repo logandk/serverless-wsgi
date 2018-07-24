@@ -25,6 +25,8 @@ TEXT_MIME_TYPES = [
     "application/vnd.api+json",
 ]
 
+TEXT_MIME_TYPES.extend(os.environ.get("ADDITIONAL_TEXT_MIME_TYPES", []))
+
 import importlib  # noqa: E402
 from werkzeug.datastructures import Headers  # noqa: E402
 from werkzeug.wrappers import Response  # noqa: E402
