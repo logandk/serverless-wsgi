@@ -7,6 +7,7 @@ try:
 except ImportError:
     import builtins
 import importlib
+import json
 import os
 import sys
 import pytest
@@ -106,7 +107,7 @@ def mock_wsgi_app_file(monkeypatch):
 
     manager = MockFileManager()
     with manager.open("/tmp/.wsgi_app", "w") as f:
-        f.write("app.app")
+        f.write(json.dumps({"app": "app.app"}))
     monkeypatch.setattr(builtins, "open", manager.open)
 
 
@@ -116,7 +117,21 @@ def mock_subdir_wsgi_app_file(monkeypatch):
 
     manager = MockFileManager()
     with manager.open("/tmp/.wsgi_app", "w") as f:
-        f.write("subdir/app.app")
+        f.write(json.dumps({"app": "subdir/app.app"}))
+    monkeypatch.setattr(builtins, "open", manager.open)
+
+
+@pytest.fixture
+def mock_text_mime_wsgi_app_file(monkeypatch):
+    monkeypatch.setattr(os.path, "abspath", lambda x: "/tmp")
+
+    manager = MockFileManager()
+    with manager.open("/tmp/.wsgi_app", "w") as f:
+        f.write(
+            json.dumps(
+                {"app": "app.app", "text_mime_types": ["application/custom+json"]}
+            )
+        )
     monkeypatch.setattr(builtins, "open", manager.open)
 
 
@@ -179,9 +194,16 @@ def event():
     }
 
 
-def test_handler(mock_wsgi_app_file, mock_app, event, capsys):
-    import wsgi  # noqa: F811
+@pytest.fixture  # noqa: F811
+def wsgi():
+    if "wsgi" in sys.modules:
+        del sys.modules["wsgi"]
+    import wsgi
 
+    return wsgi
+
+
+def test_handler(mock_wsgi_app_file, mock_app, event, capsys, wsgi):
     response = wsgi.handler(event, {"memory_limit_in_mb": "128"})
 
     assert response == {
@@ -244,18 +266,14 @@ def test_handler(mock_wsgi_app_file, mock_app, event, capsys):
     assert err == "application debug #1\n"
 
 
-def test_handler_china(mock_wsgi_app_file, mock_app, event, capsys):
-    import wsgi  # noqa: F811
-
+def test_handler_china(mock_wsgi_app_file, mock_app, event, capsys, wsgi):
     event["headers"]["Host"] = "x.amazonaws.com.cn"
     wsgi.handler(event, {"memory_limit_in_mb": "128"})
 
     assert wsgi.wsgi_app.last_environ["SCRIPT_NAME"] == "/dev"
 
 
-def test_handler_single_cookie(mock_wsgi_app_file, mock_app, event):
-    import wsgi  # noqa: F811
-
+def test_handler_single_cookie(mock_wsgi_app_file, mock_app, event, wsgi):
     wsgi.wsgi_app.cookie_count = 1
     response = wsgi.handler(event, {})
 
@@ -270,9 +288,7 @@ def test_handler_single_cookie(mock_wsgi_app_file, mock_app, event):
     }
 
 
-def test_handler_no_cookie(mock_wsgi_app_file, mock_app, event):
-    import wsgi  # noqa: F811
-
+def test_handler_no_cookie(mock_wsgi_app_file, mock_app, event, wsgi):
     wsgi.wsgi_app.cookie_count = 0
     response = wsgi.handler(event, {})
 
@@ -286,25 +302,19 @@ def test_handler_no_cookie(mock_wsgi_app_file, mock_app, event):
     }
 
 
-def test_handler_schedule(mock_wsgi_app_file, mock_app, event):
-    import wsgi  # noqa: F811
-
+def test_handler_schedule(mock_wsgi_app_file, mock_app, event, wsgi):
     event = {"source": "aws.events"}
     response = wsgi.handler(event, {})
     assert response == {}
 
 
-def test_handler_warmup_plugin(mock_wsgi_app_file, mock_app, event):
-    import wsgi  # noqa: F811
-
+def test_handler_warmup_plugin(mock_wsgi_app_file, mock_app, event, wsgi):
     event = {"source": "serverless-plugin-warmup"}
     response = wsgi.handler(event, {})
     assert response == {}
 
 
-def test_handler_custom_domain(mock_wsgi_app_file, mock_app, event):
-    import wsgi  # noqa: F811
-
+def test_handler_custom_domain(mock_wsgi_app_file, mock_app, event, wsgi):
     event["headers"]["Host"] = "custom.domain.com"
     wsgi.handler(event, {})
 
@@ -352,9 +362,7 @@ def test_handler_custom_domain(mock_wsgi_app_file, mock_app, event):
     }
 
 
-def test_handler_api_gateway_base_path(mock_wsgi_app_file, mock_app, event):
-    import wsgi  # noqa: F811
-
+def test_handler_api_gateway_base_path(mock_wsgi_app_file, mock_app, event, wsgi):
     event["headers"]["Host"] = "custom.domain.com"
     event["path"] = "/prod/some/path"
     os.environ.update(API_GATEWAY_BASE_PATH="prod")
@@ -404,9 +412,7 @@ def test_handler_api_gateway_base_path(mock_wsgi_app_file, mock_app, event):
     }
 
 
-def test_handler_base64(mock_wsgi_app_file, mock_app, event):
-    import wsgi  # noqa: F811
-
+def test_handler_base64(mock_wsgi_app_file, mock_app, event, wsgi):
     wsgi.wsgi_app.cookie_count = 1
     wsgi.wsgi_app.response_mimetype = "image/jpeg"
     response = wsgi.handler(event, {})
@@ -423,9 +429,7 @@ def test_handler_base64(mock_wsgi_app_file, mock_app, event):
     }
 
 
-def test_handler_plain(mock_wsgi_app_file, mock_app, event):
-    import wsgi  # noqa: F811
-
+def test_handler_plain(mock_wsgi_app_file, mock_app, event, wsgi):
     wsgi.wsgi_app.cookie_count = 1
 
     plain_mimetypes = ["application/vnd.api+json", "application/javascript"]
@@ -445,9 +449,7 @@ def test_handler_plain(mock_wsgi_app_file, mock_app, event):
         }
 
 
-def test_handler_base64_request(mock_wsgi_app_file, mock_app, event):
-    import wsgi  # noqa: F811
-
+def test_handler_base64_request(mock_wsgi_app_file, mock_app, event, wsgi):
     event["body"] = "SGVsbG8gd29ybGQ="
     event["headers"]["Content-Type"] = "text/plain"
     event["isBase64Encoded"] = True
@@ -463,16 +465,11 @@ def test_handler_base64_request(mock_wsgi_app_file, mock_app, event):
     assert environ["wsgi.input"].getvalue().decode() == "Hello world"
 
 
-def test_non_package_subdir_app(mock_subdir_wsgi_app_file, mock_app):
-    del sys.modules["wsgi"]
-    import wsgi  # noqa: F811
-
+def test_non_package_subdir_app(mock_subdir_wsgi_app_file, mock_app, wsgi):
     assert wsgi.wsgi_app.module == "app"
 
 
-def test_handler_binary_request_body(mock_wsgi_app_file, mock_app, event):
-    import wsgi  # noqa: F811
-
+def test_handler_binary_request_body(mock_wsgi_app_file, mock_app, event, wsgi):
     event["body"] = (
         u"LS0tLS0tV2ViS2l0Rm9ybUJvdW5kYXJ5VTRDZE5CRWVLQWxIaGRRcQ0KQ29udGVu"
         u"dC1EaXNwb3NpdGlvbjogZm9ybS1kYXRhOyBuYW1lPSJ3YXQiDQoNCmhleW9vb3Bw"
@@ -501,10 +498,8 @@ def test_handler_binary_request_body(mock_wsgi_app_file, mock_app, event):
 
 
 def test_handler_request_body_undecodable_with_latin1(
-    mock_wsgi_app_file, mock_app, event
+    mock_wsgi_app_file, mock_app, event, wsgi
 ):
-    import wsgi  # noqa: F811
-
     event["body"] = (
         u"------WebKitFormBoundary3vA72kRLuq9D3NdL\r\n"
         u'Content-Disposition: form-data; name="text"\r\n\r\n'
@@ -520,3 +515,21 @@ def test_handler_request_body_undecodable_with_latin1(
 
     environ = wsgi.wsgi_app.last_environ
     assert Request(environ).form["text"] == u"テスト 테스트 测试"
+
+
+def test_handler_custom_text_mime_types(
+    mock_text_mime_wsgi_app_file, mock_app, event, wsgi
+):
+    wsgi.wsgi_app.cookie_count = 1
+    wsgi.wsgi_app.response_mimetype = "application/custom+json"
+    response = wsgi.handler(event, {})
+
+    assert response == {
+        "body": u"Hello World ☃!",
+        "headers": {
+            "Set-Cookie": "CUSTOMER=WILE_E_COYOTE; Path=/",
+            "Content-Length": "16",
+            "Content-Type": "application/custom+json",
+        },
+        "statusCode": 200,
+    }

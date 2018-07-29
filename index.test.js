@@ -88,7 +88,10 @@ describe("serverless-wsgi", () => {
             "/tmp/wsgi.py"
           )
         ).to.be.true;
-        expect(writeStub.calledWith("/tmp/.wsgi_app", "api.app")).to.be.true;
+        expect(writeStub.calledWith("/tmp/.wsgi_app")).to.be.true;
+        expect(JSON.parse(writeStub.lastCall.args[1])).to.deep.equal({
+          app: "api.app"
+        });
         expect(
           procStub.calledWith("python2.7", [
             path.resolve(__dirname, "requirements.py"),
@@ -104,6 +107,39 @@ describe("serverless-wsgi", () => {
         expect(plugin.serverless.service.package.exclude).to.have.members([
           ".requirements/**"
         ]);
+      });
+    });
+
+    it("packages wsgi handler with additional text mime types", () => {
+      var plugin = new Plugin(
+        {
+          config: { servicePath: "/tmp" },
+          service: {
+            provider: { runtime: "python2.7" },
+            custom: {
+              wsgi: {
+                app: "api.app",
+                textMimeTypes: ["application/custom+json"]
+              }
+            }
+          },
+          classes: { Error: Error },
+          cli: { log: () => {} }
+        },
+        {}
+      );
+
+      var sandbox = sinon.createSandbox();
+      sandbox.stub(fse, "copyAsync");
+      var writeStub = sandbox.stub(fse, "writeFileAsync");
+      sandbox.stub(child_process, "spawnSync").returns({ status: 0 });
+      plugin.hooks["before:package:createDeploymentArtifacts"]().then(() => {
+        expect(writeStub.calledWith("/tmp/.wsgi_app")).to.be.true;
+        expect(JSON.parse(writeStub.lastCall.args[1])).to.deep.equal({
+          app: "api.app",
+          text_mime_types: ["application/custom+json"]
+        });
+        sandbox.restore();
       });
     });
 
@@ -556,7 +592,10 @@ describe("serverless-wsgi", () => {
             "/tmp/wsgi.py"
           )
         ).to.be.true;
-        expect(writeStub.calledWith("/tmp/.wsgi_app", "api.app")).to.be.true;
+        expect(writeStub.calledWith("/tmp/.wsgi_app")).to.be.true;
+        expect(JSON.parse(writeStub.lastCall.args[1])).to.deep.equal({
+          app: "api.app"
+        });
         expect(
           procStub.calledWith("python2.7", [
             path.resolve(__dirname, "requirements.py"),

@@ -49,6 +49,16 @@ class ServerlessWSGI {
     }
   }
 
+  getConfig() {
+    const config = { app: this.wsgiApp };
+
+    if (_.isArray(this.serverless.service.custom.wsgi.textMimeTypes)) {
+      config.text_mime_types = this.serverless.service.custom.wsgi.textMimeTypes;
+    }
+
+    return config;
+  }
+
   packWsgiHandler() {
     if (!this.wsgiApp) {
       this.serverless.cli.log(
@@ -66,7 +76,7 @@ class ServerlessWSGI {
       ),
       fse.writeFileAsync(
         path.join(this.serverless.config.servicePath, ".wsgi_app"),
-        this.wsgiApp
+        JSON.stringify(this.getConfig())
       )
     ]);
   }

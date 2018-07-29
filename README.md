@@ -14,10 +14,10 @@ http://wsgi.readthedocs.io/en/latest/frameworks.html.
 
 ### Features
 
-* Transparently converts API Gateway requests to and from standard WSGI requests
-* Supports anything you'd expect from WSGI such as redirects, cookies, file uploads etc.
-* Automatically downloads Python packages that you specify in `requirements.txt` and deploys them along with your application
-* Convenient `wsgi serve` command for serving your application locally during development
+- Transparently converts API Gateway requests to and from standard WSGI requests
+- Supports anything you'd expect from WSGI such as redirects, cookies, file uploads etc.
+- Automatically downloads Python packages that you specify in `requirements.txt` and deploys them along with your application
+- Convenient `wsgi serve` command for serving your application locally during development
 
 ## Install
 
@@ -124,8 +124,8 @@ Serverless: Stack update finished...
 
 Set `custom.wsgi.app` in `serverless.yml` according to your WSGI callable:
 
-* For Pyramid, use [make_wsgi_app](http://docs.pylonsproject.org/projects/pyramid/en/latest/api/config.html#pyramid.config.Configurator.make_wsgi_app) to intialize the callable
-* Django is configured for WSGI by default, set the callable to `<project_name>.wsgi.application`. See https://docs.djangoproject.com/en/1.10/howto/deployment/wsgi/ for more information.
+- For Pyramid, use [make_wsgi_app](http://docs.pylonsproject.org/projects/pyramid/en/latest/api/config.html#pyramid.config.Configurator.make_wsgi_app) to intialize the callable
+- Django is configured for WSGI by default, set the callable to `<project_name>.wsgi.application`. See https://docs.djangoproject.com/en/1.10/howto/deployment/wsgi/ for more information.
 
 ## Usage
 
@@ -298,6 +298,32 @@ app = Flask(__name__)
 def index():
     print(request.environ['context'])
     print(request.environ['event'])
+```
+
+### Text MIME types
+
+By default, all MIME types starting with `text/` and the following whitelist are sent
+through API Gateway in plain text. All other MIME types will have their response body
+base64 encoded (and the `isBase64Encoded` API Gateway flag set) in order to be
+delivered by API Gateway as binary data.
+
+This is the default whitelist of plain text MIME types:
+
+- `application/json`
+- `application/javascript`
+- `application/xml`
+- `application/vnd.api+json`
+
+In order to add additional plain text MIME types to this whitelist, use the
+`textMimeTypes` configuration option:
+
+```yaml
+custom:
+  wsgi:
+    app: api.app
+    textMimeTypes:
+    - application/custom+json
+    - application/vnd.company+json
 ```
 
 # Thanks

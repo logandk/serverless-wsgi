@@ -10,14 +10,20 @@ Inspired by: https://github.com/miserlou/zappa
 Author: Logan Raarup <logan@logan.dk>
 """
 import base64
+import importlib
+import json
 import os
 import sys
 
+# Call decompression helper from `serverless-python-requirements` if
+# available. See: https://github.com/UnitedIncome/serverless-python-requirements#dealing-with-lambdas-size-limitations
 try:
     import unzip_requirements  # noqa
 except ImportError:
     pass
 
+# List of MIME types that should not be base64 encoded. MIME types within `text/*`
+# are included by default.
 TEXT_MIME_TYPES = [
     "application/json",
     "application/javascript",
@@ -25,7 +31,6 @@ TEXT_MIME_TYPES = [
     "application/vnd.api+json",
 ]
 
-import importlib  # noqa: E402
 from werkzeug.datastructures import Headers  # noqa: E402
 from werkzeug.wrappers import Response  # noqa: E402
 from werkzeug.urls import url_encode  # noqa: E402
@@ -36,16 +41,22 @@ from werkzeug._compat import (
     wsgi_encoding_dance,
 )  # noqa: E402
 
+# Read the configuration file created during deployment
 root = os.path.abspath(os.path.dirname(__file__))
 with open(os.path.join(root, ".wsgi_app"), "r") as f:
-    app_path = f.read()
+    config = json.loads(f.read())
 
-wsgi_fqn = app_path.rsplit(".", 1)
+# Load the application WSGI handler
+wsgi_fqn = config["app"].rsplit(".", 1)
 wsgi_fqn_parts = wsgi_fqn[0].rsplit("/", 1)
 if len(wsgi_fqn_parts) == 2:
     sys.path.insert(0, os.path.join(root, wsgi_fqn_parts[0]))
 wsgi_module = importlib.import_module(wsgi_fqn_parts[-1])
 wsgi_app = getattr(wsgi_module, wsgi_fqn[1])
+
+# Add additional text (non-base64) mime types from configuration file
+if "text_mime_types" in config and isinstance(config["text_mime_types"], list):
+    TEXT_MIME_TYPES.extend(config["text_mime_types"])
 
 
 def all_casings(input_string):
