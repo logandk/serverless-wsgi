@@ -8,6 +8,7 @@ const Plugin = require("./index");
 const child_process = require("child_process");
 const path = require("path");
 const fse = require("fs-extra");
+const hasbin = require("hasbin");
 
 const chaiAsPromised = require("chai-as-promised");
 chai.use(chaiAsPromised);
@@ -50,10 +51,12 @@ describe("serverless-wsgi", () => {
       );
 
       var sandbox = sinon.createSandbox();
+      var hasbinStub = sandbox.stub(hasbin, "sync").returns(true);
       var copyStub = sandbox.stub(fse, "copyAsync");
       var writeStub = sandbox.stub(fse, "writeFileAsync");
       var procStub = sandbox.stub(child_process, "spawnSync");
       plugin.hooks["before:package:createDeploymentArtifacts"]().then(() => {
+        expect(hasbinStub.calledWith("python2.7")).to.be.true;
         expect(copyStub.called).to.be.false;
         expect(writeStub.called).to.be.false;
         expect(procStub.called).to.be.false;
@@ -76,12 +79,14 @@ describe("serverless-wsgi", () => {
       );
 
       var sandbox = sinon.createSandbox();
+      var hasbinStub = sandbox.stub(hasbin, "sync").returns(true);
       var copyStub = sandbox.stub(fse, "copyAsync");
       var writeStub = sandbox.stub(fse, "writeFileAsync");
       var procStub = sandbox
         .stub(child_process, "spawnSync")
         .returns({ status: 0 });
       plugin.hooks["before:package:createDeploymentArtifacts"]().then(() => {
+        expect(hasbinStub.calledWith("python2.7")).to.be.true;
         expect(
           copyStub.calledWith(
             path.resolve(__dirname, "wsgi.py"),
@@ -130,15 +135,55 @@ describe("serverless-wsgi", () => {
       );
 
       var sandbox = sinon.createSandbox();
+      var hasbinStub = sandbox.stub(hasbin, "sync").returns(true);
       sandbox.stub(fse, "copyAsync");
       var writeStub = sandbox.stub(fse, "writeFileAsync");
       sandbox.stub(child_process, "spawnSync").returns({ status: 0 });
       plugin.hooks["before:package:createDeploymentArtifacts"]().then(() => {
+        expect(hasbinStub.calledWith("python2.7")).to.be.true;
         expect(writeStub.calledWith("/tmp/.wsgi_app")).to.be.true;
         expect(JSON.parse(writeStub.lastCall.args[1])).to.deep.equal({
           app: "api.app",
           text_mime_types: ["application/custom+json"]
         });
+        sandbox.restore();
+      });
+    });
+
+    it("falls back to default python if runtime version is not found", () => {
+      var plugin = new Plugin(
+        {
+          config: { servicePath: "/tmp" },
+          service: {
+            provider: { runtime: "python3.6" },
+            custom: {
+              wsgi: {
+                app: "api.app"
+              }
+            }
+          },
+          classes: { Error: Error },
+          cli: { log: () => {} }
+        },
+        {}
+      );
+
+      var sandbox = sinon.createSandbox();
+      var hasbinStub = sandbox.stub(hasbin, "sync").returns(false);
+      sandbox.stub(fse, "copyAsync");
+      sandbox.stub(fse, "writeFileAsync");
+      var procStub = sandbox
+        .stub(child_process, "spawnSync")
+        .returns({ status: 0 });
+      plugin.hooks["before:package:createDeploymentArtifacts"]().then(() => {
+        expect(hasbinStub.calledWith("python3.6")).to.be.true;
+        expect(
+          procStub.calledWith("python", [
+            path.resolve(__dirname, "requirements.py"),
+            path.resolve(__dirname, "requirements.txt"),
+            "/tmp/.requirements"
+          ])
+        ).to.be.true;
         sandbox.restore();
       });
     });
@@ -158,8 +203,10 @@ describe("serverless-wsgi", () => {
       );
 
       var sandbox = sinon.createSandbox();
+      var hasbinStub = sandbox.stub(hasbin, "sync").returns(true);
       var removeStub = sandbox.stub(fse, "removeAsync");
       plugin.hooks["after:package:createDeploymentArtifacts"]().then(() => {
+        expect(hasbinStub.calledWith("python2.7")).to.be.true;
         expect(removeStub.calledWith("/tmp/wsgi.py")).to.be.true;
         expect(removeStub.calledWith("/tmp/.wsgi_app")).to.be.true;
         expect(removeStub.calledWith("/tmp/.requirements")).to.be.false;
@@ -185,6 +232,7 @@ describe("serverless-wsgi", () => {
       );
 
       var sandbox = sinon.createSandbox();
+      var hasbinStub = sandbox.stub(hasbin, "sync").returns(true);
       var copyStub = sandbox.stub(fse, "copyAsync");
       var writeStub = sandbox.stub(fse, "writeFileAsync");
       var symlinkStub = sandbox.stub(fse, "symlinkSync");
@@ -194,6 +242,7 @@ describe("serverless-wsgi", () => {
         .stub(child_process, "spawnSync")
         .returns({ status: 0 });
       plugin.hooks["before:package:createDeploymentArtifacts"]().then(() => {
+        expect(hasbinStub.calledWith("python2.7")).to.be.true;
         expect(copyStub.called).to.be.true;
         expect(writeStub.called).to.be.true;
         expect(symlinkStub.called).to.be.true;
@@ -235,6 +284,7 @@ describe("serverless-wsgi", () => {
       );
 
       var sandbox = sinon.createSandbox();
+      var hasbinStub = sandbox.stub(hasbin, "sync").returns(true);
       var copyStub = sandbox.stub(fse, "copyAsync");
       var writeStub = sandbox.stub(fse, "writeFileAsync");
       var symlinkStub = sandbox.stub(fse, "symlinkSync");
@@ -244,6 +294,7 @@ describe("serverless-wsgi", () => {
         .stub(child_process, "spawnSync")
         .returns({ status: 0 });
       plugin.hooks["before:package:createDeploymentArtifacts"]().then(() => {
+        expect(hasbinStub.called).to.be.false;
         expect(copyStub.called).to.be.true;
         expect(writeStub.called).to.be.true;
         expect(symlinkStub.called).to.be.true;
@@ -284,6 +335,7 @@ describe("serverless-wsgi", () => {
       );
 
       var sandbox = sinon.createSandbox();
+      var hasbinStub = sandbox.stub(hasbin, "sync").returns(true);
       var copyStub = sandbox.stub(fse, "copyAsync");
       var writeStub = sandbox.stub(fse, "writeFileAsync");
       sandbox.stub(fse, "readdirSync").returns([]);
@@ -292,6 +344,7 @@ describe("serverless-wsgi", () => {
         .stub(child_process, "spawnSync")
         .returns({ status: 0 });
       plugin.hooks["before:package:createDeploymentArtifacts"]().then(() => {
+        expect(hasbinStub.calledWith("python2.7")).to.be.true;
         expect(copyStub.called).to.be.true;
         expect(writeStub.called).to.be.true;
         expect(
@@ -318,6 +371,7 @@ describe("serverless-wsgi", () => {
       );
 
       var sandbox = sinon.createSandbox();
+      sandbox.stub(hasbin, "sync").returns(true);
       sandbox.stub(fse, "copyAsync");
       sandbox.stub(fse, "writeFileAsync");
       sandbox.stub(fse, "symlinkSync").throws();
@@ -344,6 +398,7 @@ describe("serverless-wsgi", () => {
       );
 
       var sandbox = sinon.createSandbox();
+      sandbox.stub(hasbin, "sync").returns(true);
       sandbox.stub(fse, "copyAsync");
       sandbox.stub(fse, "writeFileAsync");
       sandbox.stub(fse, "symlinkSync").throws();
@@ -370,6 +425,7 @@ describe("serverless-wsgi", () => {
       );
 
       var sandbox = sinon.createSandbox();
+      var hasbinStub = sandbox.stub(hasbin, "sync").returns(true);
       var copyStub = sandbox.stub(fse, "copyAsync");
       var writeStub = sandbox.stub(fse, "writeFileAsync");
       sandbox.stub(fse, "symlinkSync").throws();
@@ -380,6 +436,7 @@ describe("serverless-wsgi", () => {
         .stub(child_process, "spawnSync")
         .returns({ status: 0 });
       plugin.hooks["before:package:createDeploymentArtifacts"]().then(() => {
+        expect(hasbinStub.calledWith("python2.7")).to.be.true;
         expect(copyStub.called).to.be.false;
         expect(writeStub.called).to.be.false;
         expect(
@@ -405,6 +462,7 @@ describe("serverless-wsgi", () => {
       );
 
       var sandbox = sinon.createSandbox();
+      var hasbinStub = sandbox.stub(hasbin, "sync").returns(true);
       var copyStub = sandbox.stub(fse, "copyAsync");
       var writeStub = sandbox.stub(fse, "writeFileAsync");
       sandbox.stub(fse, "existsSync").returns(false);
@@ -412,6 +470,7 @@ describe("serverless-wsgi", () => {
         .stub(child_process, "spawnSync")
         .returns({ status: 0 });
       plugin.hooks["before:package:createDeploymentArtifacts"]().then(() => {
+        expect(hasbinStub.calledWith("python2.7")).to.be.true;
         expect(copyStub.called).to.be.false;
         expect(writeStub.called).to.be.false;
         expect(procStub.called).to.be.false;
@@ -434,6 +493,7 @@ describe("serverless-wsgi", () => {
       );
 
       var sandbox = sinon.createSandbox();
+      sandbox.stub(hasbin, "sync").returns(true);
       sandbox.stub(fse, "existsSync").returns(true);
       sandbox.stub(child_process, "spawnSync").returns({ status: 1 });
 
@@ -456,6 +516,7 @@ describe("serverless-wsgi", () => {
       );
 
       var sandbox = sinon.createSandbox();
+      sandbox.stub(hasbin, "sync").returns(true);
       sandbox.stub(fse, "existsSync").returns(true);
       sandbox
         .stub(child_process, "spawnSync")
@@ -483,6 +544,7 @@ describe("serverless-wsgi", () => {
       );
 
       var sandbox = sinon.createSandbox();
+      var hasbinStub = sandbox.stub(hasbin, "sync").returns(true);
       var copyStub = sandbox.stub(fse, "copyAsync");
       var writeStub = sandbox.stub(fse, "writeFileAsync");
       var existsStub = sandbox.stub(fse, "existsSync").returns(true);
@@ -490,6 +552,7 @@ describe("serverless-wsgi", () => {
         .stub(child_process, "spawnSync")
         .returns({ status: 0 });
       plugin.hooks["before:package:createDeploymentArtifacts"]().then(() => {
+        expect(hasbinStub.calledWith("python2.7")).to.be.true;
         expect(copyStub.called).to.be.true;
         expect(writeStub.called).to.be.true;
         expect(existsStub.called).to.be.false;
@@ -516,8 +579,10 @@ describe("serverless-wsgi", () => {
       );
 
       var sandbox = sinon.createSandbox();
+      var hasbinStub = sandbox.stub(hasbin, "sync").returns(true);
       var removeStub = sandbox.stub(fse, "removeAsync");
       plugin.hooks["after:package:createDeploymentArtifacts"]().then(() => {
+        expect(hasbinStub.calledWith("python2.7")).to.be.true;
         expect(removeStub.calledWith("/tmp/wsgi.py")).to.be.true;
         expect(removeStub.calledWith("/tmp/.wsgi_app")).to.be.true;
         expect(removeStub.calledWith("/tmp/.requirements")).to.be.false;
@@ -546,12 +611,14 @@ describe("serverless-wsgi", () => {
       );
 
       var sandbox = sinon.createSandbox();
+      var hasbinStub = sandbox.stub(hasbin, "sync").returns(true);
       var copyStub = sandbox.stub(fse, "copyAsync");
       var writeStub = sandbox.stub(fse, "writeFileAsync");
       var procStub = sandbox
         .stub(child_process, "spawnSync")
         .returns({ status: 0 });
       plugin.hooks["before:deploy:function:packageFunction"]().then(() => {
+        expect(hasbinStub.calledWith("python2.7")).to.be.true;
         expect(copyStub.called).to.be.false;
         expect(writeStub.called).to.be.false;
         expect(procStub.called).to.be.true;
@@ -578,6 +645,7 @@ describe("serverless-wsgi", () => {
       );
 
       var sandbox = sinon.createSandbox();
+      var hasbinStub = sandbox.stub(hasbin, "sync").returns(true);
       var copyStub = sandbox.stub(fse, "copyAsync");
       var writeStub = sandbox.stub(fse, "writeFileAsync");
       sandbox.stub(fse, "readdirSync").returns([]);
@@ -586,6 +654,7 @@ describe("serverless-wsgi", () => {
         .stub(child_process, "spawnSync")
         .returns({ status: 0 });
       plugin.hooks["before:deploy:function:packageFunction"]().then(() => {
+        expect(hasbinStub.calledWith("python2.7")).to.be.true;
         expect(
           copyStub.calledWith(
             path.resolve(__dirname, "wsgi.py"),
@@ -627,11 +696,13 @@ describe("serverless-wsgi", () => {
       );
 
       var sandbox = sinon.createSandbox();
+      var hasbinStub = sandbox.stub(hasbin, "sync").returns(true);
       var removeStub = sandbox.stub(fse, "removeAsync");
       var existsStub = sandbox.stub(fse, "existsSync").returns(true);
       sandbox.stub(fse, "readdirSync").returns(["flask"]);
       var unlinkStub = sandbox.stub(fse, "unlinkSync");
       plugin.hooks["after:deploy:function:packageFunction"]().then(() => {
+        expect(hasbinStub.calledWith("python2.7")).to.be.true;
         expect(existsStub.calledWith("/tmp/.requirements")).to.be.true;
         expect(unlinkStub.calledWith("flask")).to.be.true;
         expect(removeStub.calledWith("/tmp/wsgi.py")).to.be.true;
@@ -647,7 +718,8 @@ describe("serverless-wsgi", () => {
       var plugin = new Plugin({
         config: { servicePath: "/tmp" },
         service: { provider: { runtime: "python2.7" } },
-        classes: { Error: Error }
+        classes: { Error: Error },
+        cli: { log: () => {} }
       });
 
       return expect(plugin.hooks["wsgi:serve:serve"]()).to.be.rejected;
@@ -661,15 +733,19 @@ describe("serverless-wsgi", () => {
             provider: { runtime: "python2.7" },
             custom: { wsgi: { app: "api.app" } }
           },
-          classes: { Error: Error }
+          classes: { Error: Error },
+          cli: { log: () => {} }
         },
         {}
       );
 
-      var stub = sinon.stub(child_process, "spawnSync").returns({});
+      var sandbox = sinon.createSandbox();
+      var hasbinStub = sandbox.stub(hasbin, "sync").returns(true);
+      var procStub = sandbox.stub(child_process, "spawnSync").returns({});
       plugin.hooks["wsgi:serve:serve"]().then(() => {
+        expect(hasbinStub.calledWith("python2.7")).to.be.true;
         expect(
-          stub.calledWith(
+          procStub.calledWith(
             "python2.7",
             [
               path.resolve(__dirname, "serve.py"),
@@ -681,7 +757,7 @@ describe("serverless-wsgi", () => {
             { stdio: "inherit" }
           )
         ).to.be.true;
-        stub.restore();
+        sandbox.restore();
       });
     });
 
@@ -693,19 +769,23 @@ describe("serverless-wsgi", () => {
             provider: { runtime: "python2.7" },
             custom: { wsgi: { app: "api.app" } }
           },
-          classes: { Error: Error }
+          classes: { Error: Error },
+          cli: { log: () => {} }
         },
         {}
       );
 
-      var stub = sinon
+      var sandbox = sinon.createSandbox();
+      var hasbinStub = sandbox.stub(hasbin, "sync").returns(true);
+      var procStub = sandbox
         .stub(child_process, "spawnSync")
         .returns({ error: "Something failed" });
       expect(
         plugin.hooks["wsgi:serve:serve"]()
       ).to.eventually.be.rejected.and.notify(() => {
+        expect(hasbinStub.calledWith("python2.7")).to.be.true;
         expect(
-          stub.calledWith(
+          procStub.calledWith(
             "python2.7",
             [
               path.resolve(__dirname, "serve.py"),
@@ -717,7 +797,7 @@ describe("serverless-wsgi", () => {
             { stdio: "inherit" }
           )
         ).to.be.true;
-        stub.restore();
+        sandbox.restore();
       });
     });
 
@@ -729,15 +809,19 @@ describe("serverless-wsgi", () => {
             provider: { runtime: "python2.7" },
             custom: { wsgi: { app: "api.app" } }
           },
-          classes: { Error: Error }
+          classes: { Error: Error },
+          cli: { log: () => {} }
         },
         { port: 8000 }
       );
 
-      var stub = sinon.stub(child_process, "spawnSync").returns({});
+      var sandbox = sinon.createSandbox();
+      var hasbinStub = sandbox.stub(hasbin, "sync").returns(true);
+      var procStub = sandbox.stub(child_process, "spawnSync").returns({});
       plugin.hooks["wsgi:serve:serve"]().then(() => {
+        expect(hasbinStub.calledWith("python2.7")).to.be.true;
         expect(
-          stub.calledWith(
+          procStub.calledWith(
             "python2.7",
             [
               path.resolve(__dirname, "serve.py"),
@@ -749,7 +833,7 @@ describe("serverless-wsgi", () => {
             { stdio: "inherit" }
           )
         ).to.be.true;
-        stub.restore();
+        sandbox.restore();
       });
     });
 
@@ -761,15 +845,19 @@ describe("serverless-wsgi", () => {
             provider: { runtime: "python2.7" },
             custom: { wsgi: { app: "api.app" } }
           },
-          classes: { Error: Error }
+          classes: { Error: Error },
+          cli: { log: () => {} }
         },
         { host: "0.0.0.0" }
       );
 
-      var stub = sinon.stub(child_process, "spawnSync").returns({});
+      var sandbox = sinon.createSandbox();
+      var hasbinStub = sandbox.stub(hasbin, "sync").returns(true);
+      var procStub = sandbox.stub(child_process, "spawnSync").returns({});
       plugin.hooks["wsgi:serve:serve"]().then(() => {
+        expect(hasbinStub.calledWith("python2.7")).to.be.true;
         expect(
-          stub.calledWith(
+          procStub.calledWith(
             "python2.7",
             [
               path.resolve(__dirname, "serve.py"),
@@ -781,7 +869,7 @@ describe("serverless-wsgi", () => {
             { stdio: "inherit" }
           )
         ).to.be.true;
-        stub.restore();
+        sandbox.restore();
       });
     });
 
@@ -807,12 +895,14 @@ describe("serverless-wsgi", () => {
             },
             custom: { wsgi: { app: "api.app" } }
           },
-          classes: { Error: Error }
+          classes: { Error: Error },
+          cli: { log: () => {} }
         },
         { port: 8000 }
       );
 
       var sandbox = sinon.createSandbox();
+      sandbox.stub(hasbin, "sync").returns(true);
       sandbox.stub(child_process, "spawnSync").returns({});
       sandbox.stub(process, "env").value({});
       plugin.hooks["wsgi:serve:serve"]().then(() => {
@@ -845,11 +935,13 @@ describe("serverless-wsgi", () => {
       );
 
       var sandbox = sinon.createSandbox();
+      var hasbinStub = sandbox.stub(hasbin, "sync").returns(true);
       var removeStub = sandbox.stub(fse, "removeAsync");
       var existsStub = sandbox.stub(fse, "existsSync").returns(true);
       sandbox.stub(fse, "readdirSync").returns(["flask"]);
       var unlinkStub = sandbox.stub(fse, "unlinkSync");
       plugin.hooks["wsgi:clean:clean"]().then(() => {
+        expect(hasbinStub.calledWith("python2.7")).to.be.true;
         expect(existsStub.calledWith("/tmp/.requirements")).to.be.true;
         expect(unlinkStub.calledWith("flask")).to.be.true;
         expect(removeStub.calledWith("/tmp/wsgi.py")).to.be.true;
@@ -878,9 +970,11 @@ describe("serverless-wsgi", () => {
       );
 
       var sandbox = sinon.createSandbox();
+      var hasbinStub = sandbox.stub(hasbin, "sync").returns(true);
       var removeStub = sandbox.stub(fse, "removeAsync");
       var existsStub = sandbox.stub(fse, "existsSync").returns(true);
       plugin.hooks["wsgi:clean:clean"]().then(() => {
+        expect(hasbinStub.calledWith("python2.7")).to.be.true;
         expect(existsStub.calledWith("/tmp/.requirements")).to.be.false;
         expect(removeStub.calledWith("/tmp/wsgi.py")).to.be.true;
         expect(removeStub.calledWith("/tmp/.wsgi_app")).to.be.true;

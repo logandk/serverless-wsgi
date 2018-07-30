@@ -3,6 +3,7 @@
 ## Features
 
 - Allow adding additional text mime-types
+- Improve detection of available Python executable and associated error messages
 
 ## Internal
 

@@ -5,18 +5,16 @@ const _ = require("lodash");
 const path = require("path");
 const fse = require("fs-extra");
 const child_process = require("child_process");
+const hasbin = require("hasbin");
 
 BbPromise.promisifyAll(fse);
 
 class ServerlessWSGI {
   validate() {
     this.enableRequirements = true;
-    this.pythonBin = this.serverless.service.provider.runtime;
+    this.pythonBin = this.locatePython();
 
     if (this.serverless.service.custom && this.serverless.service.custom.wsgi) {
-      this.pythonBin =
-        this.serverless.service.custom.wsgi.pythonBin || this.pythonBin;
-
       if (this.serverless.service.custom.wsgi.app) {
         this.wsgiApp = this.serverless.service.custom.wsgi.app;
         this.appPath = path.dirname(
@@ -47,6 +45,44 @@ class ServerlessWSGI {
       );
       this.serverless.service.package.exclude.push(".requirements/**");
     }
+  }
+
+  locatePython() {
+    if (
+      this.serverless.service.custom &&
+      this.serverless.service.custom.wsgi &&
+      this.serverless.service.custom.wsgi.pythonBin
+    ) {
+      this.serverless.cli.log(
+        `Using Python specified in "pythonBin": ${
+          this.serverless.service.custom.wsgi.pythonBin
+        }`
+      );
+
+      return this.serverless.service.custom.wsgi.pythonBin;
+    }
+
+    if (this.serverless.service.provider.runtime) {
+      if (hasbin.sync(this.serverless.service.provider.runtime)) {
+        this.serverless.cli.log(
+          `Using Python specified in "runtime": ${
+            this.serverless.service.provider.runtime
+          }`
+        );
+
+        return this.serverless.service.provider.runtime;
+      } else {
+        this.serverless.cli.log(
+          `Python executable not found for "runtime": ${
+            this.serverless.service.provider.runtime
+          }`
+        );
+      }
+    }
+
+    this.serverless.cli.log("Using default Python executable: python");
+
+    return "python";
   }
 
   getConfig() {
@@ -109,7 +145,15 @@ class ServerlessWSGI {
     return new BbPromise((resolve, reject) => {
       const res = child_process.spawnSync(this.pythonBin, args);
       if (res.error) {
-        return reject(res.error);
+        if (res.error.code == "ENOENT") {
+          return reject(
+            `Unable to run Python executable: ${
+              this.pythonBin
+            }. Use the "pythonBin" option to set your Python executable explicitly.`
+          );
+        } else {
+          return reject(res.error);
+        }
       }
       if (res.status != 0) {
         return reject(res.stderr);
@@ -226,7 +270,15 @@ class ServerlessWSGI {
         { stdio: "inherit" }
       );
       if (status.error) {
-        reject(status.error);
+        if (status.error.code == "ENOENT") {
+          reject(
+            `Unable to run Python executable: ${
+              this.pythonBin
+            }. Use the "pythonBin" option to set your Python executable explicitly.`
+          );
+        } else {
+          reject(status.error);
+        }
       } else {
         resolve();
       }
