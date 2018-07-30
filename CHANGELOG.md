@@ -2,8 +2,9 @@
 
 ## Features
 
-- Allow adding additional text mime-types
-- Improve detection of available Python executable and associated error messages
+- Allow adding additional text mime-types (#68)
+- Improve detection of available Python executable and associated error messages (#66)
+- Start multithreaded server when running `sls wsgi serve` (#69)
 
 ## Internal
 

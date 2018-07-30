@@ -59,6 +59,7 @@ def test_serve(mock_path, mock_importlib, mock_werkzeug):
         "use_reloader": True,
         "use_debugger": True,
         "use_evalex": True,
+        "threaded": True,
     }
 
 
@@ -74,6 +75,7 @@ def test_serve_alternative_hostname(mock_path, mock_importlib, mock_werkzeug):
         "use_reloader": True,
         "use_debugger": True,
         "use_evalex": True,
+        "threaded": True,
     }
 
 
@@ -90,6 +92,7 @@ def test_serve_from_subdir(mock_path, mock_importlib, mock_werkzeug):
         "use_reloader": True,
         "use_debugger": True,
         "use_evalex": True,
+        "threaded": True,
     }
 
 

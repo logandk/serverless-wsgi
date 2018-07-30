@@ -34,7 +34,13 @@ def serve(cwd, app, port, host="localhost"):
         pass
 
     serving.run_simple(
-        host, int(port), wsgi_app, use_debugger=True, use_reloader=True, use_evalex=True
+        host,
+        int(port),
+        wsgi_app,
+        use_debugger=True,
+        use_reloader=True,
+        use_evalex=True,
+        threaded=True,
     )
 
 
