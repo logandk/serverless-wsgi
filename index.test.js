@@ -93,6 +93,12 @@ describe("serverless-wsgi", () => {
             "/tmp/wsgi.py"
           )
         ).to.be.true;
+        expect(
+          copyStub.calledWith(
+            path.resolve(__dirname, "serverless_wsgi.py"),
+            "/tmp/serverless_wsgi.py"
+          )
+        ).to.be.true;
         expect(writeStub.calledWith("/tmp/.wsgi_app")).to.be.true;
         expect(JSON.parse(writeStub.lastCall.args[1])).to.deep.equal({
           app: "api.app"
@@ -107,6 +113,7 @@ describe("serverless-wsgi", () => {
         sandbox.restore();
         expect(plugin.serverless.service.package.include).to.have.members([
           "wsgi.py",
+          "serverless_wsgi.py",
           ".wsgi_app"
         ]);
         expect(plugin.serverless.service.package.exclude).to.have.members([
@@ -208,6 +215,7 @@ describe("serverless-wsgi", () => {
       plugin.hooks["after:package:createDeploymentArtifacts"]().then(() => {
         expect(hasbinStub.calledWith("python2.7")).to.be.true;
         expect(removeStub.calledWith("/tmp/wsgi.py")).to.be.true;
+        expect(removeStub.calledWith("/tmp/serverless_wsgi.py")).to.be.true;
         expect(removeStub.calledWith("/tmp/.wsgi_app")).to.be.true;
         expect(removeStub.calledWith("/tmp/.requirements")).to.be.false;
         sandbox.restore();
@@ -257,6 +265,7 @@ describe("serverless-wsgi", () => {
         expect(plugin.serverless.service.package.include).to.have.members([
           "sample.txt",
           "wsgi.py",
+          "serverless_wsgi.py",
           ".wsgi_app",
           "flask",
           "flask/**"
@@ -309,6 +318,7 @@ describe("serverless-wsgi", () => {
         expect(plugin.serverless.service.package.include).to.have.members([
           "sample.txt",
           "wsgi.py",
+          "serverless_wsgi.py",
           ".wsgi_app",
           "flask",
           "flask/**"
@@ -584,6 +594,7 @@ describe("serverless-wsgi", () => {
       plugin.hooks["after:package:createDeploymentArtifacts"]().then(() => {
         expect(hasbinStub.calledWith("python2.7")).to.be.true;
         expect(removeStub.calledWith("/tmp/wsgi.py")).to.be.true;
+        expect(removeStub.calledWith("/tmp/serverless_wsgi.py")).to.be.true;
         expect(removeStub.calledWith("/tmp/.wsgi_app")).to.be.true;
         expect(removeStub.calledWith("/tmp/.requirements")).to.be.false;
         sandbox.restore();
@@ -661,6 +672,12 @@ describe("serverless-wsgi", () => {
             "/tmp/wsgi.py"
           )
         ).to.be.true;
+        expect(
+          copyStub.calledWith(
+            path.resolve(__dirname, "serverless_wsgi.py"),
+            "/tmp/serverless_wsgi.py"
+          )
+        ).to.be.true;
         expect(writeStub.calledWith("/tmp/.wsgi_app")).to.be.true;
         expect(JSON.parse(writeStub.lastCall.args[1])).to.deep.equal({
           app: "api.app"
@@ -706,6 +723,7 @@ describe("serverless-wsgi", () => {
         expect(existsStub.calledWith("/tmp/.requirements")).to.be.true;
         expect(unlinkStub.calledWith("flask")).to.be.true;
         expect(removeStub.calledWith("/tmp/wsgi.py")).to.be.true;
+        expect(removeStub.calledWith("/tmp/serverless_wsgi.py")).to.be.true;
         expect(removeStub.calledWith("/tmp/.wsgi_app")).to.be.true;
         expect(removeStub.calledWith("/tmp/.requirements")).to.be.false;
         sandbox.restore();
@@ -945,6 +963,7 @@ describe("serverless-wsgi", () => {
         expect(existsStub.calledWith("/tmp/.requirements")).to.be.true;
         expect(unlinkStub.calledWith("flask")).to.be.true;
         expect(removeStub.calledWith("/tmp/wsgi.py")).to.be.true;
+        expect(removeStub.calledWith("/tmp/serverless_wsgi.py")).to.be.true;
         expect(removeStub.calledWith("/tmp/.wsgi_app")).to.be.true;
         expect(removeStub.calledWith("/tmp/.requirements")).to.be.true;
         sandbox.restore();
@@ -977,6 +996,7 @@ describe("serverless-wsgi", () => {
         expect(hasbinStub.calledWith("python2.7")).to.be.true;
         expect(existsStub.calledWith("/tmp/.requirements")).to.be.false;
         expect(removeStub.calledWith("/tmp/wsgi.py")).to.be.true;
+        expect(removeStub.calledWith("/tmp/serverless_wsgi.py")).to.be.true;
         expect(removeStub.calledWith("/tmp/.wsgi_app")).to.be.true;
         expect(removeStub.calledWith("/tmp/.requirements")).to.be.false;
         sandbox.restore();

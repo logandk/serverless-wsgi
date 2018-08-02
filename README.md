@@ -326,6 +326,34 @@ custom:
     - application/vnd.company+json
 ```
 
+## Usage without Serverless
+
+The AWS API Gateway to WSGI mapping module is available on PyPI in the
+`serverless-wsgi` package.
+
+Use this package if you need to deploy Python Lambda functions to handle
+API Gateway events directly, without using the Serverless framework.
+
+```
+pip install serverless-wsgi
+```
+
+Initialize your WSGI application and in your Lambda event handler, call
+the request mapper:
+
+```python
+import app  # Replace with your actual application
+import serverless_wsgi
+
+# If you need to send additional content types as text, add then directly
+# to the whitelist:
+#
+# serverless_wsgi.TEXT_MIME_TYPES.append("application/custom+json")
+
+def handle(event, context):
+    return serverless_wsgi.handle_request(app.app, event, context)
+```
+
 # Thanks
 
 Thanks to [Zappa](https://github.com/Miserlou/Zappa), which has been both the

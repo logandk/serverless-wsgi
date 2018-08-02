@@ -35,7 +35,7 @@ class ServerlessWSGI {
 
     this.serverless.service.package.include = _.union(
       this.serverless.service.package.include,
-      ["wsgi.py", ".wsgi_app"]
+      ["wsgi.py", "serverless_wsgi.py", ".wsgi_app"]
     );
 
     if (this.enableRequirements) {
@@ -109,6 +109,10 @@ class ServerlessWSGI {
       fse.copyAsync(
         path.resolve(__dirname, "wsgi.py"),
         path.join(this.serverless.config.servicePath, "wsgi.py")
+      ),
+      fse.copyAsync(
+        path.resolve(__dirname, "serverless_wsgi.py"),
+        path.join(this.serverless.config.servicePath, "serverless_wsgi.py")
       ),
       fse.writeFileAsync(
         path.join(this.serverless.config.servicePath, ".wsgi_app"),
@@ -221,7 +225,7 @@ class ServerlessWSGI {
   }
 
   cleanup() {
-    const artifacts = ["wsgi.py", ".wsgi_app"];
+    const artifacts = ["wsgi.py", "serverless_wsgi.py", ".wsgi_app"];
 
     return BbPromise.all(
       _.map(artifacts, artifact =>
