@@ -47,3 +47,5 @@ __pycache__
 .cache
 
 env/
+build/
+*.egg-info/
