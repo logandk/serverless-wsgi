@@ -1,3 +1,11 @@
+# 1.5.1
+
+## Bugs
+
+- Fix import error when using unzip_requirements from serverless-python-requirements (#72)
+
+  _Justin Plock_
+
 # 1.5.0
 
 ## Features
