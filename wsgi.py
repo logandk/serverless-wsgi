@@ -10,7 +10,6 @@ import importlib
 import json
 import os
 import sys
-import serverless_wsgi
 
 # Call decompression helper from `serverless-python-requirements` if
 # available. See: https://github.com/UnitedIncome/serverless-python-requirements#dealing-with-lambdas-size-limitations
@@ -18,6 +17,8 @@ try:
     import unzip_requirements  # noqa
 except ImportError:
     pass
+
+import serverless_wsgi
 
 
 def load_config():
