@@ -28,13 +28,11 @@ except:  # noqa: E722
 
 
 class ObjectStub:
-
     def __init__(self, **kwds):
         self.__dict__.update(kwds)
 
 
 class MockApp:
-
     def __init__(self):
         self.cookie_count = 3
         self.response_mimetype = "text/plain"
@@ -54,7 +52,6 @@ class MockApp:
 
 
 class MockFile:
-
     def __init__(self):
         self.contents = None
 
@@ -72,7 +69,6 @@ class MockFile:
 
 
 class MockFileManager:
-
     def __init__(self):
         self.files = {}
 
@@ -432,7 +428,11 @@ def test_handler_base64(mock_wsgi_app_file, mock_app, event, wsgi):
 def test_handler_plain(mock_wsgi_app_file, mock_app, event, wsgi):
     wsgi.wsgi_app.cookie_count = 1
 
-    plain_mimetypes = ["application/vnd.api+json", "application/javascript"]
+    plain_mimetypes = [
+        "application/vnd.api+json",
+        "application/javascript",
+        "image/svg+xml",
+    ]
 
     for mimetype in plain_mimetypes:
         wsgi.wsgi_app.response_mimetype = mimetype

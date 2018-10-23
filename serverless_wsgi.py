@@ -22,6 +22,7 @@ TEXT_MIME_TYPES = [
     "application/javascript",
     "application/xml",
     "application/vnd.api+json",
+    "image/svg+xml",
 ]
 
 
