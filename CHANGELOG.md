@@ -1,3 +1,13 @@
+# 1.5.2
+
+## Features
+
+- Add `image/svg+xml` to default text mime types (#74)
+
+## Bugs
+
+- Add missing `werkzeug` requirement to `setup.py` (#73)
+
 # 1.5.1
 
 ## Bugs
