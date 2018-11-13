@@ -1,3 +1,10 @@
+# 1.5.3
+
+## Features
+
+- Add `sls wsgi install` command to install WSGI handler and requirements for local use
+- Support `sls invoke local` (serverless/serverless#5475)
+
 # 1.5.2
 
 ## Features
