@@ -12,7 +12,6 @@ BbPromise.promisifyAll(fse);
 class ServerlessWSGI {
   validate() {
     this.enableRequirements = true;
-    this.pythonBin = this.locatePython();
 
     if (this.serverless.service.custom && this.serverless.service.custom.wsgi) {
       if (this.serverless.service.custom.wsgi.app) {
@@ -27,6 +26,17 @@ class ServerlessWSGI {
       }
     }
 
+    if (this.enableRequirements) {
+      this.requirementsInstallPath = path.join(
+        this.appPath ? this.appPath : this.serverless.config.servicePath,
+        ".requirements"
+      );
+    }
+
+    return BbPromise.resolve();
+  }
+
+  configurePackaging() {
     this.serverless.service.package = this.serverless.service.package || {};
     this.serverless.service.package.include =
       this.serverless.service.package.include || [];
@@ -39,12 +49,10 @@ class ServerlessWSGI {
     );
 
     if (this.enableRequirements) {
-      this.requirementsInstallPath = path.join(
-        this.appPath ? this.appPath : this.serverless.config.servicePath,
-        ".requirements"
-      );
       this.serverless.service.package.exclude.push(".requirements/**");
     }
+
+    return BbPromise.resolve();
   }
 
   locatePython() {
@@ -59,7 +67,8 @@ class ServerlessWSGI {
         }`
       );
 
-      return this.serverless.service.custom.wsgi.pythonBin;
+      this.pythonBin = this.serverless.service.custom.wsgi.pythonBin;
+      return BbPromise.resolve();
     }
 
     if (this.serverless.service.provider.runtime) {
@@ -70,7 +79,8 @@ class ServerlessWSGI {
           }`
         );
 
-        return this.serverless.service.provider.runtime;
+        this.pythonBin = this.serverless.service.provider.runtime;
+        return BbPromise.resolve();
       } else {
         this.serverless.cli.log(
           `Python executable not found for "runtime": ${
@@ -82,10 +92,11 @@ class ServerlessWSGI {
 
     this.serverless.cli.log("Using default Python executable: python");
 
-    return "python";
+    this.pythonBin = "python";
+    return BbPromise.resolve();
   }
 
-  getConfig() {
+  getWsgiHandlerConfiguration() {
     const config = { app: this.wsgiApp };
 
     if (_.isArray(this.serverless.service.custom.wsgi.textMimeTypes)) {
@@ -95,7 +106,7 @@ class ServerlessWSGI {
     return config;
   }
 
-  packWsgiHandler() {
+  packWsgiHandler(verbose = true) {
     if (!this.wsgiApp) {
       this.serverless.cli.log(
         "Warning: No WSGI app specified, omitting WSGI handler from package"
@@ -103,7 +114,9 @@ class ServerlessWSGI {
       return BbPromise.resolve();
     }
 
-    this.serverless.cli.log("Packaging Python WSGI handler...");
+    if (verbose) {
+      this.serverless.cli.log("Packaging Python WSGI handler...");
+    }
 
     return BbPromise.all([
       fse.copyAsync(
@@ -116,7 +129,7 @@ class ServerlessWSGI {
       ),
       fse.writeFileAsync(
         path.join(this.serverless.config.servicePath, ".wsgi_app"),
-        JSON.stringify(this.getConfig())
+        JSON.stringify(this.getWsgiHandlerConfiguration())
       )
     ]);
   }
@@ -309,6 +322,10 @@ class ServerlessWSGI {
               }
             }
           },
+          install: {
+            usage: "Install WSGI handler and requirements for local use.",
+            lifecycleEvents: ["install"]
+          },
           clean: {
             usage: "Remove cached requirements.",
             lifecycleEvents: ["clean"]
@@ -317,67 +334,72 @@ class ServerlessWSGI {
       }
     };
 
+    const deployBeforeHook = () =>
+      BbPromise.bind(this)
+        .then(this.validate)
+        .then(this.configurePackaging)
+        .then(this.locatePython)
+        .then(this.packWsgiHandler)
+        .then(this.packRequirements)
+        .then(this.linkRequirements);
+
+    const deployBeforeHookWithoutHandler = () =>
+      BbPromise.bind(this)
+        .then(this.validate)
+        .then(this.configurePackaging)
+        .then(this.locatePython)
+        .then(this.packRequirements)
+        .then(this.linkRequirements);
+
+    const deployAfterHook = () =>
+      BbPromise.bind(this)
+        .then(this.validate)
+        .then(this.unlinkRequirements)
+        .then(this.cleanup);
+
     this.hooks = {
-      "before:package:createDeploymentArtifacts": () =>
-        BbPromise.bind(this)
-          .then(this.validate)
-          .then(this.packWsgiHandler)
-          .then(this.packRequirements)
-          .then(this.linkRequirements),
-
-      "after:package:createDeploymentArtifacts": () =>
-        BbPromise.bind(this)
-          .then(this.validate)
-          .then(this.unlinkRequirements)
-          .then(this.cleanup),
-
       "wsgi:serve:serve": () =>
         BbPromise.bind(this)
           .then(this.validate)
+          .then(this.locatePython)
           .then(this.loadEnvVars)
           .then(this.serve),
 
-      "wsgi:clean:clean": () =>
-        BbPromise.bind(this)
-          .then(this.validate)
-          .then(this.unlinkRequirements)
-          .then(this.cleanRequirements)
-          .then(this.cleanup),
+      "wsgi:install:install": deployBeforeHook,
 
-      "before:deploy:function:packageFunction": () =>
-        BbPromise.bind(this).then(() => {
-          if (this.options.functionObj.handler == "wsgi.handler") {
-            return BbPromise.bind(this)
-              .then(this.validate)
-              .then(this.packWsgiHandler)
-              .then(this.packRequirements)
-              .then(this.linkRequirements);
-          } else {
-            return BbPromise.bind(this)
-              .then(this.validate)
-              .then(this.packRequirements)
-              .then(this.linkRequirements);
-          }
-        }),
+      "wsgi:clean:clean": () => deployAfterHook().then(this.cleanRequirements),
 
-      "after:deploy:function:packageFunction": () =>
-        BbPromise.bind(this)
-          .then(this.validate)
-          .then(this.unlinkRequirements)
-          .then(this.cleanup),
+      "before:package:createDeploymentArtifacts": deployBeforeHook,
+      "after:package:createDeploymentArtifacts": deployAfterHook,
 
-      "before:offline:start:init": () =>
-        BbPromise.bind(this)
-          .then(this.validate)
-          .then(this.packWsgiHandler)
-          .then(this.packRequirements)
-          .then(this.linkRequirements),
+      "before:deploy:function:packageFunction": () => {
+        if (this.options.functionObj.handler == "wsgi.handler") {
+          return deployBeforeHook();
+        } else {
+          return deployBeforeHookWithoutHandler();
+        }
+      },
+      "after:deploy:function:packageFunction": deployAfterHook,
 
-      "after:offline:start:end": () =>
-        BbPromise.bind(this)
-          .then(this.validate)
-          .then(this.unlinkRequirements)
-          .then(this.cleanup)
+      "before:offline:start:init": deployBeforeHook,
+      "after:offline:start:end": deployAfterHook,
+
+      "before:invoke:local:invoke": () => {
+        const functionObj = this.serverless.service.getFunction(
+          this.options.function
+        );
+
+        if (functionObj.handler == "wsgi.handler") {
+          BbPromise.bind(this)
+            .then(this.validate)
+            .then(() => {
+              return this.packWsgiHandler(false);
+            });
+        } else {
+          return BbPromise.resolve();
+        }
+      },
+      "after:invoke:local:invoke": () => BbPromise.bind(this).then(this.cleanup)
     };
   }
 }
