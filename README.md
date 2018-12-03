@@ -14,7 +14,7 @@ http://wsgi.readthedocs.io/en/latest/frameworks.html.
 
 ### Features
 
-- Transparently converts API Gateway requests to and from standard WSGI requests
+- Transparently converts API Gateway and ALB requests to and from standard WSGI requests
 - Supports anything you'd expect from WSGI such as redirects, cookies, file uploads etc.
 - Automatically downloads Python packages that you specify in `requirements.txt` and deploys them along with your application
 - Convenient `wsgi serve` command for serving your application locally during development
@@ -300,7 +300,8 @@ def index():
 By default, all MIME types starting with `text/` and the following whitelist are sent
 through API Gateway in plain text. All other MIME types will have their response body
 base64 encoded (and the `isBase64Encoded` API Gateway flag set) in order to be
-delivered by API Gateway as binary data.
+delivered by API Gateway as binary data (remember to add any binary MIME types that
+you're using to the _Binary Support_ list in API Gateway).
 
 This is the default whitelist of plain text MIME types:
 
@@ -308,6 +309,7 @@ This is the default whitelist of plain text MIME types:
 - `application/javascript`
 - `application/xml`
 - `application/vnd.api+json`
+- `image/svg+xml`
 
 In order to add additional plain text MIME types to this whitelist, use the
 `textMimeTypes` configuration option:
