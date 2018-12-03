@@ -13,6 +13,7 @@ import sys
 from werkzeug.datastructures import Headers
 from werkzeug.wrappers import Response
 from werkzeug.urls import url_encode
+from werkzeug.http import HTTP_STATUS_CODES
 from werkzeug._compat import BytesIO, string_types, to_bytes, wsgi_encoding_dance
 
 # List of MIME types that should not be base64 encoded. MIME types within `text/*`
@@ -126,18 +127,21 @@ def handle_request(app, event, context):
 
     returndict = {u"statusCode": response.status_code, u"headers": dict(new_headers)}
 
+    if event.get("requestContext").get("elb"):
+        # If the request comes from ALB we need to add a status description
+        returndict["statusDescription"] = u"%d %s" % (
+            response.status_code,
+            HTTP_STATUS_CODES[response.status_code],
+        )
+
     if response.data:
         mimetype = response.mimetype or "text/plain"
         if (
             mimetype.startswith("text/") or mimetype in TEXT_MIME_TYPES
         ) and not response.headers.get("Content-Encoding", ""):
             returndict["body"] = response.get_data(as_text=True)
-            if event.get("requestContext").get("elb"):  # If the request comes from the ELB we need to add those 2 fields to response
-                from werkzeug.http import HTTP_STATUS_CODES
-                returndict["isBase64Encoded"] = False
-                returndict["statusDescription"] = "%d %s" % (response.status_code, HTTP_STATUS_CODES[response.status_code])
         else:
             returndict["body"] = base64.b64encode(response.data).decode("utf-8")
-            returndict["isBase64Encoded"] = "true"
+            returndict["isBase64Encoded"] = True
 
     return returndict
