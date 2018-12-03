@@ -140,6 +140,7 @@ def handle_request(app, event, context):
             mimetype.startswith("text/") or mimetype in TEXT_MIME_TYPES
         ) and not response.headers.get("Content-Encoding", ""):
             returndict["body"] = response.get_data(as_text=True)
+            returndict["isBase64Encoded"] = False
         else:
             returndict["body"] = base64.b64encode(response.data).decode("utf-8")
             returndict["isBase64Encoded"] = True

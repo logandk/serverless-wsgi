@@ -212,6 +212,7 @@ def test_handler(mock_wsgi_app_file, mock_app, event, capsys, wsgi):
             "Set-cookie": "PART_NUMBER=ROCKET_LAUNCHER_0002; Path=/",
         },
         "statusCode": 200,
+        "isBase64Encoded": False,
     }
 
     assert wsgi.wsgi_app.last_environ == {
@@ -281,6 +282,7 @@ def test_handler_single_cookie(mock_wsgi_app_file, mock_app, event, wsgi):
             "Content-Type": "text/plain; charset=utf-8",
         },
         "statusCode": 200,
+        "isBase64Encoded": False,
     }
 
 
@@ -295,6 +297,7 @@ def test_handler_no_cookie(mock_wsgi_app_file, mock_app, event, wsgi):
             "Content-Type": "text/plain; charset=utf-8",
         },
         "statusCode": 200,
+        "isBase64Encoded": False,
     }
 
 
@@ -446,6 +449,7 @@ def test_handler_plain(mock_wsgi_app_file, mock_app, event, wsgi):
                 "Content-Type": mimetype,
             },
             "statusCode": 200,
+            "isBase64Encoded": False,
         }
 
 
@@ -532,6 +536,7 @@ def test_handler_custom_text_mime_types(
             "Content-Type": "application/custom+json",
         },
         "statusCode": 200,
+        "isBase64Encoded": False,
     }
 
 
@@ -577,4 +582,5 @@ def test_handler_alb(mock_wsgi_app_file, mock_app, wsgi):
         },
         "statusDescription": "200 OK",
         "statusCode": 200,
+        "isBase64Encoded": False,
     }
