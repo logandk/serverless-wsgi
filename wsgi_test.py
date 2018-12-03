@@ -421,7 +421,7 @@ def test_handler_base64(mock_wsgi_app_file, mock_app, event, wsgi):
             "Content-Type": "image/jpeg",
         },
         "statusCode": 200,
-        "isBase64Encoded": "true",
+        "isBase64Encoded": True,
     }
 
 
@@ -531,5 +531,50 @@ def test_handler_custom_text_mime_types(
             "Content-Length": "16",
             "Content-Type": "application/custom+json",
         },
+        "statusCode": 200,
+    }
+
+
+def test_handler_alb(mock_wsgi_app_file, mock_app, wsgi):
+    response = wsgi.handler(
+        {
+            "requestContext": {
+                "elb": {
+                    "targetGroupArn": "arn:aws:elasticloadbalancing:us-east-1:12345:targetgroup/xxxx/5e43816d76759862"
+                }
+            },
+            "httpMethod": "GET",
+            "path": "/cats",
+            "queryStringParameters": {},
+            "headers": {
+                "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
+                "accept-encoding": "gzip, deflate",
+                "accept-language": "en-US,en;q=0.9,da;q=0.8",
+                "cache-control": "max-age=0",
+                "connection": "keep-alive",
+                "host": "xxxx-203391234.us-east-1.elb.amazonaws.com",
+                "upgrade-insecure-requests": "1",
+                "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.110 Safari/537.36",
+                "x-amzn-trace-id": "Root=1-5f05949b-77e2b0f9434e2acbf5ad8ce8",
+                "x-forwarded-for": "95.181.37.218",
+                "x-forwarded-port": "80",
+                "x-forwarded-proto": "http",
+            },
+            "body": "",
+            "isBase64Encoded": False,
+        },
+        {},
+    )
+
+    assert response == {
+        "body": u"Hello World ☃!",
+        "headers": {
+            "set-cookie": "CUSTOMER=WILE_E_COYOTE; Path=/",
+            "Content-Length": "16",
+            "Content-Type": "text/plain; charset=utf-8",
+            "sEt-cookie": "LOT_NUMBER=42; Path=/",
+            "Set-cookie": "PART_NUMBER=ROCKET_LAUNCHER_0002; Path=/",
+        },
+        "statusDescription": "200 OK",
         "statusCode": 200,
     }
