@@ -1,3 +1,11 @@
+# 1.6.0
+
+## Features
+
+- Add support for ALB requests (#77)
+
+  _Alan Trope_
+
 # 1.5.3
 
 ## Features

@@ -1,6 +1,6 @@
 {
   "name": "serverless-wsgi",
-  "version": "1.5.3",
+  "version": "1.6.0",
   "engines": {
     "node": ">=4.0"
   },
@@ -49,14 +49,14 @@
   "devDependencies": {
     "chai": "^4.2.0",
     "chai-as-promised": "^7.0.0",
-    "eslint": "^5.7.0",
+    "eslint": "^5.9.0",
     "istanbul": "^0.4.4",
     "mocha": "^5.2.0",
-    "sinon": "^7.0.0"
+    "sinon": "^7.1.1"
   },
   "dependencies": {
-    "bluebird": "^3.5.2",
-    "fs-extra": "^7.0.0",
+    "bluebird": "^3.5.3",
+    "fs-extra": "^7.0.1",
     "hasbin": "^1.2.3",
     "lodash": "^4.17.11"
   }
