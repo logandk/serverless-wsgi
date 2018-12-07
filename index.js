@@ -12,6 +12,7 @@ BbPromise.promisifyAll(fse);
 class ServerlessWSGI {
   validate() {
     this.enableRequirements = true;
+    this.pipArgs = null;
 
     if (this.serverless.service.custom && this.serverless.service.custom.wsgi) {
       if (this.serverless.service.custom.wsgi.app) {
@@ -24,6 +25,8 @@ class ServerlessWSGI {
       if (this.serverless.service.custom.wsgi.packRequirements === false) {
         this.enableRequirements = false;
       }
+
+      this.pipArgs = this.serverless.service.custom.wsgi.pipArgs;
     }
 
     if (this.enableRequirements) {
@@ -135,12 +138,17 @@ class ServerlessWSGI {
   }
 
   packRequirements() {
+    if (!this.enableRequirements) {
+      return BbPromise.resolve();
+    }
+
     const requirementsPath = this.appPath || this.serverless.config.servicePath;
     const requirementsFile = path.join(requirementsPath, "requirements.txt");
     let args = [path.resolve(__dirname, "requirements.py")];
 
-    if (!this.enableRequirements) {
-      return BbPromise.resolve();
+    if (this.pipArgs) {
+      args.push("--pip-args");
+      args.push(this.pipArgs);
     }
 
     if (this.wsgiApp) {

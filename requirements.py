@@ -10,6 +10,7 @@ Author: Logan Raarup <logan@logan.dk>
 """
 import os
 import platform
+import shlex
 import shutil
 import subprocess
 import sys
@@ -20,7 +21,7 @@ except ImportError:  # pragma: no cover
     sys.exit("Unable to load virtualenv, please install")
 
 
-def package(req_files, target_dir):
+def package(req_files, target_dir, pip_args=""):
     venv_dir = os.path.join(target_dir, ".venv")
     tmp_dir = os.path.join(target_dir, ".tmp")
 
@@ -68,7 +69,8 @@ def package(req_files, target_dir):
 
     for req_file in req_files:
         p = subprocess.Popen(
-            [pip_exe, "install", "-r", req_file], stdout=subprocess.PIPE
+            [pip_exe, "install", "-r", req_file] + shlex.split(pip_args),
+            stdout=subprocess.PIPE,
         )
         p.communicate()
         if p.returncode != 0:
@@ -105,9 +107,20 @@ def package(req_files, target_dir):
 
 
 if __name__ == "__main__":  # pragma: no cover
-    if len(sys.argv) < 3:
+    args = sys.argv
+    pip_args = ""
+
+    if len(args) > 3 and args[1] == "--pip-args":
+        pip_args = args[2]
+        args = args[3:]
+    else:
+        args = args[1:]
+
+    if len(args) < 2:
         sys.exit(
-            "Usage: {} REQ_FILE... TARGET_DIR".format(os.path.basename(sys.argv[0]))
+            "Usage: {} --pip-args '--no-deps' REQ_FILE... TARGET_DIR".format(
+                os.path.basename(sys.argv[0])
+            )
         )
 
-    package(sys.argv[1:-1], sys.argv[-1])
+    package(args[:-1], args[-1], pip_args)

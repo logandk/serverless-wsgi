@@ -152,6 +152,16 @@ custom:
     packRequirements: false
 ```
 
+In order to pass additional arguments to `pip` when installing requirements, the `pipArgs` configuration
+option is available:
+
+```yaml
+custom:
+  wsgi:
+    app: api.app
+    pipArgs: --no-deps
+```
+
 For a more advanced approach to packaging requirements, consider using https://github.com/UnitedIncome/serverless-python-requirements.
 
 ### Python version

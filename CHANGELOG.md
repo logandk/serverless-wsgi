@@ -2,6 +2,7 @@
 
 ## Features
 
+- Add `pipArgs` configuration option for passing additional arguments to pip (#76)
 - Add support for ALB requests (#77)
 
   _Alan Trope_

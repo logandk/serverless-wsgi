@@ -12,7 +12,6 @@ from functools import partial
 
 
 class PopenStub:
-
     def __init__(self, returncode):
         self.returncode = returncode
 
@@ -168,3 +167,27 @@ def test_pip_error(mock_system, mock_virtualenv, monkeypatch):
 
     with pytest.raises(SystemExit):
         requirements.package(["/path1/requirements.txt"], "/tmp")
+
+
+def test_package_with_pip_args(mock_system, mock_virtualenv):
+    requirements.package(
+        ["/path1/requirements.txt"],
+        "/tmp",
+        "--no-deps --imaginary-arg 'imaginary \"value\"'",
+    )
+
+    # Invokes pip for package installation
+    assert mock_system[14] == (
+        "subprocess.Popen",
+        (
+            [
+                "/tmp/.venv/bin/pip",
+                "install",
+                "-r",
+                "/path1/requirements.txt",
+                "--no-deps",
+                "--imaginary-arg",
+                'imaginary "value"',
+            ],
+        ),
+    )

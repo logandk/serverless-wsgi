@@ -462,6 +462,48 @@ describe("serverless-wsgi", () => {
       });
     });
 
+    it("packages user requirements with additional pip args", () => {
+      var plugin = new Plugin(
+        {
+          config: { servicePath: "/tmp" },
+          service: {
+            provider: { runtime: "python3.6" },
+            custom: { wsgi: { pipArgs: "--no-deps 'imaginary \"value\"'" } }
+          },
+          classes: { Error: Error },
+          cli: { log: () => {} }
+        },
+        {}
+      );
+
+      var sandbox = sinon.createSandbox();
+      var hasbinStub = sandbox.stub(hasbin, "sync").returns(true);
+      var copyStub = sandbox.stub(fse, "copyAsync");
+      var writeStub = sandbox.stub(fse, "writeFileAsync");
+      sandbox.stub(fse, "symlinkSync").throws();
+      sandbox.stub(fse, "readlinkSync").returns("/tmp/.requirements/flask");
+      sandbox.stub(fse, "readdirSync").returns(["flask"]);
+      sandbox.stub(fse, "existsSync").returns(true);
+      var procStub = sandbox
+        .stub(child_process, "spawnSync")
+        .returns({ status: 0 });
+      plugin.hooks["before:package:createDeploymentArtifacts"]().then(() => {
+        expect(hasbinStub.calledWith("python3.6")).to.be.true;
+        expect(copyStub.called).to.be.false;
+        expect(writeStub.called).to.be.false;
+        expect(
+          procStub.calledWith("python3.6", [
+            path.resolve(__dirname, "requirements.py"),
+            "--pip-args",
+            "--no-deps 'imaginary \"value\"'",
+            "/tmp/requirements.txt",
+            "/tmp/.requirements"
+          ])
+        ).to.be.true;
+        sandbox.restore();
+      });
+    });
+
     it("skips packaging for non-wsgi app without user requirements", () => {
       var plugin = new Plugin(
         {
