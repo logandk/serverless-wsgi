@@ -1,4 +1,6 @@
-# Serverless WSGI
+<p align="center">
+  <img src="https://logandk.github.io/serverless-wsgi/assets/header.svg">
+</p>
 
 [![npm package](https://nodei.co/npm/serverless-wsgi.png?downloads=true&downloadRank=true&stars=true)](https://nodei.co/npm/serverless-wsgi/)
 
@@ -31,7 +33,7 @@ This will automatically add the plugin to `package.json` and the plugins section
 ## Flask configuration example
 
 <p align="center">
-    <img src="https://logandk.github.io/serverless-wsgi/assets/hello-world.svg">
+  <img src="https://logandk.github.io/serverless-wsgi/assets/hello-world.svg">
 </p>
 
 This example assumes that you have intialized your application as `app` inside `api.py`.
@@ -193,7 +195,7 @@ custom:
 ### Local server
 
 <p align="center">
-    <img src="https://logandk.github.io/serverless-wsgi/assets/serve.svg">
+  <img src="https://logandk.github.io/serverless-wsgi/assets/serve.svg">
 </p>
 
 For convenience, a `sls wsgi serve` command is provided to run your WSGI application
@@ -224,7 +226,7 @@ So, if you want to know when the application is running locally, check `os.envir
 ### Remote command execution
 
 <p align="center">
-    <img src="https://logandk.github.io/serverless-wsgi/assets/command.svg">
+  <img src="https://logandk.github.io/serverless-wsgi/assets/command.svg">
 </p>
 
 The `wsgi exec` command lets you execute Python code remotely:
