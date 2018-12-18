@@ -30,6 +30,10 @@ This will automatically add the plugin to `package.json` and the plugins section
 
 ## Flask configuration example
 
+<p align="center">
+    <img src="https://raw.githubusercontent.com/logandk/serverless-wsgi/master/assets/hello-world.svg">
+</p>
+
 This example assumes that you have intialized your application as `app` inside `api.py`.
 
 ```
@@ -188,6 +192,10 @@ custom:
 
 ### Local server
 
+<p align="center">
+    <img src="https://raw.githubusercontent.com/logandk/serverless-wsgi/master/assets/serve.svg">
+</p>
+
 For convenience, a `sls wsgi serve` command is provided to run your WSGI application
 locally. This command requires the `werkzeug` Python package to be installed,
 and acts as a simple wrapper for starting werkzeug's built-in HTTP server.
@@ -214,6 +222,10 @@ When running locally, an environment variable named `IS_OFFLINE` will be set to 
 So, if you want to know when the application is running locally, check `os.environ["IS_OFFLINE"]`.
 
 ### Remote command execution
+
+<p align="center">
+    <img src="https://raw.githubusercontent.com/logandk/serverless-wsgi/master/assets/command.svg">
+</p>
 
 The `wsgi exec` command lets you execute Python code remotely:
 
