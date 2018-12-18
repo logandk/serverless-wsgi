@@ -9,6 +9,10 @@
 
   _Alan Trope_
 
+- Improve log output for errors at import-time
+
+  _Jackal_
+
 # 1.5.3
 
 ## Features
