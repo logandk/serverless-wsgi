@@ -97,6 +97,14 @@ def mock_app(monkeypatch):
 
 
 @pytest.fixture
+def mock_app_with_import_error(monkeypatch):
+    def mock_importlib(module):
+        raise ImportError("No module named {}".format(module))
+
+    monkeypatch.setattr(importlib, "import_module", mock_importlib)
+
+
+@pytest.fixture
 def mock_wsgi_app_file(monkeypatch):
     monkeypatch.setattr(os.path, "abspath", lambda x: "/tmp")
 
@@ -634,3 +642,10 @@ def test_command_unknown(mock_wsgi_app_file, mock_app, wsgi):
 
     assert "Traceback (most recent call last):" in response
     assert "Exception: Uknown command: unknown" in response
+
+
+def test_app_import_error(mock_wsgi_app_file, mock_app_with_import_error, event):
+    with pytest.raises(Exception, message="Unable to import app.app"):
+        if "wsgi" in sys.modules:
+            del sys.modules["wsgi"]
+        import wsgi  # noqa: F401
