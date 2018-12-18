@@ -51,18 +51,52 @@ def append_text_mime_types(config):
         serverless_wsgi.TEXT_MIME_TYPES.extend(config["text_mime_types"])
 
 
-def make_handler(wsgi_app):
-    """ Factory that builds a Lambda event handler for a given WSGI application
+def handler(event, context):
+    """ Lambda event handler, invokes the WSGI wrapper and handles command invocation
     """
-    return lambda event, context: serverless_wsgi.handle_request(
-        wsgi_app, event, context
-    )
+    if "_serverless-wsgi" in event:
+        import shlex
+        import subprocess
+        import traceback
+        from werkzeug._compat import StringIO, to_native
+
+        native_stdout = sys.stdout
+        native_stderr = sys.stderr
+        output_buffer = StringIO()
+
+        try:
+            sys.stdout = output_buffer
+            sys.stderr = output_buffer
+
+            meta = event["_serverless-wsgi"]
+            if meta.get("command") == "exec":
+                # Evaluate Python code
+                exec(meta.get("data", ""))
+            elif meta.get("command") == "command":
+                # Run shell commands
+                result = subprocess.check_output(
+                    meta.get("data", ""), shell=True, stderr=subprocess.STDOUT
+                )
+                output_buffer.write(to_native(result))
+            elif meta.get("command") == "manage":
+                # Run Django management commands
+                from django.core import management
+
+                management.call_command(*shlex.split(meta.get("data", "")))
+            else:
+                raise Exception("Uknown command: {}".format(meta.get("command")))
+        except:  # noqa
+            return traceback.format_exc()
+        finally:
+            sys.stdout = native_stdout
+            sys.stderr = native_stderr
+
+        return output_buffer.getvalue()
+    else:
+        return serverless_wsgi.handle_request(wsgi_app, event, context)
 
 
 # Read configuration and import the WSGI application
 config = load_config()
 wsgi_app = import_app(config)
 append_text_mime_types(config)
-
-# Declare the AWS Lambda event handler
-handler = make_handler(wsgi_app)

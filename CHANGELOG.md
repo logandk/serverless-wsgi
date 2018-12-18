@@ -2,6 +2,8 @@
 
 ## Features
 
+- Add `exec`, `command` and `manage` CLI commands for invoking scripts remotely (#75)
+- Detect presence of `serverless-python-requirements` and disable `packRequirements` automatically
 - Add `pipArgs` configuration option for passing additional arguments to pip (#76)
 - Add support for ALB requests (#77)
 

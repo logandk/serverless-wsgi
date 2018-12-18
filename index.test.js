@@ -9,6 +9,7 @@ const child_process = require("child_process");
 const path = require("path");
 const fse = require("fs-extra");
 const hasbin = require("hasbin");
+const BbPromise = require("bluebird");
 
 const chaiAsPromised = require("chai-as-promised");
 chai.use(chaiAsPromised);
@@ -39,6 +40,21 @@ describe("serverless-wsgi", () => {
       expect(plugin.hooks["after:offline:start:end"]).to.be.a("function");
       expect(plugin.hooks["before:invoke:local:invoke"]).to.be.a("function");
       expect(plugin.hooks["after:invoke:local:invoke"]).to.be.a("function");
+    });
+
+    it("generates help for default command", () => {
+      var plugin = new Plugin(
+        {
+          cli: {
+            generateCommandsHelp: command => {
+              expect(command).to.deep.equal(["wsgi"]);
+            }
+          }
+        },
+        {}
+      );
+
+      expect(plugin.hooks["wsgi:wsgi"]()).to.be.fulfilled;
     });
   });
 
@@ -337,7 +353,7 @@ describe("serverless-wsgi", () => {
         {
           config: { servicePath: "/tmp" },
           service: {
-            provider: { runtime: "python2.7" },
+            provider: {},
             custom: { wsgi: { app: "api/api.app" } }
           },
           classes: { Error: Error },
@@ -347,7 +363,6 @@ describe("serverless-wsgi", () => {
       );
 
       var sandbox = sinon.createSandbox();
-      var hasbinStub = sandbox.stub(hasbin, "sync").returns(true);
       var copyStub = sandbox.stub(fse, "copyAsync");
       var writeStub = sandbox.stub(fse, "writeFileAsync");
       sandbox.stub(fse, "readdirSync").returns([]);
@@ -356,11 +371,10 @@ describe("serverless-wsgi", () => {
         .stub(child_process, "spawnSync")
         .returns({ status: 0 });
       plugin.hooks["before:package:createDeploymentArtifacts"]().then(() => {
-        expect(hasbinStub.calledWith("python2.7")).to.be.true;
         expect(copyStub.called).to.be.true;
         expect(writeStub.called).to.be.true;
         expect(
-          procStub.calledWith("python2.7", [
+          procStub.calledWith("python", [
             path.resolve(__dirname, "requirements.py"),
             path.resolve(__dirname, "requirements.txt"),
             "/tmp/api/requirements.txt",
@@ -583,6 +597,31 @@ describe("serverless-wsgi", () => {
       });
     });
 
+    it("handles missing Python binary error", () => {
+      var plugin = new Plugin(
+        {
+          config: { servicePath: "/tmp" },
+          service: { provider: { runtime: "python2.7" } },
+          classes: { Error: Error },
+          cli: { log: () => {} }
+        },
+        {}
+      );
+
+      var sandbox = sinon.createSandbox();
+      sandbox.stub(hasbin, "sync").returns(true);
+      sandbox.stub(fse, "existsSync").returns(true);
+      sandbox
+        .stub(child_process, "spawnSync")
+        .returns({ error: { code: "ENOENT" } });
+
+      expect(
+        plugin.hooks["before:package:createDeploymentArtifacts"]()
+      ).to.eventually.be.rejected.and.notify(() => {
+        sandbox.restore();
+      });
+    });
+
     it("skips packaging if disabled", () => {
       var plugin = new Plugin(
         {
@@ -639,6 +678,42 @@ describe("serverless-wsgi", () => {
         expect(removeStub.calledWith("/tmp/serverless_wsgi.py")).to.be.true;
         expect(removeStub.calledWith("/tmp/.wsgi_app")).to.be.true;
         expect(removeStub.calledWith("/tmp/.requirements")).to.be.false;
+        sandbox.restore();
+      });
+    });
+
+    it("skips packaging if serverless-python-requirements is present", () => {
+      var plugin = new Plugin(
+        {
+          config: { servicePath: "/tmp" },
+          service: {
+            provider: { runtime: "python2.7" },
+            custom: { wsgi: { app: "api.app" } },
+            plugins: ["serverless-wsgi", "serverless-python-requirements"]
+          },
+          classes: { Error: Error },
+          cli: { log: () => {} }
+        },
+        {}
+      );
+
+      var sandbox = sinon.createSandbox();
+      var hasbinStub = sandbox.stub(hasbin, "sync").returns(true);
+      var copyStub = sandbox.stub(fse, "copyAsync");
+      var writeStub = sandbox.stub(fse, "writeFileAsync");
+      var existsStub = sandbox.stub(fse, "existsSync").returns(true);
+      var procStub = sandbox
+        .stub(child_process, "spawnSync")
+        .returns({ status: 0 });
+      plugin.hooks["before:package:createDeploymentArtifacts"]().then(() => {
+        expect(hasbinStub.calledWith("python2.7")).to.be.true;
+        expect(copyStub.called).to.be.true;
+        expect(writeStub.called).to.be.true;
+        expect(existsStub.called).to.be.false;
+        expect(procStub.called).to.be.false;
+        expect(plugin.serverless.service.package.include).not.to.have.members([
+          ".requirements/**"
+        ]);
         sandbox.restore();
       });
     });
@@ -757,11 +832,13 @@ describe("serverless-wsgi", () => {
       var sandbox = sinon.createSandbox();
       var removeStub = sandbox.stub(fse, "removeAsync");
       var existsStub = sandbox.stub(fse, "existsSync").returns(true);
-      sandbox.stub(fse, "readdirSync").returns(["flask"]);
+      existsStub.withArgs("werkzeug").returns(false);
+      sandbox.stub(fse, "readdirSync").returns(["flask", "werkzeug"]);
       var unlinkStub = sandbox.stub(fse, "unlinkSync");
       plugin.hooks["after:deploy:function:packageFunction"]().then(() => {
         expect(existsStub.calledWith("/tmp/.requirements")).to.be.true;
         expect(unlinkStub.calledWith("flask")).to.be.true;
+        expect(unlinkStub.calledWith("werkzeug")).to.be.false;
         expect(removeStub.calledWith("/tmp/wsgi.py")).to.be.true;
         expect(removeStub.calledWith("/tmp/serverless_wsgi.py")).to.be.true;
         expect(removeStub.calledWith("/tmp/.wsgi_app")).to.be.true;
@@ -819,7 +896,7 @@ describe("serverless-wsgi", () => {
       });
     });
 
-    it("handles errors", () => {
+    it("handles process errors", () => {
       var plugin = new Plugin(
         {
           config: { servicePath: "/tmp" },
@@ -838,6 +915,46 @@ describe("serverless-wsgi", () => {
       var procStub = sandbox
         .stub(child_process, "spawnSync")
         .returns({ error: "Something failed" });
+      expect(
+        plugin.hooks["wsgi:serve:serve"]()
+      ).to.eventually.be.rejected.and.notify(() => {
+        expect(hasbinStub.calledWith("python2.7")).to.be.true;
+        expect(
+          procStub.calledWith(
+            "python2.7",
+            [
+              path.resolve(__dirname, "serve.py"),
+              "/tmp",
+              "api.app",
+              5000,
+              "localhost"
+            ],
+            { stdio: "inherit" }
+          )
+        ).to.be.true;
+        sandbox.restore();
+      });
+    });
+
+    it("handles missing Python binary error", () => {
+      var plugin = new Plugin(
+        {
+          config: { servicePath: "/tmp" },
+          service: {
+            provider: { runtime: "python2.7" },
+            custom: { wsgi: { app: "api.app" } }
+          },
+          classes: { Error: Error },
+          cli: { log: () => {} }
+        },
+        {}
+      );
+
+      var sandbox = sinon.createSandbox();
+      var hasbinStub = sandbox.stub(hasbin, "sync").returns(true);
+      var procStub = sandbox
+        .stub(child_process, "spawnSync")
+        .returns({ error: { code: "ENOENT" } });
       expect(
         plugin.hooks["wsgi:serve:serve"]()
       ).to.eventually.be.rejected.and.notify(() => {
@@ -975,21 +1092,17 @@ describe("serverless-wsgi", () => {
 
   describe("install", () => {
     it("installs handler and requirements", () => {
-      var functions = {
-        app: { handler: "wsgi.handler" }
-      };
       var plugin = new Plugin(
         {
           config: { servicePath: "/tmp" },
           service: {
             provider: { runtime: "python2.7" },
-            custom: { wsgi: { app: "api.app" } },
-            functions: functions
+            custom: { wsgi: { app: "api.app" } }
           },
           classes: { Error: Error },
           cli: { log: () => {} }
         },
-        { functionObj: functions.app }
+        {}
       );
 
       var sandbox = sinon.createSandbox();
@@ -1034,21 +1147,17 @@ describe("serverless-wsgi", () => {
 
   describe("clean", () => {
     it("cleans up everything", () => {
-      var functions = {
-        app: { handler: "wsgi.handler" }
-      };
       var plugin = new Plugin(
         {
           config: { servicePath: "/tmp" },
           service: {
             provider: { runtime: "python2.7" },
-            custom: { wsgi: { app: "api.app" } },
-            functions: functions
+            custom: { wsgi: { app: "api.app" } }
           },
           classes: { Error: Error },
           cli: { log: () => {} }
         },
-        { functionObj: functions.app }
+        {}
       );
 
       var sandbox = sinon.createSandbox();
@@ -1067,7 +1176,7 @@ describe("serverless-wsgi", () => {
       });
     });
 
-    it("skips requirements packaging if not enabled", () => {
+    it("skips cleaning requirements if packaging not enabled", () => {
       var functions = {
         app: { handler: "wsgi.handler" }
       };
@@ -1094,6 +1203,360 @@ describe("serverless-wsgi", () => {
         expect(removeStub.calledWith("/tmp/serverless_wsgi.py")).to.be.true;
         expect(removeStub.calledWith("/tmp/.wsgi_app")).to.be.true;
         expect(removeStub.calledWith("/tmp/.requirements")).to.be.false;
+        sandbox.restore();
+      });
+    });
+  });
+
+  describe("exec", () => {
+    it("fails when invoked without command or file", () => {
+      var plugin = new Plugin(
+        {
+          config: { servicePath: "/tmp" },
+          service: {
+            provider: { runtime: "python2.7" },
+            custom: { wsgi: { app: "api.app" } }
+          },
+          classes: { Error: Error },
+          cli: { log: () => {} }
+        },
+        {}
+      );
+
+      expect(plugin.hooks["wsgi:exec:exec"]()).to.be.rejectedWith(
+        "Please provide either a command (-c) or a file (-f)"
+      );
+    });
+
+    it("calls handler to execute code remotely from argument", () => {
+      var plugin = new Plugin(
+        {
+          config: { servicePath: "/tmp" },
+          service: {
+            provider: { runtime: "python2.7" },
+            custom: { wsgi: { app: "api.app" } },
+            functions: { app: { handler: "wsgi.handler" } }
+          },
+          classes: { Error: Error },
+          cli: { log: () => {} },
+          pluginManager: {
+            cliOptions: {},
+            run: command =>
+              new BbPromise(resolve => {
+                expect(command).to.deep.equal(["invoke"]);
+                console.log('"5"'); // eslint-disable-line no-console
+                resolve();
+              })
+          }
+        },
+        { command: "print(1+4)" }
+      );
+
+      var sandbox = sinon.createSandbox();
+      let consoleSpy = sandbox.spy(console, "log");
+      plugin.hooks["wsgi:exec:exec"]().then(() => {
+        expect(plugin.serverless.pluginManager.cliOptions.f).to.equal("app");
+        expect(plugin.serverless.pluginManager.cliOptions.function).to.equal(
+          "app"
+        );
+        expect(plugin.serverless.pluginManager.cliOptions.d).to.equal(
+          '{"_serverless-wsgi":{"command":"exec","data":"print(1+4)"}}'
+        );
+        expect(plugin.serverless.pluginManager.cliOptions.data).to.equal(
+          '{"_serverless-wsgi":{"command":"exec","data":"print(1+4)"}}'
+        );
+        expect(consoleSpy.calledWith("5")).to.be.true;
+        sandbox.restore();
+      });
+    });
+
+    it("calls handler to execute code remotely from file", () => {
+      var plugin = new Plugin(
+        {
+          config: { servicePath: "/tmp" },
+          service: {
+            provider: { runtime: "python2.7" },
+            custom: { wsgi: { app: "api.app" } },
+            functions: { app: { handler: "wsgi.handler" } }
+          },
+          classes: { Error: Error },
+          cli: { log: () => {} },
+          pluginManager: {
+            cliOptions: {},
+            run: command =>
+              new BbPromise(resolve => {
+                expect(command).to.deep.equal(["invoke"]);
+                console.log('{"response": "5"}'); // eslint-disable-line no-console
+                resolve();
+              })
+          }
+        },
+        { file: "script.py" }
+      );
+
+      var sandbox = sinon.createSandbox();
+      let consoleSpy = sandbox.spy(console, "log");
+      sandbox.stub(fse, "readFileSync").returns("print(1+4)");
+      plugin.hooks["wsgi:exec:exec"]().then(() => {
+        expect(plugin.serverless.pluginManager.cliOptions.f).to.equal("app");
+        expect(plugin.serverless.pluginManager.cliOptions.function).to.equal(
+          "app"
+        );
+        expect(plugin.serverless.pluginManager.cliOptions.d).to.equal(
+          '{"_serverless-wsgi":{"command":"exec","data":"print(1+4)"}}'
+        );
+        expect(plugin.serverless.pluginManager.cliOptions.data).to.equal(
+          '{"_serverless-wsgi":{"command":"exec","data":"print(1+4)"}}'
+        );
+        expect(consoleSpy.calledWith('{"response": "5"}')).to.be.true;
+        sandbox.restore();
+      });
+    });
+  });
+
+  describe("command", () => {
+    it("fails when no wsgi handler is set", () => {
+      var plugin = new Plugin(
+        {
+          config: { servicePath: "/tmp" },
+          service: {
+            provider: { runtime: "python2.7" },
+            custom: { wsgi: { app: "api.app" } },
+            functions: { app: { handler: "other.handler" } }
+          },
+          classes: { Error: Error },
+          cli: { log: () => {} }
+        },
+        { command: "pwd" }
+      );
+
+      expect(plugin.hooks["wsgi:command:command"]()).to.be.rejectedWith(
+        "No functions were found with handler: wsgi.handler"
+      );
+    });
+
+    it("fails when invoked without command or file", () => {
+      var plugin = new Plugin(
+        {
+          config: { servicePath: "/tmp" },
+          service: {
+            provider: { runtime: "python2.7" },
+            custom: { wsgi: { app: "api.app" } }
+          },
+          classes: { Error: Error },
+          cli: { log: () => {} }
+        },
+        {}
+      );
+
+      expect(plugin.hooks["wsgi:command:command"]()).to.be.rejectedWith(
+        "Please provide either a command (-c) or a file (-f)"
+      );
+    });
+
+    it("calls handler to execute commands remotely from argument", () => {
+      var plugin = new Plugin(
+        {
+          config: { servicePath: "/tmp" },
+          service: {
+            provider: { runtime: "python2.7" },
+            custom: { wsgi: { app: "api.app" } },
+            functions: { app: { handler: "wsgi.handler" } }
+          },
+          classes: { Error: Error },
+          cli: { log: () => {} },
+          pluginManager: {
+            cliOptions: {},
+            run: command =>
+              new BbPromise(resolve => {
+                expect(command).to.deep.equal(["invoke"]);
+                console.log("non-json output"); // eslint-disable-line no-console
+                resolve();
+              })
+          }
+        },
+        { command: "pwd" }
+      );
+
+      var sandbox = sinon.createSandbox();
+      let consoleSpy = sandbox.spy(console, "log");
+      plugin.hooks["wsgi:command:command"]().then(() => {
+        expect(plugin.serverless.pluginManager.cliOptions.f).to.equal("app");
+        expect(plugin.serverless.pluginManager.cliOptions.function).to.equal(
+          "app"
+        );
+        expect(plugin.serverless.pluginManager.cliOptions.d).to.equal(
+          '{"_serverless-wsgi":{"command":"command","data":"pwd"}}'
+        );
+        expect(plugin.serverless.pluginManager.cliOptions.data).to.equal(
+          '{"_serverless-wsgi":{"command":"command","data":"pwd"}}'
+        );
+        expect(consoleSpy.calledWith("non-json output")).to.be.true;
+        sandbox.restore();
+      });
+    });
+
+    it("calls handler to execute commands remotely from file", () => {
+      var plugin = new Plugin(
+        {
+          config: { servicePath: "/tmp" },
+          service: {
+            provider: { runtime: "python2.7" },
+            custom: { wsgi: { app: "api.app" } },
+            functions: { app: { handler: "wsgi.handler" } }
+          },
+          classes: { Error: Error },
+          cli: { log: () => {} },
+          pluginManager: {
+            cliOptions: {},
+            run: command =>
+              new BbPromise(resolve => {
+                expect(command).to.deep.equal(["invoke"]);
+                console.log('"/var/task"'); // eslint-disable-line no-console
+                resolve();
+              })
+          }
+        },
+        { file: "script.sh" }
+      );
+
+      var sandbox = sinon.createSandbox();
+      let consoleSpy = sandbox.spy(console, "log");
+      sandbox.stub(fse, "readFileSync").returns("pwd");
+      plugin.hooks["wsgi:command:command"]().then(() => {
+        expect(plugin.serverless.pluginManager.cliOptions.f).to.equal("app");
+        expect(plugin.serverless.pluginManager.cliOptions.function).to.equal(
+          "app"
+        );
+        expect(plugin.serverless.pluginManager.cliOptions.d).to.equal(
+          '{"_serverless-wsgi":{"command":"command","data":"pwd"}}'
+        );
+        expect(plugin.serverless.pluginManager.cliOptions.data).to.equal(
+          '{"_serverless-wsgi":{"command":"command","data":"pwd"}}'
+        );
+        expect(consoleSpy.calledWith("/var/task")).to.be.true;
+        sandbox.restore();
+      });
+    });
+  });
+
+  describe("manage", () => {
+    it("calls handler to execute manage commands remotely from argument", () => {
+      var plugin = new Plugin(
+        {
+          config: { servicePath: "/tmp" },
+          service: {
+            provider: { runtime: "python2.7" },
+            custom: { wsgi: { app: "api.app" } },
+            functions: { app: { handler: "wsgi.handler" } }
+          },
+          classes: { Error: Error },
+          cli: { log: () => {} },
+          pluginManager: {
+            cliOptions: {},
+            run: command =>
+              new BbPromise(resolve => {
+                expect(command).to.deep.equal(["invoke"]);
+                console.log('"manage command output"'); // eslint-disable-line no-console
+                resolve();
+              })
+          }
+        },
+        { command: "check" }
+      );
+
+      var sandbox = sinon.createSandbox();
+      let consoleSpy = sandbox.spy(console, "log");
+      plugin.hooks["wsgi:manage:manage"]().then(() => {
+        expect(plugin.serverless.pluginManager.cliOptions.f).to.equal("app");
+        expect(plugin.serverless.pluginManager.cliOptions.function).to.equal(
+          "app"
+        );
+        expect(plugin.serverless.pluginManager.cliOptions.d).to.equal(
+          '{"_serverless-wsgi":{"command":"manage","data":"check"}}'
+        );
+        expect(plugin.serverless.pluginManager.cliOptions.data).to.equal(
+          '{"_serverless-wsgi":{"command":"manage","data":"check"}}'
+        );
+        expect(consoleSpy.calledWith("manage command output")).to.be.true;
+        sandbox.restore();
+      });
+    });
+  });
+
+  describe("invoke local", () => {
+    it("installs handler before invocation", () => {
+      var functions = {
+        app: { handler: "wsgi.handler" },
+        other: { handler: "other.handler" }
+      };
+      var plugin = new Plugin(
+        {
+          config: { servicePath: "/tmp" },
+          service: {
+            provider: { runtime: "python2.7" },
+            custom: { wsgi: { app: "api.app" } },
+            functions: functions,
+            getFunction: name => functions[name]
+          },
+          classes: { Error: Error },
+          cli: { log: () => {} }
+        },
+        { function: "other" }
+      );
+
+      // Test invocation for non-WSGI function, should do nothing
+      expect(plugin.hooks["before:invoke:local:invoke"]()).to.be.fulfilled;
+
+      plugin.options.function = "app";
+
+      var sandbox = sinon.createSandbox();
+      var copyStub = sandbox.stub(fse, "copyAsync");
+      var writeStub = sandbox.stub(fse, "writeFileAsync");
+      plugin.hooks["before:invoke:local:invoke"]().then(() => {
+        expect(
+          copyStub.calledWith(
+            path.resolve(__dirname, "wsgi.py"),
+            "/tmp/wsgi.py"
+          )
+        ).to.be.true;
+        expect(
+          copyStub.calledWith(
+            path.resolve(__dirname, "serverless_wsgi.py"),
+            "/tmp/serverless_wsgi.py"
+          )
+        ).to.be.true;
+        expect(writeStub.calledWith("/tmp/.wsgi_app")).to.be.true;
+        expect(JSON.parse(writeStub.lastCall.args[1])).to.deep.equal({
+          app: "api.app"
+        });
+        sandbox.restore();
+      });
+    });
+
+    it("cleans up after invocation", () => {
+      var plugin = new Plugin(
+        {
+          config: { servicePath: "/tmp" },
+          service: {
+            provider: { runtime: "python2.7" },
+            custom: { wsgi: { app: "api.app" } },
+            functions: {
+              app: { handler: "wsgi.handler" }
+            }
+          },
+          classes: { Error: Error },
+          cli: { log: () => {} }
+        },
+        { function: "app" }
+      );
+
+      var sandbox = sinon.createSandbox();
+      var removeStub = sandbox.stub(fse, "removeAsync");
+      plugin.hooks["after:invoke:local:invoke"]().then(() => {
+        expect(removeStub.calledWith("/tmp/wsgi.py")).to.be.true;
+        expect(removeStub.calledWith("/tmp/serverless_wsgi.py")).to.be.true;
+        expect(removeStub.calledWith("/tmp/.wsgi_app")).to.be.true;
         sandbox.restore();
       });
     });

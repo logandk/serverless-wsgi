@@ -4,8 +4,9 @@ from __future__ import print_function
 
 try:
     import __builtin__ as builtins
-except ImportError:
+except ImportError:  # pragma: no cover
     import builtins
+
 import importlib
 import json
 import os
@@ -25,11 +26,6 @@ try:
     import wsgi  # noqa: F401
 except:  # noqa: E722
     pass
-
-
-class ObjectStub:
-    def __init__(self, **kwds):
-        self.__dict__.update(kwds)
 
 
 class MockApp:
@@ -74,7 +70,7 @@ class MockFileManager:
 
     def open(self, name, mode="r", buffering=-1, **options):
         if name not in self.files:
-            if mode.startswith("r"):
+            if mode.startswith("r"):  # pragma: no cover
                 return original_open(name, mode, buffering, **options)
             else:
                 self.files[name] = MockFile()
@@ -87,7 +83,10 @@ def mock_app(monkeypatch):
     mock_app = MockApp()
 
     def mock_importlib(module):
-        app = ObjectStub
+        class MockObject:
+            pass
+
+        app = MockObject()
         app.app = mock_app
         app.app.module = module
         return app
@@ -584,3 +583,54 @@ def test_handler_alb(mock_wsgi_app_file, mock_app, wsgi):
         "statusCode": 200,
         "isBase64Encoded": False,
     }
+
+
+def test_command_exec(mock_wsgi_app_file, mock_app, wsgi):
+    response = wsgi.handler(
+        {"_serverless-wsgi": {"command": "exec", "data": "print(1+4)"}}, {}
+    )
+
+    assert response == "5\n"
+
+    response = wsgi.handler(
+        {"_serverless-wsgi": {"command": "exec", "data": "invalid code"}}, {}
+    )
+
+    assert "Traceback (most recent call last):" in response
+    assert "SyntaxError: invalid syntax" in response
+
+
+def test_command_command(mock_wsgi_app_file, mock_app, wsgi):
+    response = wsgi.handler(
+        {"_serverless-wsgi": {"command": "command", "data": 'echo "hello world"'}}, {}
+    )
+
+    assert response == "hello world\n"
+
+
+def test_command_manage(mock_wsgi_app_file, mock_app, wsgi):
+    class MockObject:
+        pass
+
+    class MockDjango:
+        def call_command(*args):
+            print("Called with: {}".format(", ".join(args[1:])))
+
+    sys.modules["django"] = MockObject()
+    sys.modules["django.core"] = MockObject()
+    sys.modules["django.core"].management = MockDjango()
+
+    response = wsgi.handler(
+        {"_serverless-wsgi": {"command": "manage", "data": "check --list-tags"}}, {}
+    )
+
+    assert response == "Called with: check, --list-tags\n"
+
+
+def test_command_unknown(mock_wsgi_app_file, mock_app, wsgi):
+    response = wsgi.handler(
+        {"_serverless-wsgi": {"command": "unknown", "data": 'echo "hello world"'}}, {}
+    )
+
+    assert "Traceback (most recent call last):" in response
+    assert "Exception: Uknown command: unknown" in response

@@ -37,15 +37,22 @@ def mock_system(monkeypatch):
 
     def mock_any(func, retval, *args, **kwargs):
         calls.append((func, args))
-        return retval
+        if hasattr(retval, "__call__"):
+            return retval(*args)
+        else:
+            return retval
 
     monkeypatch.setattr(
-        os, "listdir", partial(mock_any, "os.listdir", ["dir1", "dir2"])
+        os, "listdir", partial(mock_any, "os.listdir", ["dir1", "dir2", "file1"])
     )
     monkeypatch.setattr(os, "mkdir", partial(mock_any, "os.mkdir", None))
     monkeypatch.setattr(os, "remove", partial(mock_any, "os.remove", None))
     monkeypatch.setattr(os.path, "isfile", partial(mock_any, "os.path.isfile", True))
-    monkeypatch.setattr(os.path, "isdir", partial(mock_any, "os.path.isdir", True))
+    monkeypatch.setattr(
+        os.path,
+        "isdir",
+        partial(mock_any, "os.path.isdir", lambda filename: filename != "/tmp/file1"),
+    )
     monkeypatch.setattr(os.path, "exists", partial(mock_any, "os.path.exists", True))
     monkeypatch.setattr(shutil, "rmtree", partial(mock_any, "shutil.rmtree", None))
     monkeypatch.setattr(shutil, "copytree", partial(mock_any, "shutil.copytree", None))
@@ -90,6 +97,7 @@ def test_package(mock_system, mock_virtualenv):
 
     assert mock_system.pop(0) == ("os.path.isdir", ("/tmp/.venv/lib/dir1",))
     assert mock_system.pop(0) == ("os.path.isdir", ("/tmp/.venv/lib/dir2",))
+    assert mock_system.pop(0) == ("os.path.isdir", ("/tmp/.venv/lib/file1",))
 
     assert mock_system.pop(0) == ("os.path.isfile", ("/tmp/.venv/bin/pip",))
 
@@ -130,6 +138,14 @@ def test_package(mock_system, mock_virtualenv):
     # Moves package 2 into place
     assert mock_system.pop(0) == ("shutil.move", ("/tmp/.tmp/dir2", "/tmp"))
 
+    # Clears existing installation of package 3
+    assert mock_system.pop(0) == ("os.path.isdir", ("/tmp/file1",))
+    assert mock_system.pop(0) == ("os.path.exists", ("/tmp/file1",))
+    assert mock_system.pop(0) == ("os.remove", ("/tmp/file1",))
+
+    # Moves package 3 into place
+    assert mock_system.pop(0) == ("shutil.move", ("/tmp/.tmp/file1", "/tmp"))
+
     # Performs final cleanup
     assert mock_system.pop(0) == ("shutil.rmtree", ("/tmp/.venv",))
     assert mock_system.pop(0) == ("shutil.rmtree", ("/tmp/.tmp",))
@@ -144,6 +160,29 @@ def test_package_missing_requirements_file(mock_system, mock_virtualenv, monkeyp
 
 def test_package_existing_target_file(mock_system, mock_virtualenv, monkeypatch):
     monkeypatch.setattr(os.path, "isdir", lambda f: False)
+
+    with pytest.raises(SystemExit):
+        requirements.package(["/path1/requirements.txt"], "/tmp")
+
+
+def test_package_missing_deps(mock_system, mock_virtualenv, monkeypatch):
+    monkeypatch.setattr(
+        os.path, "isdir", lambda f: f != "/tmp/.venv/lib/dir1/site-packages"
+    )
+
+    with pytest.raises(SystemExit):
+        requirements.package(["/path1/requirements.txt"], "/tmp")
+
+
+def test_package_missing_pip(mock_system, mock_virtualenv, monkeypatch):
+    monkeypatch.setattr(os.path, "isfile", lambda f: f != "/tmp/.venv/bin/pip")
+
+    with pytest.raises(SystemExit):
+        requirements.package(["/path1/requirements.txt"], "/tmp")
+
+
+def test_package_missing_python_dir(mock_system, mock_virtualenv, monkeypatch):
+    monkeypatch.setattr(os, "listdir", lambda f: [])
 
     with pytest.raises(SystemExit):
         requirements.package(["/path1/requirements.txt"], "/tmp")
@@ -177,7 +216,7 @@ def test_package_with_pip_args(mock_system, mock_virtualenv):
     )
 
     # Invokes pip for package installation
-    assert mock_system[14] == (
+    assert mock_system[15] == (
         "subprocess.Popen",
         (
             [

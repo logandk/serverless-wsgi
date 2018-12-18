@@ -18,6 +18,7 @@ http://wsgi.readthedocs.io/en/latest/frameworks.html.
 - Supports anything you'd expect from WSGI such as redirects, cookies, file uploads etc.
 - Automatically downloads Python packages that you specify in `requirements.txt` and deploys them along with your application
 - Convenient `wsgi serve` command for serving your application locally during development
+- Includes CLI commands for remote execution of Python code (`wsgi exec`), shell commands (`wsgi command`) and Django management commands (`wsgi manage`)
 
 ## Install
 
@@ -72,7 +73,7 @@ service: example
 
 provider:
   name: aws
-  runtime: python2.7
+  runtime: python3.6
 
 plugins:
   - serverless-wsgi
@@ -94,7 +95,7 @@ custom:
 Add Flask to the application bundle.
 
 ```
-Flask==0.12.2
+Flask==1.0.2
 ```
 
 ## Deployment
@@ -103,15 +104,20 @@ Simply run the serverless deploy command as usual:
 
 ```
 $ sls deploy
+Serverless: Using Python specified in "runtime": python3.6
 Serverless: Packaging Python WSGI handler...
 Serverless: Packaging required Python packages...
+Serverless: Linking required Python packages...
 Serverless: Packaging service...
-Serverless: Removing old service versions...
+Serverless: Excluding development dependencies...
+Serverless: Unlinking required Python packages...
 Serverless: Uploading CloudFormation file to S3...
-Serverless: Uploading service .zip file to S3...
+Serverless: Uploading artifacts...
+Serverless: Uploading service .zip file to S3 (864.57 KB)...
+Serverless: Validating template...
 Serverless: Updating Stack...
 Serverless: Checking Stack update progress...
-..........
+..............
 Serverless: Stack update finished...
 ```
 
@@ -132,11 +138,11 @@ as long as you specify your required packages in a `requirements.txt` file in th
 of your Serverless service path:
 
 ```
-Flask==0.12.2
-requests==2.18.3
+Flask==1.0.2
+requests==2.21.0
 ```
 
-For more information, see https://pip.readthedocs.io/en/1.1/requirements.html.
+For more information, see https://pip.pypa.io/en/latest/user_guide/#requirements-files.
 
 You can use the requirement packaging functionality of _serverless-wsgi_ without the WSGI
 handler itself by including the plugin in your `serverless.yml` configuration, without specifying
@@ -163,6 +169,8 @@ custom:
 ```
 
 For a more advanced approach to packaging requirements, consider using https://github.com/UnitedIncome/serverless-python-requirements.
+When the `serverless-python-requirements` is added to `serverless.yml`, the `packRequirements` option
+is set to `false` by default.
 
 ### Python version
 
@@ -202,8 +210,53 @@ $ sls wsgi serve -p 8000
  * Debugger is active!
 ```
 
-When running locally, an environment variable named `IS_OFFLINE` will be set to `"True"`.
+When running locally, an environment variable named `IS_OFFLINE` will be set to `True`.
 So, if you want to know when the application is running locally, check `os.environ["IS_OFFLINE"]`.
+
+### Remote command execution
+
+The `wsgi exec` command lets you execute Python code remotely:
+
+```
+$ sls wsgi exec -c "import math; print((1 + math.sqrt(5)) / 2)"
+1.618033988749895
+
+$ cat count.py
+for i in range(3):
+    print(i)
+
+$ sls wsgi exec -f count.py
+0
+1
+2
+```
+
+The `wsgi command` command lets you execute shell commands remotely:
+
+```
+$ sls wsgi command -c "pwd"
+/var/task
+
+$ cat script.sh
+#!/bin/bash
+echo "dlrow olleh" | rev
+
+$ sls wsgi command -f script.sh
+hello world
+```
+
+The `wsgi manage` command lets you execute Django management commands remotely:
+
+```
+$ sls wsgi manage -c "check --list-tags"
+admin
+caches
+database
+models
+staticfiles
+templates
+urls
+```
 
 ### Explicit routes
 
@@ -215,7 +268,7 @@ service: example
 
 provider:
   name: aws
-  runtime: python2.7
+  runtime: python3.6
 
 plugins:
   - serverless-wsgi
@@ -241,9 +294,8 @@ custom:
 ### Custom domain names
 
 If you use custom domain names with API Gateway, you might have a base path that is
-at the beginning of your path, such as the stage (`/dev`, `/stage`, `/prod`). You
-can pass in an `API_GATEWAY_BASE_PATH` environment variable so your WSGI app can
-handle it correctly.
+at the beginning of your path, such as the stage (`/dev`, `/stage`, `/prod`). In this case, set
+the `API_GATEWAY_BASE_PATH` environment variable to let `serverless-wsgi` know.
 
 The example below uses the [serverless-domain-manager](https://github.com/amplify-education/serverless-domain-manager)
 plugin to handle custom domains in API Gateway:
@@ -253,7 +305,7 @@ service: example
 
 provider:
   name: aws
-  runtime: python2.7
+  runtime: python3.6
   environment:
     API_GATEWAY_BASE_PATH: ${self:custom.customDomain.basePath}
 
@@ -357,7 +409,7 @@ import serverless_wsgi
 #
 # serverless_wsgi.TEXT_MIME_TYPES.append("application/custom+json")
 
-def handle(event, context):
+def handler(event, context):
     return serverless_wsgi.handle_request(app.app, event, context)
 ```
 

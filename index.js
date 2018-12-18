@@ -3,100 +3,111 @@
 const BbPromise = require("bluebird");
 const _ = require("lodash");
 const path = require("path");
-const fse = require("fs-extra");
+const fse = BbPromise.promisifyAll(require("fs-extra"));
 const child_process = require("child_process");
 const hasbin = require("hasbin");
 
-BbPromise.promisifyAll(fse);
-
 class ServerlessWSGI {
   validate() {
-    this.enableRequirements = true;
-    this.pipArgs = null;
+    return new BbPromise(resolve => {
+      this.enableRequirements = !_.includes(
+        this.serverless.service.plugins,
+        "serverless-python-requirements"
+      );
+      this.pipArgs = null;
 
-    if (this.serverless.service.custom && this.serverless.service.custom.wsgi) {
-      if (this.serverless.service.custom.wsgi.app) {
-        this.wsgiApp = this.serverless.service.custom.wsgi.app;
-        this.appPath = path.dirname(
-          path.join(this.serverless.config.servicePath, this.wsgiApp)
+      if (
+        this.serverless.service.custom &&
+        this.serverless.service.custom.wsgi
+      ) {
+        if (this.serverless.service.custom.wsgi.app) {
+          this.wsgiApp = this.serverless.service.custom.wsgi.app;
+          this.appPath = path.dirname(
+            path.join(this.serverless.config.servicePath, this.wsgiApp)
+          );
+        }
+
+        if (_.isBoolean(this.serverless.service.custom.wsgi.packRequirements)) {
+          this.enableRequirements = this.serverless.service.custom.wsgi.packRequirements;
+        }
+
+        this.pipArgs = this.serverless.service.custom.wsgi.pipArgs;
+      }
+
+      if (this.enableRequirements) {
+        this.requirementsInstallPath = path.join(
+          this.appPath ? this.appPath : this.serverless.config.servicePath,
+          ".requirements"
         );
       }
 
-      if (this.serverless.service.custom.wsgi.packRequirements === false) {
-        this.enableRequirements = false;
-      }
-
-      this.pipArgs = this.serverless.service.custom.wsgi.pipArgs;
-    }
-
-    if (this.enableRequirements) {
-      this.requirementsInstallPath = path.join(
-        this.appPath ? this.appPath : this.serverless.config.servicePath,
-        ".requirements"
-      );
-    }
-
-    return BbPromise.resolve();
+      resolve();
+    });
   }
 
   configurePackaging() {
-    this.serverless.service.package = this.serverless.service.package || {};
-    this.serverless.service.package.include =
-      this.serverless.service.package.include || [];
-    this.serverless.service.package.exclude =
-      this.serverless.service.package.exclude || [];
+    return new BbPromise(resolve => {
+      this.serverless.service.package = this.serverless.service.package || {};
+      this.serverless.service.package.include =
+        this.serverless.service.package.include || [];
+      this.serverless.service.package.exclude =
+        this.serverless.service.package.exclude || [];
 
-    this.serverless.service.package.include = _.union(
-      this.serverless.service.package.include,
-      ["wsgi.py", "serverless_wsgi.py", ".wsgi_app"]
-    );
+      this.serverless.service.package.include = _.union(
+        this.serverless.service.package.include,
+        ["wsgi.py", "serverless_wsgi.py", ".wsgi_app"]
+      );
 
-    if (this.enableRequirements) {
-      this.serverless.service.package.exclude.push(".requirements/**");
-    }
+      if (this.enableRequirements) {
+        this.serverless.service.package.exclude.push(".requirements/**");
+      }
 
-    return BbPromise.resolve();
+      resolve();
+    });
   }
 
   locatePython() {
-    if (
-      this.serverless.service.custom &&
-      this.serverless.service.custom.wsgi &&
-      this.serverless.service.custom.wsgi.pythonBin
-    ) {
-      this.serverless.cli.log(
-        `Using Python specified in "pythonBin": ${
-          this.serverless.service.custom.wsgi.pythonBin
-        }`
-      );
-
-      this.pythonBin = this.serverless.service.custom.wsgi.pythonBin;
-      return BbPromise.resolve();
-    }
-
-    if (this.serverless.service.provider.runtime) {
-      if (hasbin.sync(this.serverless.service.provider.runtime)) {
+    return new BbPromise(resolve => {
+      if (
+        this.serverless.service.custom &&
+        this.serverless.service.custom.wsgi &&
+        this.serverless.service.custom.wsgi.pythonBin
+      ) {
         this.serverless.cli.log(
-          `Using Python specified in "runtime": ${
-            this.serverless.service.provider.runtime
+          `Using Python specified in "pythonBin": ${
+            this.serverless.service.custom.wsgi.pythonBin
           }`
         );
 
-        this.pythonBin = this.serverless.service.provider.runtime;
-        return BbPromise.resolve();
-      } else {
-        this.serverless.cli.log(
-          `Python executable not found for "runtime": ${
-            this.serverless.service.provider.runtime
-          }`
-        );
+        this.pythonBin = this.serverless.service.custom.wsgi.pythonBin;
+        return resolve();
       }
-    }
 
-    this.serverless.cli.log("Using default Python executable: python");
+      if (this.serverless.service.provider.runtime) {
+        if (hasbin.sync(this.serverless.service.provider.runtime)) {
+          this.serverless.cli.log(
+            `Using Python specified in "runtime": ${
+              this.serverless.service.provider.runtime
+            }`
+          );
 
-    this.pythonBin = "python";
-    return BbPromise.resolve();
+          this.pythonBin = this.serverless.service.provider.runtime;
+          return resolve();
+        } else {
+          this.serverless.cli.log(
+            `Python executable not found for "runtime": ${
+              this.serverless.service.provider.runtime
+            }`
+          );
+        }
+      }
+
+      this.serverless.cli.log("Using default Python executable: python");
+
+      this.pythonBin = "python";
+
+      resolve();
+    });
   }
 
   getWsgiHandlerConfiguration() {
@@ -138,36 +149,37 @@ class ServerlessWSGI {
   }
 
   packRequirements() {
-    if (!this.enableRequirements) {
-      return BbPromise.resolve();
-    }
-
-    const requirementsPath = this.appPath || this.serverless.config.servicePath;
-    const requirementsFile = path.join(requirementsPath, "requirements.txt");
-    let args = [path.resolve(__dirname, "requirements.py")];
-
-    if (this.pipArgs) {
-      args.push("--pip-args");
-      args.push(this.pipArgs);
-    }
-
-    if (this.wsgiApp) {
-      args.push(path.resolve(__dirname, "requirements.txt"));
-    }
-
-    if (fse.existsSync(requirementsFile)) {
-      args.push(requirementsFile);
-    } else {
-      if (!this.wsgiApp) {
-        return BbPromise.resolve();
-      }
-    }
-
-    args.push(this.requirementsInstallPath);
-
-    this.serverless.cli.log("Packaging required Python packages...");
-
     return new BbPromise((resolve, reject) => {
+      if (!this.enableRequirements) {
+        return resolve();
+      }
+
+      const requirementsPath =
+        this.appPath || this.serverless.config.servicePath;
+      const requirementsFile = path.join(requirementsPath, "requirements.txt");
+      let args = [path.resolve(__dirname, "requirements.py")];
+
+      if (this.pipArgs) {
+        args.push("--pip-args");
+        args.push(this.pipArgs);
+      }
+
+      if (this.wsgiApp) {
+        args.push(path.resolve(__dirname, "requirements.txt"));
+      }
+
+      if (fse.existsSync(requirementsFile)) {
+        args.push(requirementsFile);
+      } else {
+        if (!this.wsgiApp) {
+          return resolve();
+        }
+      }
+
+      args.push(this.requirementsInstallPath);
+
+      this.serverless.cli.log("Packaging required Python packages...");
+
       const res = child_process.spawnSync(this.pythonBin, args);
       if (res.error) {
         if (res.error.code == "ENOENT") {
@@ -180,61 +192,71 @@ class ServerlessWSGI {
           return reject(res.error);
         }
       }
+
       if (res.status != 0) {
         return reject(res.stderr);
       }
+
       resolve();
     });
   }
 
   linkRequirements() {
-    if (!this.enableRequirements) {
-      return BbPromise.resolve();
-    }
+    return new BbPromise((resolve, reject) => {
+      if (!this.enableRequirements) {
+        return resolve();
+      }
 
-    if (fse.existsSync(this.requirementsInstallPath)) {
-      this.serverless.cli.log("Linking required Python packages...");
+      if (fse.existsSync(this.requirementsInstallPath)) {
+        this.serverless.cli.log("Linking required Python packages...");
 
-      fse.readdirSync(this.requirementsInstallPath).map(file => {
-        this.serverless.service.package.include.push(file);
-        this.serverless.service.package.include.push(`${file}/**`);
+        fse.readdirSync(this.requirementsInstallPath).map(file => {
+          this.serverless.service.package.include.push(file);
+          this.serverless.service.package.include.push(`${file}/**`);
 
-        try {
-          fse.symlinkSync(`${this.requirementsInstallPath}/${file}`, file);
-        } catch (exception) {
-          let linkConflict = false;
           try {
-            linkConflict =
-              fse.readlinkSync(file) !==
-              `${this.requirementsInstallPath}/${file}`;
-          } catch (e) {
-            linkConflict = true;
+            fse.symlinkSync(`${this.requirementsInstallPath}/${file}`, file);
+          } catch (exception) {
+            let linkConflict = false;
+            try {
+              linkConflict =
+                fse.readlinkSync(file) !==
+                `${this.requirementsInstallPath}/${file}`;
+            } catch (e) {
+              linkConflict = true;
+            }
+            if (linkConflict) {
+              return reject(
+                `Unable to link dependency '${file}' ` +
+                  "because a file by the same name exists in this service"
+              );
+            }
           }
-          if (linkConflict) {
-            throw new this.serverless.classes.Error(
-              `Unable to link dependency '${file}' ` +
-                "because a file by the same name exists in this service"
-            );
-          }
-        }
-      });
-    }
+        });
+      }
+
+      resolve();
+    });
   }
 
   unlinkRequirements() {
-    if (!this.enableRequirements) {
-      return BbPromise.resolve();
-    }
+    return new BbPromise(resolve => {
+      if (!this.enableRequirements) {
+        return resolve();
+      }
 
-    if (fse.existsSync(this.requirementsInstallPath)) {
-      this.serverless.cli.log("Unlinking required Python packages...");
+      if (fse.existsSync(this.requirementsInstallPath)) {
+        this.serverless.cli.log("Unlinking required Python packages...");
 
-      fse.readdirSync(this.requirementsInstallPath).map(file => {
-        if (fse.existsSync(file)) {
-          fse.unlinkSync(file);
-        }
-      });
-    }
+        fse.readdirSync(this.requirementsInstallPath).map(file => {
+          if (fse.existsSync(file)) {
+            fse.unlinkSync(file);
+          }
+        });
+      }
+
+      resolve();
+    });
   }
 
   cleanRequirements() {
@@ -256,33 +278,35 @@ class ServerlessWSGI {
   }
 
   loadEnvVars() {
-    const providerEnvVars = _.omitBy(
-      this.serverless.service.provider.environment || {},
-      _.isObject
-    );
-    _.merge(process.env, providerEnvVars);
+    return new BbPromise(resolve => {
+      const providerEnvVars = _.omitBy(
+        this.serverless.service.provider.environment || {},
+        _.isObject
+      );
+      _.merge(process.env, providerEnvVars);
 
-    _.each(this.serverless.service.functions, func => {
-      if (func.handler == "wsgi.handler") {
-        const functionEnvVars = _.omitBy(func.environment || {}, _.isObject);
-        _.merge(process.env, functionEnvVars);
-      }
+      _.each(this.serverless.service.functions, func => {
+        if (func.handler == "wsgi.handler") {
+          const functionEnvVars = _.omitBy(func.environment || {}, _.isObject);
+          _.merge(process.env, functionEnvVars);
+        }
+      });
+
+      resolve();
     });
-
-    return BbPromise.resolve();
   }
 
   serve() {
-    if (!this.wsgiApp) {
-      throw new this.serverless.classes.Error(
-        'Missing WSGI app, please specify custom.wsgi.app. For instance, if you have a Flask application "app" in "api.py", set the Serverless custom.wsgi.app configuration option to: api.app'
-      );
-    }
-
-    const port = this.options.port || 5000;
-    const host = this.options.host || "localhost";
-
     return new BbPromise((resolve, reject) => {
+      if (!this.wsgiApp) {
+        return reject(
+          'Missing WSGI app, please specify custom.wsgi.app. For instance, if you have a Flask application "app" in "api.py", set the Serverless custom.wsgi.app configuration option to: api.app'
+        );
+      }
+
+      const port = this.options.port || 5000;
+      const host = this.options.host || "localhost";
+
       var status = child_process.spawnSync(
         this.pythonBin,
         [
@@ -310,33 +334,177 @@ class ServerlessWSGI {
     });
   }
 
+  findHandler() {
+    return _.findKey(
+      this.serverless.service.functions,
+      fun => fun.handler == "wsgi.handler"
+    );
+  }
+
+  invokeHandler(command, data) {
+    const handlerFunction = this.findHandler();
+
+    if (!handlerFunction) {
+      return BbPromise.reject(
+        "No functions were found with handler: wsgi.handler"
+      );
+    }
+
+    // We're going to call the provider-agnostic invoke plugin, which has
+    // no proper plugin-facing API. Instead, the current CLI options are modified
+    // to match those of an invoke call.
+    this.serverless.pluginManager.cliOptions.function = handlerFunction;
+    this.serverless.pluginManager.cliOptions.data = JSON.stringify({
+      "_serverless-wsgi": {
+        command: command,
+        data: data
+      }
+    });
+    this.serverless.pluginManager.cliOptions.f = this.serverless.pluginManager.cliOptions.function;
+    this.serverless.pluginManager.cliOptions.d = this.serverless.pluginManager.cliOptions.data;
+
+    // The invoke plugin prints the response to the console as JSON. When invoking commands
+    // remotely, we get a string back and we want it to appear in the console as it would have
+    // if it was invoked locally.
+    //
+    // Thus, console.log is temporarily hijacked to capture the output and parse it as JSON. This
+    // hack is needed to avoid having to call the provider-specific invoke plugins.
+    return new BbPromise(resolve => {
+      let output = "";
+
+      /* eslint-disable no-console */
+      const native_log = console.log;
+      console.log = msg => (output += msg + "\n");
+
+      resolve(
+        this.serverless.pluginManager
+          .run(["invoke"])
+          .then(() => {
+            output = _.trimEnd(output, "\n");
+            try {
+              const output_data = JSON.parse(output);
+              if (_.isString(output_data)) {
+                native_log(_.trimEnd(output_data, "\n"));
+              } else {
+                native_log(output);
+              }
+            } catch (e) {
+              native_log(output);
+            }
+          })
+          .finally(() => {
+            console.log = native_log;
+          })
+      );
+      /* eslint-enable no-console */
+    });
+  }
+
+  command() {
+    let data = null;
+
+    if (this.options.command) {
+      data = this.options.command;
+    } else if (this.options.file) {
+      data = fse.readFileSync(this.options.file, "utf8");
+    } else {
+      return BbPromise.reject(
+        "Please provide either a command (-c) or a file (-f)"
+      );
+    }
+
+    return this.invokeHandler("command", data);
+  }
+
+  exec() {
+    let data = null;
+
+    if (this.options.command) {
+      data = this.options.command;
+    } else if (this.options.file) {
+      data = fse.readFileSync(this.options.file, "utf8");
+    } else {
+      return BbPromise.reject(
+        "Please provide either a command (-c) or a file (-f)"
+      );
+    }
+
+    return this.invokeHandler("exec", data);
+  }
+
+  manage() {
+    return this.invokeHandler("manage", this.options.command);
+  }
+
   constructor(serverless, options) {
     this.serverless = serverless;
     this.options = options;
 
     this.commands = {
       wsgi: {
+        usage: "Deploy Python WSGI applications",
+        lifecycleEvents: ["wsgi"],
+
         commands: {
           serve: {
-            usage: "Serve the WSGI application locally.",
+            usage: "Serve the WSGI application locally",
             lifecycleEvents: ["serve"],
             options: {
               port: {
-                usage: "The local server port, defaults to 5000.",
+                usage: "Local server port, defaults to 5000",
                 shortcut: "p"
               },
               host: {
-                usage: "The server host, defaults to 'localhost'."
+                usage: "Server host, defaults to 'localhost'"
               }
             }
           },
           install: {
-            usage: "Install WSGI handler and requirements for local use.",
+            usage: "Install WSGI handler and requirements for local use",
             lifecycleEvents: ["install"]
           },
           clean: {
-            usage: "Remove cached requirements.",
+            usage: "Remove cached requirements",
             lifecycleEvents: ["clean"]
+          },
+          command: {
+            usage: "Execute shell commands or scripts remotely",
+            lifecycleEvents: ["command"],
+            options: {
+              command: {
+                usage: "Command to execute",
+                shortcut: "c"
+              },
+              file: {
+                usage: "Path to a shell script to execute",
+                shortcut: "f"
+              }
+            }
+          },
+          exec: {
+            usage: "Evaluate Python code remotely",
+            lifecycleEvents: ["exec"],
+            options: {
+              command: {
+                usage: "Python code to execute",
+                shortcut: "c"
+              },
+              file: {
+                usage: "Path to a Python script to execute",
+                shortcut: "f"
+              }
+            }
+          },
+          manage: {
+            usage: "Run Django management commands remotely",
+            lifecycleEvents: ["manage"],
+            options: {
+              command: {
+                usage: "Management command",
+                shortcut: "c",
+                required: true
+              }
+            }
           }
         }
       }
@@ -366,6 +534,11 @@ class ServerlessWSGI {
         .then(this.cleanup);
 
     this.hooks = {
+      "wsgi:wsgi": () => {
+        this.serverless.cli.generateCommandsHelp(["wsgi"]);
+        return BbPromise.resolve();
+      },
+
       "wsgi:serve:serve": () =>
         BbPromise.bind(this)
           .then(this.validate)
@@ -374,6 +547,10 @@ class ServerlessWSGI {
           .then(this.serve),
 
       "wsgi:install:install": deployBeforeHook,
+
+      "wsgi:command:command": () => BbPromise.bind(this).then(this.command),
+      "wsgi:exec:exec": () => BbPromise.bind(this).then(this.exec),
+      "wsgi:manage:manage": () => BbPromise.bind(this).then(this.manage),
 
       "wsgi:clean:clean": () => deployAfterHook().then(this.cleanRequirements),
 
@@ -398,7 +575,7 @@ class ServerlessWSGI {
         );
 
         if (functionObj.handler == "wsgi.handler") {
-          BbPromise.bind(this)
+          return BbPromise.bind(this)
             .then(this.validate)
             .then(() => {
               return this.packWsgiHandler(false);
