@@ -42,7 +42,7 @@ def import_app(config):
 
     try:
         wsgi_module = importlib.import_module(wsgi_fqn_parts[-1])
-    except:
+    except:  # noqa
         print(traceback.format_exc())
 
     return getattr(wsgi_module, wsgi_fqn[1])
