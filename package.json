@@ -49,10 +49,10 @@
   "devDependencies": {
     "chai": "^4.2.0",
     "chai-as-promised": "^7.0.0",
-    "eslint": "^5.9.0",
+    "eslint": "^5.10.0",
     "istanbul": "^0.4.4",
     "mocha": "^5.2.0",
-    "sinon": "^7.1.1"
+    "sinon": "^7.2.2"
   },
   "dependencies": {
     "bluebird": "^3.5.3",
