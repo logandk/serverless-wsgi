@@ -55,7 +55,7 @@ def split_headers(headers):
     """
     new_headers = {}
 
-    for key in headers.iterkeys():
+    for key in headers.keys():
         values = headers.get_all(key)
         if len(values) > 1:
             for value, casing in zip(values, all_casings(key)):
