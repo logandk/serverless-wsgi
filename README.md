@@ -6,7 +6,7 @@
 
 [![serverless](http://public.serverless.com/badges/v3.svg)](http://www.serverless.com)
 [![Build Status](https://travis-ci.org/logandk/serverless-wsgi.png?branch=master)](https://travis-ci.org/logandk/serverless-wsgi)
-[![Coverage Status](https://coveralls.io/repos/github/logandk/serverless-wsgi/badge.svg?branch=master)](https://coveralls.io/github/logandk/serverless-wsgi?branch=master)
+[![Coverage Status](https://codecov.io/gh/logandk/serverless-wsgi/branch/master/graph/badge.svg)](https://codecov.io/gh/logandk/serverless-wsgi)
 [![Dependency Status](https://david-dm.org/logandk/serverless-wsgi.png)](https://david-dm.org/logandk/serverless-wsgi)
 [![Dev Dependency Status](https://david-dm.org/logandk/serverless-wsgi/dev-status.png)](https://david-dm.org/logandk/serverless-wsgi?type=dev)
 
@@ -367,8 +367,8 @@ app = Flask(__name__)
 
 @app.route("/")
 def index():
-    print(request.environ['context'])
-    print(request.environ['event'])
+    print(request.environ['serverless.context'])
+    print(request.environ['serverless.event'])
 ```
 
 ### Text MIME types

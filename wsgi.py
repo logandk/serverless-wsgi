@@ -88,7 +88,7 @@ def handler(event, context):
 
                 management.call_command(*shlex.split(meta.get("data", "")))
             else:
-                raise Exception("Uknown command: {}".format(meta.get("command")))
+                raise Exception("Unknown command: {}".format(meta.get("command")))
         except:  # noqa
             return traceback.format_exc()
         finally:

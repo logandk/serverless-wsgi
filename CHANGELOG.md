@@ -1,3 +1,11 @@
+# 1.6.1
+
+## Features
+
+- Use proper namespacing for custom WSGI environment variables: `serverless.authorizer`, `serverless.event` and `serverless.context`.
+  Note: `API_GATEWAY_AUTHORIZER`, `event` and `context` will be deprecated later.
+- Permute header casings for multiple values of any header, not just `Set-Cookie`
+
 # 1.6.0
 
 ## Features

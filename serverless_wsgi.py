@@ -46,6 +46,26 @@ def all_casings(input_string):
                 yield first.upper() + sub_casing
 
 
+def split_headers(headers):
+    """
+    If there are multiple occurrences of headers, create case-mutated variations
+    in order to pass them through APIGW. This is a hack that's currently
+    needed. See: https://github.com/logandk/serverless-wsgi/issues/11
+    Source: https://github.com/Miserlou/Zappa/blob/master/zappa/middleware.py
+    """
+    new_headers = {}
+
+    for key in headers.iterkeys():
+        values = headers.get_all(key)
+        if len(values) > 1:
+            for value, casing in zip(values, all_casings(key)):
+                new_headers[casing] = value
+        elif len(values) == 1:
+            new_headers[key] = values[0]
+
+    return new_headers
+
+
 def handle_request(app, event, context):
     if event.get("source") in ["aws.events", "serverless-plugin-warmup"]:
         return {}
@@ -75,7 +95,6 @@ def handle_request(app, event, context):
         body = to_bytes(body, charset="utf-8")
 
     environ = {
-        "API_GATEWAY_AUTHORIZER": event[u"requestContext"].get(u"authorizer"),
         "CONTENT_LENGTH": str(len(body)),
         "CONTENT_TYPE": headers.get(u"Content-Type", ""),
         "PATH_INFO": path_info,
@@ -91,8 +110,6 @@ def handle_request(app, event, context):
         "SERVER_NAME": headers.get(u"Host", "lambda"),
         "SERVER_PORT": headers.get(u"X-Forwarded-Port", "80"),
         "SERVER_PROTOCOL": "HTTP/1.1",
-        "event": event,
-        "context": context,
         "wsgi.errors": sys.stderr,
         "wsgi.input": BytesIO(body),
         "wsgi.multiprocess": False,
@@ -100,6 +117,19 @@ def handle_request(app, event, context):
         "wsgi.run_once": False,
         "wsgi.url_scheme": headers.get(u"X-Forwarded-Proto", "http"),
         "wsgi.version": (1, 0),
+        "serverless.authorizer": event[u"requestContext"].get(u"authorizer"),
+        "serverless.event": event,
+        "serverless.context": context,
+        # TODO: Deprecate the following entries, as they do not comply with the WSGI
+        # spec. For custom variables, the spec says:
+        #
+        #   Finally, the environ dictionary may also contain server-defined variables.
+        #   These variables should be named using only lower-case letters, numbers, dots,
+        #   and underscores, and should be prefixed with a name that is unique to the
+        #   defining server or gateway.
+        "API_GATEWAY_AUTHORIZER": event[u"requestContext"].get(u"authorizer"),
+        "event": event,
+        "context": context,
     }
 
     for key, value in environ.items():
@@ -113,19 +143,10 @@ def handle_request(app, event, context):
 
     response = Response.from_app(app, environ)
 
-    # If there are multiple Set-Cookie headers, create case-mutated variations
-    # in order to pass them through APIGW. This is a hack that's currently
-    # needed. See: https://github.com/logandk/serverless-wsgi/issues/11
-    # Source: https://github.com/Miserlou/Zappa/blob/master/zappa/middleware.py
-    new_headers = [x for x in response.headers if x[0] != "Set-Cookie"]
-    cookie_headers = [x for x in response.headers if x[0] == "Set-Cookie"]
-    if len(cookie_headers) > 1:
-        for header, new_name in zip(cookie_headers, all_casings("Set-Cookie")):
-            new_headers.append((new_name, header[1]))
-    elif len(cookie_headers) == 1:
-        new_headers.extend(cookie_headers)
-
-    returndict = {u"statusCode": response.status_code, u"headers": dict(new_headers)}
+    returndict = {
+        u"statusCode": response.status_code,
+        u"headers": split_headers(response.headers),
+    }
 
     if event.get("requestContext").get("elb"):
         # If the request comes from ALB we need to add a status description

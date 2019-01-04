@@ -223,7 +223,6 @@ def test_handler(mock_wsgi_app_file, mock_app, event, capsys, wsgi):
     }
 
     assert wsgi.wsgi_app.last_environ == {
-        "API_GATEWAY_AUTHORIZER": {"principalId": "wile_e_coyote"},
         "CONTENT_LENGTH": "0",
         "CONTENT_TYPE": "",
         "HTTP_ACCEPT": "*/*",
@@ -261,8 +260,12 @@ def test_handler(mock_wsgi_app_file, mock_app, event, capsys, wsgi):
         "wsgi.run_once": False,
         "wsgi.url_scheme": "https",
         "wsgi.version": (1, 0),
+        "API_GATEWAY_AUTHORIZER": {"principalId": "wile_e_coyote"},
         "context": {"memory_limit_in_mb": "128"},
         "event": event,
+        "serverless.authorizer": {"principalId": "wile_e_coyote"},
+        "serverless.context": {"memory_limit_in_mb": "128"},
+        "serverless.event": event,
     }
 
     out, err = capsys.readouterr()
@@ -325,7 +328,6 @@ def test_handler_custom_domain(mock_wsgi_app_file, mock_app, event, wsgi):
     wsgi.handler(event, {})
 
     assert wsgi.wsgi_app.last_environ == {
-        "API_GATEWAY_AUTHORIZER": {"principalId": "wile_e_coyote"},
         "CONTENT_LENGTH": "0",
         "CONTENT_TYPE": "",
         "HTTP_ACCEPT": "*/*",
@@ -363,8 +365,12 @@ def test_handler_custom_domain(mock_wsgi_app_file, mock_app, event, wsgi):
         "wsgi.run_once": False,
         "wsgi.url_scheme": "https",
         "wsgi.version": (1, 0),
+        "API_GATEWAY_AUTHORIZER": {"principalId": "wile_e_coyote"},
         "context": {},
         "event": event,
+        "serverless.authorizer": {"principalId": "wile_e_coyote"},
+        "serverless.context": {},
+        "serverless.event": event,
     }
 
 
@@ -375,7 +381,6 @@ def test_handler_api_gateway_base_path(mock_wsgi_app_file, mock_app, event, wsgi
     wsgi.handler(event, {})
 
     assert wsgi.wsgi_app.last_environ == {
-        "API_GATEWAY_AUTHORIZER": {"principalId": "wile_e_coyote"},
         "CONTENT_LENGTH": "0",
         "CONTENT_TYPE": "",
         "HTTP_ACCEPT": "*/*",
@@ -413,8 +418,12 @@ def test_handler_api_gateway_base_path(mock_wsgi_app_file, mock_app, event, wsgi
         "wsgi.run_once": False,
         "wsgi.url_scheme": "https",
         "wsgi.version": (1, 0),
+        "API_GATEWAY_AUTHORIZER": {"principalId": "wile_e_coyote"},
         "context": {},
         "event": event,
+        "serverless.authorizer": {"principalId": "wile_e_coyote"},
+        "serverless.context": {},
+        "serverless.event": event,
     }
 
 
@@ -641,7 +650,7 @@ def test_command_unknown(mock_wsgi_app_file, mock_app, wsgi):
     )
 
     assert "Traceback (most recent call last):" in response
-    assert "Exception: Uknown command: unknown" in response
+    assert "Exception: Unknown command: unknown" in response
 
 
 def test_app_import_error(mock_wsgi_app_file, mock_app_with_import_error, event):
