@@ -59,6 +59,9 @@ def append_text_mime_types(config):
 def handler(event, context):
     """ Lambda event handler, invokes the WSGI wrapper and handles command invocation
     """
+    if event.source == "serverless-plugin-warmup":
+        return "WarmUp - Lambda is warm"
+
     if "_serverless-wsgi" in event:
         import shlex
         import subprocess
