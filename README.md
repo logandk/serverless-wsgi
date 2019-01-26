@@ -405,6 +405,12 @@ custom:
       - application/vnd.company+json
 ```
 
+### Preventing cold starts
+
+Common ways to keep lambda functions warm include [scheduled events](https://serverless.com/framework/docs/providers/aws/events/schedule/)
+and the [WarmUP plugin](https://github.com/FidelLimited/serverless-plugin-warmup). Both these event sources
+are supported by default and will be ignored by `serverless-wsgi`.
+
 ## Usage without Serverless
 
 The AWS API Gateway to WSGI mapping module is available on PyPI in the
