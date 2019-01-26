@@ -262,7 +262,7 @@ describe("serverless-wsgi", () => {
       var copyStub = sandbox.stub(fse, "copyAsync");
       var writeStub = sandbox.stub(fse, "writeFileAsync");
       var symlinkStub = sandbox.stub(fse, "symlinkSync");
-      sandbox.stub(fse, "readdirSync").returns(["flask"]);
+      sandbox.stub(fse, "readdirSync").returns(["flask", "werkzeug"]);
       sandbox.stub(fse, "existsSync").returns(true);
       var procStub = sandbox
         .stub(child_process, "spawnSync")
@@ -286,7 +286,9 @@ describe("serverless-wsgi", () => {
           "serverless_wsgi.py",
           ".wsgi_app",
           "flask",
-          "flask/**"
+          "flask/**",
+          "werkzeug",
+          "werkzeug/**"
         ]);
         expect(plugin.serverless.service.package.exclude).to.have.members([
           ".requirements/**"

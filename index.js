@@ -239,6 +239,27 @@ class ServerlessWSGI {
     });
   }
 
+  checkWerkzeugPresent() {
+    return new BbPromise(resolve => {
+      if (!this.wsgiApp) {
+        return resolve();
+      }
+
+      const hasWerkzeug = _.includes(
+        fse.readdirSync(this.serverless.config.servicePath),
+        "werkzeug"
+      );
+
+      if (!hasWerkzeug) {
+        this.serverless.cli.log(
+          "WARNING: Could not find werkzeug, please add it to your requirements.txt"
+        );
+      }
+
+      resolve();
+    });
+  }
+
   unlinkRequirements() {
     return new BbPromise(resolve => {
       if (!this.enableRequirements) {
@@ -517,7 +538,8 @@ class ServerlessWSGI {
         .then(this.locatePython)
         .then(this.packWsgiHandler)
         .then(this.packRequirements)
-        .then(this.linkRequirements);
+        .then(this.linkRequirements)
+        .then(this.checkWerkzeugPresent);
 
     const deployBeforeHookWithoutHandler = () =>
       BbPromise.bind(this)
