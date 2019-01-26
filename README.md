@@ -150,6 +150,9 @@ requests==2.21.0
 
 For more information, see https://pip.pypa.io/en/latest/user_guide/#requirements-files.
 
+The `serverless-wsgi` plugin itself depends on `werkzeug` and will package it automatically,
+even if `werkzeug` is not present in your `requirements.txt`.
+
 You can use the requirement packaging functionality of _serverless-wsgi_ without the WSGI
 handler itself by including the plugin in your `serverless.yml` configuration, without specifying
 the `custom.wsgi.app` setting. This will omit the WSGI handler from the package, but include
@@ -177,6 +180,9 @@ custom:
 For a more advanced approach to packaging requirements, consider using https://github.com/UnitedIncome/serverless-python-requirements.
 When the `serverless-python-requirements` is added to `serverless.yml`, the `packRequirements` option
 is set to `false` by default.
+
+If you have `packRequirements` set to `false`, or if you use `serverless-python-requirements`, remember to add
+`werkzeug` explicitly in your `requirements.txt`.
 
 ### Python version
 
