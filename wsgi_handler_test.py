@@ -21,9 +21,9 @@ PY2 = sys.version_info[0] == 2
 original_open = open
 
 
-# This workaround is needed for coverage.py to pick up the wsgi module
+# This workaround is needed for coverage.py to pick up the wsgi handler module
 try:
-    import wsgi  # noqa: F401
+    import wsgi_handler  # noqa: F401
 except:  # noqa: E722
     pass
 
@@ -109,7 +109,7 @@ def mock_wsgi_app_file(monkeypatch):
     monkeypatch.setattr(os.path, "abspath", lambda x: "/tmp")
 
     manager = MockFileManager()
-    with manager.open("/tmp/.wsgi_app", "w") as f:
+    with manager.open("/tmp/.serverless-wsgi", "w") as f:
         f.write(json.dumps({"app": "app.app"}))
     monkeypatch.setattr(builtins, "open", manager.open)
 
@@ -119,7 +119,7 @@ def mock_subdir_wsgi_app_file(monkeypatch):
     monkeypatch.setattr(os.path, "abspath", lambda x: "/tmp")
 
     manager = MockFileManager()
-    with manager.open("/tmp/.wsgi_app", "w") as f:
+    with manager.open("/tmp/.serverless-wsgi", "w") as f:
         f.write(json.dumps({"app": "subdir/app.app"}))
     monkeypatch.setattr(builtins, "open", manager.open)
 
@@ -129,7 +129,7 @@ def mock_text_mime_wsgi_app_file(monkeypatch):
     monkeypatch.setattr(os.path, "abspath", lambda x: "/tmp")
 
     manager = MockFileManager()
-    with manager.open("/tmp/.wsgi_app", "w") as f:
+    with manager.open("/tmp/.serverless-wsgi", "w") as f:
         f.write(
             json.dumps(
                 {"app": "app.app", "text_mime_types": ["application/custom+json"]}
@@ -198,16 +198,16 @@ def event():
 
 
 @pytest.fixture  # noqa: F811
-def wsgi():
-    if "wsgi" in sys.modules:
-        del sys.modules["wsgi"]
-    import wsgi
+def wsgi_handler():
+    if "wsgi_handler" in sys.modules:
+        del sys.modules["wsgi_handler"]
+    import wsgi_handler
 
-    return wsgi
+    return wsgi_handler
 
 
-def test_handler(mock_wsgi_app_file, mock_app, event, capsys, wsgi):
-    response = wsgi.handler(event, {"memory_limit_in_mb": "128"})
+def test_handler(mock_wsgi_app_file, mock_app, event, capsys, wsgi_handler):
+    response = wsgi_handler.handler(event, {"memory_limit_in_mb": "128"})
 
     assert response == {
         "body": u"Hello World ☃!",
@@ -222,7 +222,7 @@ def test_handler(mock_wsgi_app_file, mock_app, event, capsys, wsgi):
         "isBase64Encoded": False,
     }
 
-    assert wsgi.wsgi_app.last_environ == {
+    assert wsgi_handler.wsgi_app.last_environ == {
         "CONTENT_LENGTH": "0",
         "CONTENT_TYPE": "",
         "HTTP_ACCEPT": "*/*",
@@ -253,8 +253,8 @@ def test_handler(mock_wsgi_app_file, mock_app, event, capsys, wsgi):
         "SERVER_NAME": "3z6kd9fbb1.execute-api.us-east-1.amazonaws.com",
         "SERVER_PORT": "443",
         "SERVER_PROTOCOL": "HTTP/1.1",
-        "wsgi.errors": wsgi.wsgi_app.last_environ["wsgi.errors"],
-        "wsgi.input": wsgi.wsgi_app.last_environ["wsgi.input"],
+        "wsgi.errors": wsgi_handler.wsgi_app.last_environ["wsgi.errors"],
+        "wsgi.input": wsgi_handler.wsgi_app.last_environ["wsgi.input"],
         "wsgi.multiprocess": False,
         "wsgi.multithread": False,
         "wsgi.run_once": False,
@@ -273,16 +273,16 @@ def test_handler(mock_wsgi_app_file, mock_app, event, capsys, wsgi):
     assert err == "application debug #1\n"
 
 
-def test_handler_china(mock_wsgi_app_file, mock_app, event, capsys, wsgi):
+def test_handler_china(mock_wsgi_app_file, mock_app, event, capsys, wsgi_handler):
     event["headers"]["Host"] = "x.amazonaws.com.cn"
-    wsgi.handler(event, {"memory_limit_in_mb": "128"})
+    wsgi_handler.handler(event, {"memory_limit_in_mb": "128"})
 
-    assert wsgi.wsgi_app.last_environ["SCRIPT_NAME"] == "/dev"
+    assert wsgi_handler.wsgi_app.last_environ["SCRIPT_NAME"] == "/dev"
 
 
-def test_handler_single_cookie(mock_wsgi_app_file, mock_app, event, wsgi):
-    wsgi.wsgi_app.cookie_count = 1
-    response = wsgi.handler(event, {})
+def test_handler_single_cookie(mock_wsgi_app_file, mock_app, event, wsgi_handler):
+    wsgi_handler.wsgi_app.cookie_count = 1
+    response = wsgi_handler.handler(event, {})
 
     assert response == {
         "body": u"Hello World ☃!",
@@ -296,9 +296,9 @@ def test_handler_single_cookie(mock_wsgi_app_file, mock_app, event, wsgi):
     }
 
 
-def test_handler_no_cookie(mock_wsgi_app_file, mock_app, event, wsgi):
-    wsgi.wsgi_app.cookie_count = 0
-    response = wsgi.handler(event, {})
+def test_handler_no_cookie(mock_wsgi_app_file, mock_app, event, wsgi_handler):
+    wsgi_handler.wsgi_app.cookie_count = 0
+    response = wsgi_handler.handler(event, {})
 
     assert response == {
         "body": u"Hello World ☃!",
@@ -311,23 +311,23 @@ def test_handler_no_cookie(mock_wsgi_app_file, mock_app, event, wsgi):
     }
 
 
-def test_handler_schedule(mock_wsgi_app_file, mock_app, event, wsgi):
+def test_handler_schedule(mock_wsgi_app_file, mock_app, event, wsgi_handler):
     event = {"source": "aws.events"}
-    response = wsgi.handler(event, {})
+    response = wsgi_handler.handler(event, {})
     assert response == {}
 
 
-def test_handler_warmup_plugin(mock_wsgi_app_file, mock_app, event, wsgi):
+def test_handler_warmup_plugin(mock_wsgi_app_file, mock_app, event, wsgi_handler):
     event = {"source": "serverless-plugin-warmup"}
-    response = wsgi.handler(event, {})
+    response = wsgi_handler.handler(event, {})
     assert response == {}
 
 
-def test_handler_custom_domain(mock_wsgi_app_file, mock_app, event, wsgi):
+def test_handler_custom_domain(mock_wsgi_app_file, mock_app, event, wsgi_handler):
     event["headers"]["Host"] = "custom.domain.com"
-    wsgi.handler(event, {})
+    wsgi_handler.handler(event, {})
 
-    assert wsgi.wsgi_app.last_environ == {
+    assert wsgi_handler.wsgi_app.last_environ == {
         "CONTENT_LENGTH": "0",
         "CONTENT_TYPE": "",
         "HTTP_ACCEPT": "*/*",
@@ -358,8 +358,8 @@ def test_handler_custom_domain(mock_wsgi_app_file, mock_app, event, wsgi):
         "SERVER_NAME": "custom.domain.com",
         "SERVER_PORT": "443",
         "SERVER_PROTOCOL": "HTTP/1.1",
-        "wsgi.errors": wsgi.wsgi_app.last_environ["wsgi.errors"],
-        "wsgi.input": wsgi.wsgi_app.last_environ["wsgi.input"],
+        "wsgi.errors": wsgi_handler.wsgi_app.last_environ["wsgi.errors"],
+        "wsgi.input": wsgi_handler.wsgi_app.last_environ["wsgi.input"],
         "wsgi.multiprocess": False,
         "wsgi.multithread": False,
         "wsgi.run_once": False,
@@ -374,13 +374,15 @@ def test_handler_custom_domain(mock_wsgi_app_file, mock_app, event, wsgi):
     }
 
 
-def test_handler_api_gateway_base_path(mock_wsgi_app_file, mock_app, event, wsgi):
+def test_handler_api_gateway_base_path(
+    mock_wsgi_app_file, mock_app, event, wsgi_handler
+):
     event["headers"]["Host"] = "custom.domain.com"
     event["path"] = "/prod/some/path"
     os.environ.update(API_GATEWAY_BASE_PATH="prod")
-    wsgi.handler(event, {})
+    wsgi_handler.handler(event, {})
 
-    assert wsgi.wsgi_app.last_environ == {
+    assert wsgi_handler.wsgi_app.last_environ == {
         "CONTENT_LENGTH": "0",
         "CONTENT_TYPE": "",
         "HTTP_ACCEPT": "*/*",
@@ -411,8 +413,8 @@ def test_handler_api_gateway_base_path(mock_wsgi_app_file, mock_app, event, wsgi
         "SERVER_NAME": "custom.domain.com",
         "SERVER_PORT": "443",
         "SERVER_PROTOCOL": "HTTP/1.1",
-        "wsgi.errors": wsgi.wsgi_app.last_environ["wsgi.errors"],
-        "wsgi.input": wsgi.wsgi_app.last_environ["wsgi.input"],
+        "wsgi.errors": wsgi_handler.wsgi_app.last_environ["wsgi.errors"],
+        "wsgi.input": wsgi_handler.wsgi_app.last_environ["wsgi.input"],
         "wsgi.multiprocess": False,
         "wsgi.multithread": False,
         "wsgi.run_once": False,
@@ -427,10 +429,10 @@ def test_handler_api_gateway_base_path(mock_wsgi_app_file, mock_app, event, wsgi
     }
 
 
-def test_handler_base64(mock_wsgi_app_file, mock_app, event, wsgi):
-    wsgi.wsgi_app.cookie_count = 1
-    wsgi.wsgi_app.response_mimetype = "image/jpeg"
-    response = wsgi.handler(event, {})
+def test_handler_base64(mock_wsgi_app_file, mock_app, event, wsgi_handler):
+    wsgi_handler.wsgi_app.cookie_count = 1
+    wsgi_handler.wsgi_app.response_mimetype = "image/jpeg"
+    response = wsgi_handler.handler(event, {})
 
     assert response == {
         "body": u"SGVsbG8gV29ybGQg4piDIQ==",
@@ -444,8 +446,8 @@ def test_handler_base64(mock_wsgi_app_file, mock_app, event, wsgi):
     }
 
 
-def test_handler_plain(mock_wsgi_app_file, mock_app, event, wsgi):
-    wsgi.wsgi_app.cookie_count = 1
+def test_handler_plain(mock_wsgi_app_file, mock_app, event, wsgi_handler):
+    wsgi_handler.wsgi_app.cookie_count = 1
 
     plain_mimetypes = [
         "application/vnd.api+json",
@@ -454,8 +456,8 @@ def test_handler_plain(mock_wsgi_app_file, mock_app, event, wsgi):
     ]
 
     for mimetype in plain_mimetypes:
-        wsgi.wsgi_app.response_mimetype = mimetype
-        response = wsgi.handler(event, {})
+        wsgi_handler.wsgi_app.response_mimetype = mimetype
+        response = wsgi_handler.handler(event, {})
 
         assert response == {
             "body": u"Hello World ☃!",
@@ -469,15 +471,15 @@ def test_handler_plain(mock_wsgi_app_file, mock_app, event, wsgi):
         }
 
 
-def test_handler_base64_request(mock_wsgi_app_file, mock_app, event, wsgi):
+def test_handler_base64_request(mock_wsgi_app_file, mock_app, event, wsgi_handler):
     event["body"] = "SGVsbG8gd29ybGQ="
     event["headers"]["Content-Type"] = "text/plain"
     event["isBase64Encoded"] = True
     event["httpMethod"] = "PUT"
 
-    wsgi.handler(event, {})
+    wsgi_handler.handler(event, {})
 
-    environ = wsgi.wsgi_app.last_environ
+    environ = wsgi_handler.wsgi_app.last_environ
 
     assert environ["CONTENT_TYPE"] == "text/plain"
     assert environ["CONTENT_LENGTH"] == "11"
@@ -485,11 +487,11 @@ def test_handler_base64_request(mock_wsgi_app_file, mock_app, event, wsgi):
     assert environ["wsgi.input"].getvalue().decode() == "Hello world"
 
 
-def test_non_package_subdir_app(mock_subdir_wsgi_app_file, mock_app, wsgi):
-    assert wsgi.wsgi_app.module == "app"
+def test_non_package_subdir_app(mock_subdir_wsgi_app_file, mock_app, wsgi_handler):
+    assert wsgi_handler.wsgi_app.module == "app"
 
 
-def test_handler_binary_request_body(mock_wsgi_app_file, mock_app, event, wsgi):
+def test_handler_binary_request_body(mock_wsgi_app_file, mock_app, event, wsgi_handler):
     event["body"] = (
         u"LS0tLS0tV2ViS2l0Rm9ybUJvdW5kYXJ5VTRDZE5CRWVLQWxIaGRRcQ0KQ29udGVu"
         u"dC1EaXNwb3NpdGlvbjogZm9ybS1kYXRhOyBuYW1lPSJ3YXQiDQoNCmhleW9vb3Bw"
@@ -509,16 +511,16 @@ def test_handler_binary_request_body(mock_wsgi_app_file, mock_app, event, wsgi):
     event["isBase64Encoded"] = True
     event["httpMethod"] = "POST"
 
-    wsgi.handler(event, {})
+    wsgi_handler.handler(event, {})
 
-    environ = wsgi.wsgi_app.last_environ
+    environ = wsgi_handler.wsgi_app.last_environ
 
     assert environ["CONTENT_LENGTH"] == "496"
     assert Request(environ).form["submit"] == u"Upload Image"
 
 
 def test_handler_request_body_undecodable_with_latin1(
-    mock_wsgi_app_file, mock_app, event, wsgi
+    mock_wsgi_app_file, mock_app, event, wsgi_handler
 ):
     event["body"] = (
         u"------WebKitFormBoundary3vA72kRLuq9D3NdL\r\n"
@@ -531,18 +533,18 @@ def test_handler_request_body_undecodable_with_latin1(
     ] = "multipart/form-data; boundary=----WebKitFormBoundary3vA72kRLuq9D3NdL"
     event["httpMethod"] = "POST"
 
-    wsgi.handler(event, {})
+    wsgi_handler.handler(event, {})
 
-    environ = wsgi.wsgi_app.last_environ
+    environ = wsgi_handler.wsgi_app.last_environ
     assert Request(environ).form["text"] == u"テスト 테스트 测试"
 
 
 def test_handler_custom_text_mime_types(
-    mock_text_mime_wsgi_app_file, mock_app, event, wsgi
+    mock_text_mime_wsgi_app_file, mock_app, event, wsgi_handler
 ):
-    wsgi.wsgi_app.cookie_count = 1
-    wsgi.wsgi_app.response_mimetype = "application/custom+json"
-    response = wsgi.handler(event, {})
+    wsgi_handler.wsgi_app.cookie_count = 1
+    wsgi_handler.wsgi_app.response_mimetype = "application/custom+json"
+    response = wsgi_handler.handler(event, {})
 
     assert response == {
         "body": u"Hello World ☃!",
@@ -556,8 +558,8 @@ def test_handler_custom_text_mime_types(
     }
 
 
-def test_handler_alb(mock_wsgi_app_file, mock_app, wsgi):
-    response = wsgi.handler(
+def test_handler_alb(mock_wsgi_app_file, mock_app, wsgi_handler):
+    response = wsgi_handler.handler(
         {
             "requestContext": {
                 "elb": {
@@ -602,14 +604,14 @@ def test_handler_alb(mock_wsgi_app_file, mock_app, wsgi):
     }
 
 
-def test_command_exec(mock_wsgi_app_file, mock_app, wsgi):
-    response = wsgi.handler(
+def test_command_exec(mock_wsgi_app_file, mock_app, wsgi_handler):
+    response = wsgi_handler.handler(
         {"_serverless-wsgi": {"command": "exec", "data": "print(1+4)"}}, {}
     )
 
     assert response == "5\n"
 
-    response = wsgi.handler(
+    response = wsgi_handler.handler(
         {"_serverless-wsgi": {"command": "exec", "data": "invalid code"}}, {}
     )
 
@@ -617,15 +619,15 @@ def test_command_exec(mock_wsgi_app_file, mock_app, wsgi):
     assert "SyntaxError: invalid syntax" in response
 
 
-def test_command_command(mock_wsgi_app_file, mock_app, wsgi):
-    response = wsgi.handler(
+def test_command_command(mock_wsgi_app_file, mock_app, wsgi_handler):
+    response = wsgi_handler.handler(
         {"_serverless-wsgi": {"command": "command", "data": 'echo "hello world"'}}, {}
     )
 
     assert response == "hello world\n"
 
 
-def test_command_manage(mock_wsgi_app_file, mock_app, wsgi):
+def test_command_manage(mock_wsgi_app_file, mock_app, wsgi_handler):
     class MockObject:
         pass
 
@@ -637,15 +639,15 @@ def test_command_manage(mock_wsgi_app_file, mock_app, wsgi):
     sys.modules["django.core"] = MockObject()
     sys.modules["django.core"].management = MockDjango()
 
-    response = wsgi.handler(
+    response = wsgi_handler.handler(
         {"_serverless-wsgi": {"command": "manage", "data": "check --list-tags"}}, {}
     )
 
     assert response == "Called with: check, --list-tags\n"
 
 
-def test_command_unknown(mock_wsgi_app_file, mock_app, wsgi):
-    response = wsgi.handler(
+def test_command_unknown(mock_wsgi_app_file, mock_app, wsgi_handler):
+    response = wsgi_handler.handler(
         {"_serverless-wsgi": {"command": "unknown", "data": 'echo "hello world"'}}, {}
     )
 
@@ -655,6 +657,6 @@ def test_command_unknown(mock_wsgi_app_file, mock_app, wsgi):
 
 def test_app_import_error(mock_wsgi_app_file, mock_app_with_import_error, event):
     with pytest.raises(Exception, message="Unable to import app.app"):
-        if "wsgi" in sys.modules:
-            del sys.modules["wsgi"]
-        import wsgi  # noqa: F401
+        if "wsgi_handler" in sys.modules:
+            del sys.modules["wsgi_handler"]
+        import wsgi_handler  # noqa: F401

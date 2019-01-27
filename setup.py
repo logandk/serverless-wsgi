@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="serverless-wsgi",
-    version="1.6.1",
+    version="1.7.0",
     author="Logan Raarup",
     author_email="logan@logan.dk",
     description="Amazon AWS API Gateway WSGI wrapper",

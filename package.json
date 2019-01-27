@@ -1,6 +1,6 @@
 {
   "name": "serverless-wsgi",
-  "version": "1.6.1",
+  "version": "1.7.0",
   "engines": {
     "node": ">=4.0"
   },
@@ -35,7 +35,7 @@
     "requirements.py",
     "requirements.txt",
     "serve.py",
-    "wsgi.py",
+    "wsgi_handler.py",
     "serverless_wsgi.py"
   ],
   "main": "index.js",
@@ -43,7 +43,7 @@
   "scripts": {
     "test": "istanbul cover -x '*.test.js' node_modules/mocha/bin/_mocha '*.test.js' -- -R spec",
     "lint": "eslint *.js",
-    "pytest": "py.test --cov=serve --cov=requirements --cov=wsgi --cov=serverless_wsgi --cov-report=html",
+    "pytest": "py.test --cov=serve --cov=requirements --cov=wsgi_handler --cov=serverless_wsgi --cov-report=html",
     "pylint": "flake8 --exclude node_modules"
   },
   "devDependencies": {

@@ -1,3 +1,16 @@
+# 1.7.0
+
+## Features
+
+- Rename `.wsgi_app` to `.serverless-wsgi` (to follow convention from `serverless-rack`)
+- Check for werkzeug presence in bundle or issue warning (#80)
+
+## Bugs
+
+- The `wsgi.handler` has been renamed to `wsgi_handler.handler` due to a naming
+  conflict with an internal AWS wsgi module. A warning and workaround is issued in order
+  to prevent breaking existing configuration files (#84)
+
 # 1.6.1
 
 ## Features

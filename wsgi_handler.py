@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-This module loads the WSGI application specified by FQN in `.wsgi_app` and invokes
+This module loads the WSGI application specified by FQN in `.serverless-wsgi` and invokes
 the request when the handler is called by AWS Lambda.
 
 Author: Logan Raarup <logan@logan.dk>
@@ -26,7 +26,7 @@ def load_config():
     """ Read the configuration file created during deployment
     """
     root = os.path.abspath(os.path.dirname(__file__))
-    with open(os.path.join(root, ".wsgi_app"), "r") as f:
+    with open(os.path.join(root, ".serverless-wsgi"), "r") as f:
         return json.loads(f.read())
 
 

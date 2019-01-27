@@ -41,6 +41,27 @@ class ServerlessWSGI {
         );
       }
 
+      let handlersFixed = false;
+
+      _.each(this.serverless.service.functions, func => {
+        if (func.handler == "wsgi.handler") {
+          func.handler = "wsgi_handler.handler";
+          handlersFixed = true;
+        }
+      });
+
+      if (handlersFixed) {
+        this.serverless.cli.log(
+          'Warning: Please change "wsgi.handler" to "wsgi_handler.handler" in serverless.yml'
+        );
+        this.serverless.cli.log(
+          'Warning: Using "wsgi.handler" still works but has been deprecated and will be removed'
+        );
+        this.serverless.cli.log(
+          "Warning: More information at https://github.com/logandk/serverless-wsgi/issues/84"
+        );
+      }
+
       resolve();
     });
   }
@@ -55,7 +76,7 @@ class ServerlessWSGI {
 
       this.serverless.service.package.include = _.union(
         this.serverless.service.package.include,
-        ["wsgi.py", "serverless_wsgi.py", ".wsgi_app"]
+        ["wsgi_handler.py", "serverless_wsgi.py", ".serverless-wsgi"]
       );
 
       if (this.enableRequirements) {
@@ -134,15 +155,15 @@ class ServerlessWSGI {
 
     return BbPromise.all([
       fse.copyAsync(
-        path.resolve(__dirname, "wsgi.py"),
-        path.join(this.serverless.config.servicePath, "wsgi.py")
+        path.resolve(__dirname, "wsgi_handler.py"),
+        path.join(this.serverless.config.servicePath, "wsgi_handler.py")
       ),
       fse.copyAsync(
         path.resolve(__dirname, "serverless_wsgi.py"),
         path.join(this.serverless.config.servicePath, "serverless_wsgi.py")
       ),
       fse.writeFileAsync(
-        path.join(this.serverless.config.servicePath, ".wsgi_app"),
+        path.join(this.serverless.config.servicePath, ".serverless-wsgi"),
         JSON.stringify(this.getWsgiHandlerConfiguration())
       )
     ]);
@@ -289,7 +310,11 @@ class ServerlessWSGI {
   }
 
   cleanup() {
-    const artifacts = ["wsgi.py", "serverless_wsgi.py", ".wsgi_app"];
+    const artifacts = [
+      "wsgi_handler.py",
+      "serverless_wsgi.py",
+      ".serverless-wsgi"
+    ];
 
     return BbPromise.all(
       _.map(artifacts, artifact =>
@@ -307,7 +332,7 @@ class ServerlessWSGI {
       _.merge(process.env, providerEnvVars);
 
       _.each(this.serverless.service.functions, func => {
-        if (func.handler == "wsgi.handler") {
+        if (func.handler == "wsgi_handler.handler") {
           const functionEnvVars = _.omitBy(func.environment || {}, _.isObject);
           _.merge(process.env, functionEnvVars);
         }
@@ -358,7 +383,7 @@ class ServerlessWSGI {
   findHandler() {
     return _.findKey(
       this.serverless.service.functions,
-      fun => fun.handler == "wsgi.handler"
+      fun => fun.handler == "wsgi_handler.handler"
     );
   }
 
@@ -367,7 +392,7 @@ class ServerlessWSGI {
 
     if (!handlerFunction) {
       return BbPromise.reject(
-        "No functions were found with handler: wsgi.handler"
+        "No functions were found with handler: wsgi_handler.handler"
       );
     }
 
@@ -570,9 +595,18 @@ class ServerlessWSGI {
 
       "wsgi:install:install": deployBeforeHook,
 
-      "wsgi:command:command": () => BbPromise.bind(this).then(this.command),
-      "wsgi:exec:exec": () => BbPromise.bind(this).then(this.exec),
-      "wsgi:manage:manage": () => BbPromise.bind(this).then(this.manage),
+      "wsgi:command:command": () =>
+        BbPromise.bind(this)
+          .then(this.validate)
+          .then(this.command),
+      "wsgi:exec:exec": () =>
+        BbPromise.bind(this)
+          .then(this.validate)
+          .then(this.exec),
+      "wsgi:manage:manage": () =>
+        BbPromise.bind(this)
+          .then(this.validate)
+          .then(this.manage),
 
       "wsgi:clean:clean": () => deployAfterHook().then(this.cleanRequirements),
 
@@ -580,7 +614,7 @@ class ServerlessWSGI {
       "after:package:createDeploymentArtifacts": deployAfterHook,
 
       "before:deploy:function:packageFunction": () => {
-        if (this.options.functionObj.handler == "wsgi.handler") {
+        if (this.options.functionObj.handler == "wsgi_handler.handler") {
           return deployBeforeHook();
         } else {
           return deployBeforeHookWithoutHandler();
@@ -596,17 +630,20 @@ class ServerlessWSGI {
           this.options.function
         );
 
-        if (functionObj.handler == "wsgi.handler") {
-          return BbPromise.bind(this)
-            .then(this.validate)
-            .then(() => {
+        return BbPromise.bind(this)
+          .then(this.validate)
+          .then(() => {
+            if (functionObj.handler == "wsgi_handler.handler") {
               return this.packWsgiHandler(false);
-            });
-        } else {
-          return BbPromise.resolve();
-        }
+            } else {
+              return BbPromise.resolve();
+            }
+          });
       },
-      "after:invoke:local:invoke": () => BbPromise.bind(this).then(this.cleanup)
+      "after:invoke:local:invoke": () =>
+        BbPromise.bind(this)
+          .then(this.validate)
+          .then(this.cleanup)
     };
   }
 }

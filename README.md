@@ -69,10 +69,13 @@ def dog(id):
 Load the plugin and set the `custom.wsgi.app` configuration in `serverless.yml` to the
 module path of your Flask application.
 
-All functions that will use WSGI need to have `wsgi.handler` set as the Lambda handler and
+All functions that will use WSGI need to have `wsgi_handler.handler` set as the Lambda handler and
 use the default `lambda-proxy` integration for API Gateway. This configuration example treats
 API Gateway as a transparent proxy, passing all requests directly to your Flask application,
 and letting the application handle errors, 404s etc.
+
+_Note: The WSGI handler was called `wsgi.handler` earlier, but was renamed to `wsgi_handler.handler`
+in `1.7.0`. The old name is still supported but using it will cause a deprecation warning._
 
 ```yaml
 service: example
@@ -86,7 +89,7 @@ plugins:
 
 functions:
   api:
-    handler: wsgi.handler
+    handler: wsgi_handler.handler
     events:
       - http: ANY /
       - http: ANY {proxy+}
@@ -295,7 +298,7 @@ plugins:
 
 functions:
   api:
-    handler: wsgi.handler
+    handler: wsgi_handler.handler
     events:
       - http:
           path: cats
@@ -335,7 +338,7 @@ plugins:
 
 functions:
   api:
-    handler: wsgi.handler
+    handler: wsgi_handler.handler
     events:
       - http: ANY /
       - http: ANY {proxy+}
