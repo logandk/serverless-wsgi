@@ -1489,7 +1489,7 @@ describe("serverless-wsgi", () => {
   describe("invoke local", () => {
     it("installs handler before invocation", () => {
       var functions = {
-        app: { handler: "wsgi_handler.handler" },
+        app: { handler: "wsgi.handler" },
         other: { handler: "other.handler" }
       };
       var plugin = new Plugin(
