@@ -1,3 +1,9 @@
+# 1.7.1
+
+## Features
+
+- Add local versions of manage, command and exec commands (#79)
+
 # 1.7.0
 
 ## Features

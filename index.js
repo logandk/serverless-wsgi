@@ -387,7 +387,7 @@ class ServerlessWSGI {
     );
   }
 
-  invokeHandler(command, data) {
+  invokeHandler(command, data, local) {
     const handlerFunction = this.findHandler();
 
     if (!handlerFunction) {
@@ -406,8 +406,10 @@ class ServerlessWSGI {
         data: data
       }
     });
+    this.serverless.pluginManager.cliOptions.context = undefined;
     this.serverless.pluginManager.cliOptions.f = this.serverless.pluginManager.cliOptions.function;
     this.serverless.pluginManager.cliOptions.d = this.serverless.pluginManager.cliOptions.data;
+    this.serverless.pluginManager.cliOptions.c = this.serverless.pluginManager.cliOptions.context;
 
     // The invoke plugin prints the response to the console as JSON. When invoking commands
     // remotely, we get a string back and we want it to appear in the console as it would have
@@ -424,7 +426,7 @@ class ServerlessWSGI {
 
       resolve(
         this.serverless.pluginManager
-          .run(["invoke"])
+          .run(local ? ["invoke", "local"] : ["invoke"])
           .then(() => {
             output = _.trimEnd(output, "\n");
             try {
@@ -446,7 +448,7 @@ class ServerlessWSGI {
     });
   }
 
-  command() {
+  command(local) {
     let data = null;
 
     if (this.options.command) {
@@ -459,10 +461,10 @@ class ServerlessWSGI {
       );
     }
 
-    return this.invokeHandler("command", data);
+    return this.invokeHandler("command", data, local);
   }
 
-  exec() {
+  exec(local) {
     let data = null;
 
     if (this.options.command) {
@@ -475,11 +477,11 @@ class ServerlessWSGI {
       );
     }
 
-    return this.invokeHandler("exec", data);
+    return this.invokeHandler("exec", data, local);
   }
 
-  manage() {
-    return this.invokeHandler("manage", this.options.command);
+  manage(local) {
+    return this.invokeHandler("manage", this.options.command, local);
   }
 
   constructor(serverless, options) {
@@ -525,6 +527,22 @@ class ServerlessWSGI {
                 usage: "Path to a shell script to execute",
                 shortcut: "f"
               }
+            },
+            commands: {
+              local: {
+                usage: "Execute shell commands or scripts locally",
+                lifecycleEvents: ["command"],
+                options: {
+                  command: {
+                    usage: "Command to execute",
+                    shortcut: "c"
+                  },
+                  file: {
+                    usage: "Path to a shell script to execute",
+                    shortcut: "f"
+                  }
+                }
+              }
             }
           },
           exec: {
@@ -539,6 +557,22 @@ class ServerlessWSGI {
                 usage: "Path to a Python script to execute",
                 shortcut: "f"
               }
+            },
+            commands: {
+              local: {
+                usage: "Evaluate Python code locally",
+                lifecycleEvents: ["exec"],
+                options: {
+                  command: {
+                    usage: "Python code to execute",
+                    shortcut: "c"
+                  },
+                  file: {
+                    usage: "Path to a Python script to execute",
+                    shortcut: "f"
+                  }
+                }
+              }
             }
           },
           manage: {
@@ -549,6 +583,19 @@ class ServerlessWSGI {
                 usage: "Management command",
                 shortcut: "c",
                 required: true
+              }
+            },
+            commands: {
+              local: {
+                usage: "Run Django management commands locally",
+                lifecycleEvents: ["manage"],
+                options: {
+                  command: {
+                    usage: "Management command",
+                    shortcut: "c",
+                    required: true
+                  }
+                }
               }
             }
           }
@@ -598,15 +645,27 @@ class ServerlessWSGI {
       "wsgi:command:command": () =>
         BbPromise.bind(this)
           .then(this.validate)
-          .then(this.command),
+          .then(() => this.command(false)),
+      "wsgi:command:local:command": () =>
+        BbPromise.bind(this)
+          .then(this.validate)
+          .then(() => this.command(true)),
       "wsgi:exec:exec": () =>
         BbPromise.bind(this)
           .then(this.validate)
-          .then(this.exec),
+          .then(() => this.exec(false)),
+      "wsgi:exec:local:exec": () =>
+        BbPromise.bind(this)
+          .then(this.validate)
+          .then(() => this.exec(true)),
       "wsgi:manage:manage": () =>
         BbPromise.bind(this)
           .then(this.validate)
-          .then(this.manage),
+          .then(() => this.manage(false)),
+      "wsgi:manage:local:manage": () =>
+        BbPromise.bind(this)
+          .then(this.validate)
+          .then(() => this.manage(true)),
 
       "wsgi:clean:clean": () => deployAfterHook().then(this.cleanRequirements),
 

@@ -1257,6 +1257,9 @@ describe("serverless-wsgi", () => {
       var sandbox = sinon.createSandbox();
       let consoleSpy = sandbox.spy(console, "log");
       plugin.hooks["wsgi:exec:exec"]().then(() => {
+        expect(plugin.serverless.pluginManager.cliOptions.c).to.be.undefined;
+        expect(plugin.serverless.pluginManager.cliOptions.context).to.be
+          .undefined;
         expect(plugin.serverless.pluginManager.cliOptions.f).to.equal("app");
         expect(plugin.serverless.pluginManager.cliOptions.function).to.equal(
           "app"
@@ -1300,6 +1303,115 @@ describe("serverless-wsgi", () => {
       let consoleSpy = sandbox.spy(console, "log");
       sandbox.stub(fse, "readFileSync").returns("print(1+4)");
       plugin.hooks["wsgi:exec:exec"]().then(() => {
+        expect(plugin.serverless.pluginManager.cliOptions.f).to.equal("app");
+        expect(plugin.serverless.pluginManager.cliOptions.function).to.equal(
+          "app"
+        );
+        expect(plugin.serverless.pluginManager.cliOptions.d).to.equal(
+          '{"_serverless-wsgi":{"command":"exec","data":"print(1+4)"}}'
+        );
+        expect(plugin.serverless.pluginManager.cliOptions.data).to.equal(
+          '{"_serverless-wsgi":{"command":"exec","data":"print(1+4)"}}'
+        );
+        expect(consoleSpy.calledWith('{"response": "5"}')).to.be.true;
+        sandbox.restore();
+      });
+    });
+  });
+
+  describe("exec local", () => {
+    it("fails when invoked without command or file", () => {
+      var plugin = new Plugin(
+        {
+          config: { servicePath: "/tmp" },
+          service: {
+            provider: { runtime: "python2.7" },
+            custom: { wsgi: { app: "api.app" } }
+          },
+          classes: { Error: Error },
+          cli: { log: () => {} }
+        },
+        {}
+      );
+
+      expect(plugin.hooks["wsgi:exec:local:exec"]()).to.be.rejectedWith(
+        "Please provide either a command (-c) or a file (-f)"
+      );
+    });
+
+    it("calls handler to execute code locally from argument", () => {
+      var plugin = new Plugin(
+        {
+          config: { servicePath: "/tmp" },
+          service: {
+            provider: { runtime: "python2.7" },
+            custom: { wsgi: { app: "api.app" } },
+            functions: { app: { handler: "wsgi_handler.handler" } }
+          },
+          classes: { Error: Error },
+          cli: { log: () => {} },
+          pluginManager: {
+            cliOptions: {},
+            run: command =>
+              new BbPromise(resolve => {
+                expect(command).to.deep.equal(["invoke", "local"]);
+                console.log('"5"'); // eslint-disable-line no-console
+                resolve();
+              })
+          }
+        },
+        { command: "print(1+4)" }
+      );
+
+      var sandbox = sinon.createSandbox();
+      let consoleSpy = sandbox.spy(console, "log");
+      plugin.hooks["wsgi:exec:local:exec"]().then(() => {
+        expect(plugin.serverless.pluginManager.cliOptions.c).to.be.undefined;
+        expect(plugin.serverless.pluginManager.cliOptions.context).to.be
+          .undefined;
+        expect(plugin.serverless.pluginManager.cliOptions.f).to.equal("app");
+        expect(plugin.serverless.pluginManager.cliOptions.function).to.equal(
+          "app"
+        );
+        expect(plugin.serverless.pluginManager.cliOptions.d).to.equal(
+          '{"_serverless-wsgi":{"command":"exec","data":"print(1+4)"}}'
+        );
+        expect(plugin.serverless.pluginManager.cliOptions.data).to.equal(
+          '{"_serverless-wsgi":{"command":"exec","data":"print(1+4)"}}'
+        );
+        expect(consoleSpy.calledWith("5")).to.be.true;
+        sandbox.restore();
+      });
+    });
+
+    it("calls handler to execute code locally from file", () => {
+      var plugin = new Plugin(
+        {
+          config: { servicePath: "/tmp" },
+          service: {
+            provider: { runtime: "python2.7" },
+            custom: { wsgi: { app: "api.app" } },
+            functions: { app: { handler: "wsgi_handler.handler" } }
+          },
+          classes: { Error: Error },
+          cli: { log: () => {} },
+          pluginManager: {
+            cliOptions: {},
+            run: command =>
+              new BbPromise(resolve => {
+                expect(command).to.deep.equal(["invoke", "local"]);
+                console.log('{"response": "5"}'); // eslint-disable-line no-console
+                resolve();
+              })
+          }
+        },
+        { file: "script.py" }
+      );
+
+      var sandbox = sinon.createSandbox();
+      let consoleSpy = sandbox.spy(console, "log");
+      sandbox.stub(fse, "readFileSync").returns("print(1+4)");
+      plugin.hooks["wsgi:exec:local:exec"]().then(() => {
         expect(plugin.serverless.pluginManager.cliOptions.f).to.equal("app");
         expect(plugin.serverless.pluginManager.cliOptions.function).to.equal(
           "app"
@@ -1383,6 +1495,9 @@ describe("serverless-wsgi", () => {
       var sandbox = sinon.createSandbox();
       let consoleSpy = sandbox.spy(console, "log");
       plugin.hooks["wsgi:command:command"]().then(() => {
+        expect(plugin.serverless.pluginManager.cliOptions.c).to.be.undefined;
+        expect(plugin.serverless.pluginManager.cliOptions.context).to.be
+          .undefined;
         expect(plugin.serverless.pluginManager.cliOptions.f).to.equal("app");
         expect(plugin.serverless.pluginManager.cliOptions.function).to.equal(
           "app"
@@ -1442,6 +1557,135 @@ describe("serverless-wsgi", () => {
     });
   });
 
+  describe("command local", () => {
+    it("fails when no wsgi handler is set", () => {
+      var plugin = new Plugin(
+        {
+          config: { servicePath: "/tmp" },
+          service: {
+            provider: { runtime: "python2.7" },
+            custom: { wsgi: { app: "api.app" } },
+            functions: { app: { handler: "other.handler" } }
+          },
+          classes: { Error: Error },
+          cli: { log: () => {} }
+        },
+        { command: "pwd" }
+      );
+
+      expect(plugin.hooks["wsgi:command:local:command"]()).to.be.rejectedWith(
+        "No functions were found with handler: wsgi_handler.handler"
+      );
+    });
+
+    it("fails when invoked without command or file", () => {
+      var plugin = new Plugin(
+        {
+          config: { servicePath: "/tmp" },
+          service: {
+            provider: { runtime: "python2.7" },
+            custom: { wsgi: { app: "api.app" } }
+          },
+          classes: { Error: Error },
+          cli: { log: () => {} }
+        },
+        {}
+      );
+
+      expect(plugin.hooks["wsgi:command:local:command"]()).to.be.rejectedWith(
+        "Please provide either a command (-c) or a file (-f)"
+      );
+    });
+
+    it("calls handler to execute commands remotely from argument", () => {
+      var plugin = new Plugin(
+        {
+          config: { servicePath: "/tmp" },
+          service: {
+            provider: { runtime: "python2.7" },
+            custom: { wsgi: { app: "api.app" } },
+            functions: { app: { handler: "wsgi_handler.handler" } }
+          },
+          classes: { Error: Error },
+          cli: { log: () => {} },
+          pluginManager: {
+            cliOptions: {},
+            run: command =>
+              new BbPromise(resolve => {
+                expect(command).to.deep.equal(["invoke", "local"]);
+                console.log("non-json output"); // eslint-disable-line no-console
+                resolve();
+              })
+          }
+        },
+        { command: "pwd" }
+      );
+
+      var sandbox = sinon.createSandbox();
+      let consoleSpy = sandbox.spy(console, "log");
+      plugin.hooks["wsgi:command:local:command"]().then(() => {
+        expect(plugin.serverless.pluginManager.cliOptions.c).to.be.undefined;
+        expect(plugin.serverless.pluginManager.cliOptions.context).to.be
+          .undefined;
+        expect(plugin.serverless.pluginManager.cliOptions.f).to.equal("app");
+        expect(plugin.serverless.pluginManager.cliOptions.function).to.equal(
+          "app"
+        );
+        expect(plugin.serverless.pluginManager.cliOptions.d).to.equal(
+          '{"_serverless-wsgi":{"command":"command","data":"pwd"}}'
+        );
+        expect(plugin.serverless.pluginManager.cliOptions.data).to.equal(
+          '{"_serverless-wsgi":{"command":"command","data":"pwd"}}'
+        );
+        expect(consoleSpy.calledWith("non-json output")).to.be.true;
+        sandbox.restore();
+      });
+    });
+
+    it("calls handler to execute commands remotely from file", () => {
+      var plugin = new Plugin(
+        {
+          config: { servicePath: "/tmp" },
+          service: {
+            provider: { runtime: "python2.7" },
+            custom: { wsgi: { app: "api.app" } },
+            functions: { app: { handler: "wsgi_handler.handler" } }
+          },
+          classes: { Error: Error },
+          cli: { log: () => {} },
+          pluginManager: {
+            cliOptions: {},
+            run: command =>
+              new BbPromise(resolve => {
+                expect(command).to.deep.equal(["invoke", "local"]);
+                console.log('"/var/task"'); // eslint-disable-line no-console
+                resolve();
+              })
+          }
+        },
+        { file: "script.sh" }
+      );
+
+      var sandbox = sinon.createSandbox();
+      let consoleSpy = sandbox.spy(console, "log");
+      sandbox.stub(fse, "readFileSync").returns("pwd");
+      plugin.hooks["wsgi:command:local:command"]().then(() => {
+        expect(plugin.serverless.pluginManager.cliOptions.f).to.equal("app");
+        expect(plugin.serverless.pluginManager.cliOptions.function).to.equal(
+          "app"
+        );
+        expect(plugin.serverless.pluginManager.cliOptions.d).to.equal(
+          '{"_serverless-wsgi":{"command":"command","data":"pwd"}}'
+        );
+        expect(plugin.serverless.pluginManager.cliOptions.data).to.equal(
+          '{"_serverless-wsgi":{"command":"command","data":"pwd"}}'
+        );
+        expect(consoleSpy.calledWith("/var/task")).to.be.true;
+        sandbox.restore();
+      });
+    });
+  });
+
   describe("manage", () => {
     it("calls handler to execute manage commands remotely from argument", () => {
       var plugin = new Plugin(
@@ -1470,6 +1714,53 @@ describe("serverless-wsgi", () => {
       var sandbox = sinon.createSandbox();
       let consoleSpy = sandbox.spy(console, "log");
       plugin.hooks["wsgi:manage:manage"]().then(() => {
+        expect(plugin.serverless.pluginManager.cliOptions.f).to.equal("app");
+        expect(plugin.serverless.pluginManager.cliOptions.function).to.equal(
+          "app"
+        );
+        expect(plugin.serverless.pluginManager.cliOptions.d).to.equal(
+          '{"_serverless-wsgi":{"command":"manage","data":"check"}}'
+        );
+        expect(plugin.serverless.pluginManager.cliOptions.data).to.equal(
+          '{"_serverless-wsgi":{"command":"manage","data":"check"}}'
+        );
+        expect(consoleSpy.calledWith("manage command output")).to.be.true;
+        sandbox.restore();
+      });
+    });
+  });
+
+  describe("manage local", () => {
+    it("calls handler to execute manage commands locally from argument", () => {
+      var plugin = new Plugin(
+        {
+          config: { servicePath: "/tmp" },
+          service: {
+            provider: { runtime: "python2.7" },
+            custom: { wsgi: { app: "api.app" } },
+            functions: { app: { handler: "wsgi_handler.handler" } }
+          },
+          classes: { Error: Error },
+          cli: { log: () => {} },
+          pluginManager: {
+            cliOptions: {},
+            run: command =>
+              new BbPromise(resolve => {
+                expect(command).to.deep.equal(["invoke", "local"]);
+                console.log('"manage command output"'); // eslint-disable-line no-console
+                resolve();
+              })
+          }
+        },
+        { command: "check" }
+      );
+
+      var sandbox = sinon.createSandbox();
+      let consoleSpy = sandbox.spy(console, "log");
+      plugin.hooks["wsgi:manage:local:manage"]().then(() => {
+        expect(plugin.serverless.pluginManager.cliOptions.c).to.be.undefined;
+        expect(plugin.serverless.pluginManager.cliOptions.context).to.be
+          .undefined;
         expect(plugin.serverless.pluginManager.cliOptions.f).to.equal("app");
         expect(plugin.serverless.pluginManager.cliOptions.function).to.equal(
           "app"

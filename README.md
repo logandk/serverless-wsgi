@@ -281,6 +281,11 @@ templates
 urls
 ```
 
+All commands have `local` equivalents that let you run commands through `sls invoke local` rather
+than `sls invoke`, i.e. on the local machine instead of through Lambda. The `local` commands (`sls wsgi command local`,
+`sls wsgi exec local` and `sls wsgi manage local`) take the same arguments as their remote counterparts
+documented above.
+
 ### Explicit routes
 
 If you'd like to be explicit about which routes and HTTP methods should pass through to your
