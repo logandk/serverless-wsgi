@@ -10,37 +10,6 @@ const hasbin = require("hasbin");
 class ServerlessWSGI {
   validate() {
     return new BbPromise(resolve => {
-      this.enableRequirements = !_.includes(
-        this.serverless.service.plugins,
-        "serverless-python-requirements"
-      );
-      this.pipArgs = null;
-
-      if (
-        this.serverless.service.custom &&
-        this.serverless.service.custom.wsgi
-      ) {
-        if (this.serverless.service.custom.wsgi.app) {
-          this.wsgiApp = this.serverless.service.custom.wsgi.app;
-          this.appPath = path.dirname(
-            path.join(this.serverless.config.servicePath, this.wsgiApp)
-          );
-        }
-
-        if (_.isBoolean(this.serverless.service.custom.wsgi.packRequirements)) {
-          this.enableRequirements = this.serverless.service.custom.wsgi.packRequirements;
-        }
-
-        this.pipArgs = this.serverless.service.custom.wsgi.pipArgs;
-      }
-
-      if (this.enableRequirements) {
-        this.requirementsInstallPath = path.join(
-          this.appPath ? this.appPath : this.serverless.config.servicePath,
-          ".requirements"
-        );
-      }
-
       let handlersFixed = false;
 
       _.each(this.serverless.service.functions, func => {
@@ -62,6 +31,54 @@ class ServerlessWSGI {
         );
       }
 
+      this.enableRequirements = !_.includes(
+        this.serverless.service.plugins,
+        "serverless-python-requirements"
+      );
+      this.pipArgs = null;
+      this.appPath = this.serverless.config.servicePath;
+
+      if (
+        this.serverless.service.custom &&
+        this.serverless.service.custom.wsgi
+      ) {
+        if (this.serverless.service.custom.wsgi.app) {
+          this.wsgiApp = this.serverless.service.custom.wsgi.app;
+          this.appPath = path.dirname(path.join(this.appPath, this.wsgiApp));
+        }
+
+        if (_.isBoolean(this.serverless.service.custom.wsgi.packRequirements)) {
+          this.enableRequirements = this.serverless.service.custom.wsgi.packRequirements;
+        }
+
+        this.pipArgs = this.serverless.service.custom.wsgi.pipArgs;
+      }
+
+      if (this.enableRequirements) {
+        this.requirementsInstallPath = path.join(this.appPath, ".requirements");
+      }
+
+      this.packageRootPath = this.serverless.config.servicePath;
+
+      if (
+        this.serverless.service.package &&
+        this.serverless.service.package.individually &&
+        this.serverless.config.servicePath != this.appPath
+      ) {
+        let handler = _.find(
+          this.serverless.service.functions,
+          fun => fun.handler == "wsgi_handler.handler"
+        );
+
+        // serverless-python-requirements supports packaging individual functions
+        // by specifying a Python module, in which case the handler needs to be installed
+        // in the module root, rather than the service root
+        if (handler && handler.module) {
+          this.packageRootPath = this.appPath;
+          this.wsgiApp = path.basename(this.wsgiApp);
+        }
+      }
+
       resolve();
     });
   }
@@ -76,11 +93,26 @@ class ServerlessWSGI {
 
       this.serverless.service.package.include = _.union(
         this.serverless.service.package.include,
-        ["wsgi_handler.py", "serverless_wsgi.py", ".serverless-wsgi"]
+        _.map(
+          ["wsgi_handler.py", "serverless_wsgi.py", ".serverless-wsgi"],
+          artifact =>
+            path.join(
+              path.relative(
+                this.serverless.config.servicePath,
+                this.packageRootPath
+              ),
+              artifact
+            )
+        )
       );
 
       if (this.enableRequirements) {
-        this.serverless.service.package.exclude.push(".requirements/**");
+        this.serverless.service.package.exclude.push(
+          path.join(
+            path.relative(this.serverless.config.servicePath, this.appPath),
+            ".requirements/**"
+          )
+        );
       }
 
       resolve();
@@ -156,14 +188,14 @@ class ServerlessWSGI {
     return BbPromise.all([
       fse.copyAsync(
         path.resolve(__dirname, "wsgi_handler.py"),
-        path.join(this.serverless.config.servicePath, "wsgi_handler.py")
+        path.join(this.packageRootPath, "wsgi_handler.py")
       ),
       fse.copyAsync(
         path.resolve(__dirname, "serverless_wsgi.py"),
-        path.join(this.serverless.config.servicePath, "serverless_wsgi.py")
+        path.join(this.packageRootPath, "serverless_wsgi.py")
       ),
       fse.writeFileAsync(
-        path.join(this.serverless.config.servicePath, ".serverless-wsgi"),
+        path.join(this.packageRootPath, ".serverless-wsgi"),
         JSON.stringify(this.getWsgiHandlerConfiguration())
       )
     ]);
@@ -175,9 +207,6 @@ class ServerlessWSGI {
         return resolve();
       }
 
-      const requirementsPath =
-        this.appPath || this.serverless.config.servicePath;
-      const requirementsFile = path.join(requirementsPath, "requirements.txt");
       let args = [path.resolve(__dirname, "requirements.py")];
 
       if (this.pipArgs) {
@@ -188,6 +217,8 @@ class ServerlessWSGI {
       if (this.wsgiApp) {
         args.push(path.resolve(__dirname, "requirements.txt"));
       }
+
+      const requirementsFile = path.join(this.appPath, "requirements.txt");
 
       if (fse.existsSync(requirementsFile)) {
         args.push(requirementsFile);
@@ -232,8 +263,13 @@ class ServerlessWSGI {
         this.serverless.cli.log("Linking required Python packages...");
 
         fse.readdirSync(this.requirementsInstallPath).map(file => {
-          this.serverless.service.package.include.push(file);
-          this.serverless.service.package.include.push(`${file}/**`);
+          let relativePath = path.join(
+            path.relative(this.serverless.config.servicePath, this.appPath),
+            file
+          );
+
+          this.serverless.service.package.include.push(relativePath);
+          this.serverless.service.package.include.push(`${relativePath}/**`);
 
           try {
             fse.symlinkSync(`${this.requirementsInstallPath}/${file}`, file);
@@ -262,18 +298,15 @@ class ServerlessWSGI {
 
   checkWerkzeugPresent() {
     return new BbPromise(resolve => {
-      if (!this.wsgiApp) {
+      if (!this.wsgiApp || !this.enableRequirements) {
         return resolve();
       }
 
-      const hasWerkzeug = _.includes(
-        fse.readdirSync(this.serverless.config.servicePath),
-        "werkzeug"
-      );
+      const hasWerkzeug = _.includes(fse.readdirSync(this.appPath), "werkzeug");
 
       if (!hasWerkzeug) {
         this.serverless.cli.log(
-          "WARNING: Could not find werkzeug, please add it to your requirements.txt"
+          "Warning: Could not find werkzeug, please add it to your requirements.txt"
         );
       }
 
@@ -318,7 +351,7 @@ class ServerlessWSGI {
 
     return BbPromise.all(
       _.map(artifacts, artifact =>
-        fse.removeAsync(path.join(this.serverless.config.servicePath, artifact))
+        fse.removeAsync(path.join(this.packageRootPath, artifact))
       )
     );
   }

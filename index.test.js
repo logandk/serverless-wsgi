@@ -239,6 +239,148 @@ describe("serverless-wsgi", () => {
         sandbox.restore();
       });
     });
+
+    it("packages wsgi handler with individual include and exclude patterns", () => {
+      var plugin = new Plugin(
+        {
+          config: { servicePath: "/tmp" },
+          service: {
+            provider: { runtime: "python2.7" },
+            package: { individually: true },
+            custom: { wsgi: { app: "web/api.app" } },
+            functions: {
+              api: { handler: "wsgi.handler" }
+            }
+          },
+          classes: { Error: Error },
+          cli: { log: () => {} }
+        },
+        {}
+      );
+
+      var sandbox = sinon.createSandbox();
+      var hasbinStub = sandbox.stub(hasbin, "sync").returns(true);
+      var copyStub = sandbox.stub(fse, "copyAsync");
+      var writeStub = sandbox.stub(fse, "writeFileAsync");
+      var symlinkStub = sandbox.stub(fse, "symlinkSync");
+      sandbox.stub(fse, "readdirSync").returns(["flask", "werkzeug"]);
+      sandbox.stub(fse, "existsSync").returns(true);
+      var procStub = sandbox
+        .stub(child_process, "spawnSync")
+        .returns({ status: 0 });
+      plugin.hooks["before:package:createDeploymentArtifacts"]().then(() => {
+        expect(hasbinStub.calledWith("python2.7")).to.be.true;
+        expect(
+          copyStub.calledWith(
+            path.resolve(__dirname, "wsgi_handler.py"),
+            "/tmp/wsgi_handler.py"
+          )
+        ).to.be.true;
+        expect(
+          copyStub.calledWith(
+            path.resolve(__dirname, "serverless_wsgi.py"),
+            "/tmp/serverless_wsgi.py"
+          )
+        ).to.be.true;
+        expect(writeStub.calledWith("/tmp/.serverless-wsgi")).to.be.true;
+        expect(JSON.parse(writeStub.lastCall.args[1])).to.deep.equal({
+          app: "web/api.app"
+        });
+        expect(symlinkStub.called).to.be.true;
+        expect(
+          procStub.calledWith("python2.7", [
+            path.resolve(__dirname, "requirements.py"),
+            path.resolve(__dirname, "requirements.txt"),
+            "/tmp/web/requirements.txt",
+            "/tmp/web/.requirements"
+          ])
+        ).to.be.true;
+        sandbox.restore();
+        expect(plugin.serverless.service.package.include).to.have.members([
+          "wsgi_handler.py",
+          "serverless_wsgi.py",
+          ".serverless-wsgi",
+          "web/flask",
+          "web/flask/**",
+          "web/werkzeug",
+          "web/werkzeug/**"
+        ]);
+        expect(plugin.serverless.service.package.exclude).to.have.members([
+          "web/.requirements/**"
+        ]);
+      });
+    });
+
+    it("packages wsgi handler in individually packaged modules by serverless-python-requirements", () => {
+      var plugin = new Plugin(
+        {
+          config: { servicePath: "/tmp" },
+          service: {
+            provider: { runtime: "python2.7" },
+            package: { individually: true },
+            custom: { wsgi: { app: "web/api.app" } },
+            functions: {
+              api: { handler: "wsgi.handler", module: "web" }
+            }
+          },
+          classes: { Error: Error },
+          cli: { log: () => {} }
+        },
+        {}
+      );
+
+      var sandbox = sinon.createSandbox();
+      var hasbinStub = sandbox.stub(hasbin, "sync").returns(true);
+      var copyStub = sandbox.stub(fse, "copyAsync");
+      var writeStub = sandbox.stub(fse, "writeFileAsync");
+      var symlinkStub = sandbox.stub(fse, "symlinkSync");
+      sandbox.stub(fse, "readdirSync").returns(["flask", "werkzeug"]);
+      sandbox.stub(fse, "existsSync").returns(true);
+      var procStub = sandbox
+        .stub(child_process, "spawnSync")
+        .returns({ status: 0 });
+      plugin.hooks["before:package:createDeploymentArtifacts"]().then(() => {
+        expect(hasbinStub.calledWith("python2.7")).to.be.true;
+        expect(
+          copyStub.calledWith(
+            path.resolve(__dirname, "wsgi_handler.py"),
+            "/tmp/web/wsgi_handler.py"
+          )
+        ).to.be.true;
+        expect(
+          copyStub.calledWith(
+            path.resolve(__dirname, "serverless_wsgi.py"),
+            "/tmp/web/serverless_wsgi.py"
+          )
+        ).to.be.true;
+        expect(writeStub.calledWith("/tmp/web/.serverless-wsgi")).to.be.true;
+        expect(JSON.parse(writeStub.lastCall.args[1])).to.deep.equal({
+          app: "api.app"
+        });
+        expect(symlinkStub.called).to.be.true;
+        expect(
+          procStub.calledWith("python2.7", [
+            path.resolve(__dirname, "requirements.py"),
+            path.resolve(__dirname, "requirements.txt"),
+            "/tmp/web/requirements.txt",
+            "/tmp/web/.requirements"
+          ])
+        ).to.be.true;
+        sandbox.restore();
+        expect(plugin.serverless.service.package.include).to.have.members([
+          "web/wsgi_handler.py",
+          "web/serverless_wsgi.py",
+          "web/.serverless-wsgi",
+          "web/flask",
+          "web/flask/**",
+          "web/werkzeug",
+          "web/werkzeug/**"
+        ]);
+        expect(plugin.serverless.service.package.exclude).to.have.members([
+          "web/.requirements/**"
+        ]);
+      });
+    });
   });
 
   describe("requirements", () => {
@@ -367,7 +509,7 @@ describe("serverless-wsgi", () => {
       var sandbox = sinon.createSandbox();
       var copyStub = sandbox.stub(fse, "copyAsync");
       var writeStub = sandbox.stub(fse, "writeFileAsync");
-      sandbox.stub(fse, "readdirSync").returns([]);
+      sandbox.stub(fse, "readdirSync").returns(["werkzeug"]);
       sandbox.stub(fse, "existsSync").returns(true);
       var procStub = sandbox
         .stub(child_process, "spawnSync")
@@ -383,6 +525,16 @@ describe("serverless-wsgi", () => {
             "/tmp/api/.requirements"
           ])
         ).to.be.true;
+        expect(plugin.serverless.service.package.include).to.have.members([
+          "wsgi_handler.py",
+          "serverless_wsgi.py",
+          ".serverless-wsgi",
+          "api/werkzeug",
+          "api/werkzeug/**"
+        ]);
+        expect(plugin.serverless.service.package.exclude).to.have.members([
+          "api/.requirements/**"
+        ]);
         sandbox.restore();
       });
     });

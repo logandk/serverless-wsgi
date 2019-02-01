@@ -419,6 +419,54 @@ Common ways to keep lambda functions warm include [scheduled events](https://ser
 and the [WarmUP plugin](https://github.com/FidelLimited/serverless-plugin-warmup). Both these event sources
 are supported by default and will be ignored by `serverless-wsgi`.
 
+### Alternative directory structure
+
+If you have several functions in `serverless.yml` and want to organize them in
+directories, e.g.:
+
+```
+project
+├── web
+│   ├── api.py
+│   └── requirements.txt
+├── serverless.yml
+└── another_function.py
+```
+
+In this case, tell `serverless-wsgi` where to find the handler by prepending the
+directory:
+
+```yaml
+service: example
+
+provider:
+  name: aws
+  runtime: python3.6
+
+plugins:
+  - serverless-wsgi
+
+functions:
+  api:
+    handler: wsgi_handler.handler
+    events:
+      - http: ANY /
+      - http: ANY {proxy+}
+
+  another_function:
+    handler: another_function.handler
+
+custom:
+  wsgi:
+    app: web/api.app
+```
+
+Requirements will now be installed into `web/`, rather than at in the service root directory.
+
+The same rule applies when using the `individually: true` flag in the `package` settings, together
+with the `module` option provided by `serverless-python-requirements`. In that case, both the requirements
+and the WSGI handler will be installed into `web/`, if the function is configured with `module: "web"`.
+
 ## Usage without Serverless
 
 The AWS API Gateway to WSGI mapping module is available on PyPI in the

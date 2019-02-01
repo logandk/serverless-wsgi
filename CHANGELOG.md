@@ -3,6 +3,7 @@
 ## Features
 
 - Add local versions of manage, command and exec commands (#79)
+- Support serverless-python-requirements packaging with `individually` and `module` configuration (#85)
 
 # 1.7.0
 
