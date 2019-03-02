@@ -12,6 +12,7 @@ import json
 import os
 import sys
 import pytest
+from werkzeug.datastructures import MultiDict
 from werkzeug.wrappers import Request, Response
 from werkzeug.urls import url_encode
 
@@ -271,6 +272,14 @@ def test_handler(mock_wsgi_app_file, mock_app, event, capsys, wsgi_handler):
     out, err = capsys.readouterr()
     assert out == ""
     assert err == "application debug #1\n"
+
+
+def test_handler_multivalue(mock_wsgi_app_file, mock_app, event, capsys, wsgi_handler):
+    event["multiValueQueryStringParameters"] = {"param1": ["value1"], "param2": ["value2", "value3"]}
+    wsgi_handler.handler(event, {"memory_limit_in_mb": "128"})
+    query_string = wsgi_handler.wsgi_app.last_environ["QUERY_STRING"]
+
+    assert query_string == url_encode(MultiDict((i, k) for i, j in event["multiValueQueryStringParameters"].items() for k in j))
 
 
 def test_handler_china(mock_wsgi_app_file, mock_app, event, capsys, wsgi_handler):

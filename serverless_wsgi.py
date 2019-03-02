@@ -10,7 +10,7 @@ Author: Logan Raarup <logan@logan.dk>
 import base64
 import os
 import sys
-from werkzeug.datastructures import Headers
+from werkzeug.datastructures import Headers, MultiDict
 from werkzeug.wrappers import Response
 from werkzeug.urls import url_encode
 from werkzeug.http import HTTP_STATUS_CODES
@@ -66,6 +66,14 @@ def split_headers(headers):
     return new_headers
 
 
+def encode_query_string(event):
+    multi = event.get(u"multiValueQueryStringParameters")
+    if multi:
+        return url_encode(MultiDict((i, j) for i in multi for j in multi[i]))
+    else:
+        return url_encode(event.get(u"queryStringParameters") or {})
+
+
 def handle_request(app, event, context):
     if event.get("source") in ["aws.events", "serverless-plugin-warmup"]:
         return {}
@@ -98,7 +106,7 @@ def handle_request(app, event, context):
         "CONTENT_LENGTH": str(len(body)),
         "CONTENT_TYPE": headers.get(u"Content-Type", ""),
         "PATH_INFO": path_info,
-        "QUERY_STRING": url_encode(event.get(u"queryStringParameters") or {}),
+        "QUERY_STRING": encode_query_string(event),
         "REMOTE_ADDR": event[u"requestContext"]
         .get(u"identity", {})
         .get(u"sourceIp", ""),
