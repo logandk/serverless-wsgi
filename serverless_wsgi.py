@@ -66,6 +66,15 @@ def split_headers(headers):
     return new_headers
 
 
+def group_headers(headers):
+    new_headers = {}
+
+    for key in headers.keys():
+        new_headers[key] = headers.get_all(key)
+
+    return new_headers
+
+
 def encode_query_string(event):
     multi = event.get(u"multiValueQueryStringParameters")
     if multi:
@@ -78,7 +87,10 @@ def handle_request(app, event, context):
     if event.get("source") in ["aws.events", "serverless-plugin-warmup"]:
         return {}
 
-    headers = Headers(event[u"headers"])
+    if u"multiValueHeaders" in event:
+        headers = Headers(event[u"multiValueHeaders"])
+    else:
+        headers = Headers(event[u"headers"])
 
     if u"amazonaws.com" in headers.get(u"Host", u""):
         script_name = "/{}".format(event[u"requestContext"].get(u"stage", ""))
@@ -151,10 +163,12 @@ def handle_request(app, event, context):
 
     response = Response.from_app(app, environ)
 
-    returndict = {
-        u"statusCode": response.status_code,
-        u"headers": split_headers(response.headers),
-    }
+    returndict = {u"statusCode": response.status_code}
+
+    if u"multiValueHeaders" in event:
+        returndict[u"multiValueHeaders"] = group_headers(response.headers)
+    else:
+        returndict[u"headers"] = split_headers(response.headers)
 
     if event.get("requestContext").get("elb"):
         # If the request comes from ALB we need to add a status description

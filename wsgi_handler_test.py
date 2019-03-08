@@ -275,11 +275,44 @@ def test_handler(mock_wsgi_app_file, mock_app, event, capsys, wsgi_handler):
 
 
 def test_handler_multivalue(mock_wsgi_app_file, mock_app, event, capsys, wsgi_handler):
-    event["multiValueQueryStringParameters"] = {"param1": ["value1"], "param2": ["value2", "value3"]}
-    wsgi_handler.handler(event, {"memory_limit_in_mb": "128"})
+    event["multiValueQueryStringParameters"] = {
+        "param1": ["value1"],
+        "param2": ["value2", "value3"],
+    }
+
+    # Convert regular headers request to multiValueHeaders
+    multi_headers = {}
+    for key, value in event["headers"].items():
+        if key not in multi_headers:
+            multi_headers[key] = []
+        multi_headers[key].append(value)
+    event["multiValueHeaders"] = multi_headers
+
+    response = wsgi_handler.handler(event, {"memory_limit_in_mb": "128"})
     query_string = wsgi_handler.wsgi_app.last_environ["QUERY_STRING"]
 
-    assert query_string == url_encode(MultiDict((i, k) for i, j in event["multiValueQueryStringParameters"].items() for k in j))
+    assert query_string == url_encode(
+        MultiDict(
+            (i, k)
+            for i, j in event["multiValueQueryStringParameters"].items()
+            for k in j
+        )
+    )
+
+    assert response == {
+        "body": u"Hello World ☃!",
+        "multiValueHeaders": {
+            "Content-Length": ["16"],
+            "Content-Type": ["text/plain; charset=utf-8"],
+            "Set-Cookie": [
+                "CUSTOMER=WILE_E_COYOTE; Path=/",
+                "PART_NUMBER=ROCKET_LAUNCHER_0002; Path=/",
+                "LOT_NUMBER=42; Path=/",
+            ],
+        },
+        "statusCode": 200,
+        "isBase64Encoded": False,
+    }
 
 
 def test_handler_china(mock_wsgi_app_file, mock_app, event, capsys, wsgi_handler):

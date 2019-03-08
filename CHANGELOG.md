@@ -1,3 +1,13 @@
+# 1.7.2
+
+## Features
+
+- Support multi-value query string parameters (#87)
+
+  _Jan Varho_
+
+- Support multi-value headers in request and response
+
 # 1.7.1
 
 ## Features
