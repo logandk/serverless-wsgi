@@ -94,7 +94,7 @@ def handler(event, context):
                 wsgi_app.cli.main(
                     shlex.split(meta.get("data", "")),
                     standalone_mode=False,
-                    obj=ScriptInfo(create_app=lambda: wsgi_app),
+                    obj=ScriptInfo(create_app=_create_app),
                 )
             else:
                 raise Exception("Unknown command: {}".format(meta.get("command")))
@@ -107,6 +107,10 @@ def handler(event, context):
         return output_buffer.getvalue()
     else:
         return serverless_wsgi.handle_request(wsgi_app, event, context)
+
+
+def _create_app():
+    return wsgi_app
 
 
 # Read configuration and import the WSGI application
