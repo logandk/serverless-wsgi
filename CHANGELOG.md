@@ -7,6 +7,7 @@
   _Jan Varho_
 
 - Support multi-value headers in request and response
+- Add `sls wsgi flask` and `sls wsgi flask local` commands (#86)
 
 # 1.7.1
 

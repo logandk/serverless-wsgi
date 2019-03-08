@@ -87,6 +87,15 @@ def handler(event, context):
                 from django.core import management
 
                 management.call_command(*shlex.split(meta.get("data", "")))
+            elif meta.get("command") == "flask":
+                # Run Flask CLI commands
+                from flask.cli import ScriptInfo
+
+                wsgi_app.cli.main(
+                    shlex.split(meta.get("data", "")),
+                    standalone_mode=False,
+                    obj=ScriptInfo(create_app=lambda: wsgi_app),
+                )
             else:
                 raise Exception("Unknown command: {}".format(meta.get("command")))
         except:  # noqa

@@ -1929,6 +1929,97 @@ describe("serverless-wsgi", () => {
     });
   });
 
+  describe("flask", () => {
+    it("calls handler to execute flask commands remotely from argument", () => {
+      var plugin = new Plugin(
+        {
+          config: { servicePath: "/tmp" },
+          service: {
+            provider: { runtime: "python2.7" },
+            custom: { wsgi: { app: "api.app" } },
+            functions: { app: { handler: "wsgi_handler.handler" } }
+          },
+          classes: { Error: Error },
+          cli: { log: () => {} },
+          pluginManager: {
+            cliOptions: {},
+            run: command =>
+              new BbPromise(resolve => {
+                expect(command).to.deep.equal(["invoke"]);
+                console.log('"flask command output"'); // eslint-disable-line no-console
+                resolve();
+              })
+          }
+        },
+        { command: "check" }
+      );
+
+      var sandbox = sinon.createSandbox();
+      let consoleSpy = sandbox.spy(console, "log");
+      plugin.hooks["wsgi:flask:flask"]().then(() => {
+        expect(plugin.serverless.pluginManager.cliOptions.f).to.equal("app");
+        expect(plugin.serverless.pluginManager.cliOptions.function).to.equal(
+          "app"
+        );
+        expect(plugin.serverless.pluginManager.cliOptions.d).to.equal(
+          '{"_serverless-wsgi":{"command":"flask","data":"check"}}'
+        );
+        expect(plugin.serverless.pluginManager.cliOptions.data).to.equal(
+          '{"_serverless-wsgi":{"command":"flask","data":"check"}}'
+        );
+        expect(consoleSpy.calledWith("flask command output")).to.be.true;
+        sandbox.restore();
+      });
+    });
+  });
+
+  describe("flask local", () => {
+    it("calls handler to execute flask commands locally from argument", () => {
+      var plugin = new Plugin(
+        {
+          config: { servicePath: "/tmp" },
+          service: {
+            provider: { runtime: "python2.7" },
+            custom: { wsgi: { app: "api.app" } },
+            functions: { app: { handler: "wsgi_handler.handler" } }
+          },
+          classes: { Error: Error },
+          cli: { log: () => {} },
+          pluginManager: {
+            cliOptions: {},
+            run: command =>
+              new BbPromise(resolve => {
+                expect(command).to.deep.equal(["invoke", "local"]);
+                console.log('"flask command output"'); // eslint-disable-line no-console
+                resolve();
+              })
+          }
+        },
+        { command: "check" }
+      );
+
+      var sandbox = sinon.createSandbox();
+      let consoleSpy = sandbox.spy(console, "log");
+      plugin.hooks["wsgi:flask:local:flask"]().then(() => {
+        expect(plugin.serverless.pluginManager.cliOptions.c).to.be.undefined;
+        expect(plugin.serverless.pluginManager.cliOptions.context).to.be
+          .undefined;
+        expect(plugin.serverless.pluginManager.cliOptions.f).to.equal("app");
+        expect(plugin.serverless.pluginManager.cliOptions.function).to.equal(
+          "app"
+        );
+        expect(plugin.serverless.pluginManager.cliOptions.d).to.equal(
+          '{"_serverless-wsgi":{"command":"flask","data":"check"}}'
+        );
+        expect(plugin.serverless.pluginManager.cliOptions.data).to.equal(
+          '{"_serverless-wsgi":{"command":"flask","data":"check"}}'
+        );
+        expect(consoleSpy.calledWith("flask command output")).to.be.true;
+        sandbox.restore();
+      });
+    });
+  });
+
   describe("invoke local", () => {
     it("installs handler before invocation", () => {
       var functions = {

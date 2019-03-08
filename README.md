@@ -20,7 +20,7 @@ http://wsgi.readthedocs.io/en/latest/frameworks.html.
 - Supports anything you'd expect from WSGI such as redirects, cookies, file uploads etc.
 - Automatically downloads Python packages that you specify in `requirements.txt` and deploys them along with your application
 - Convenient `wsgi serve` command for serving your application locally during development
-- Includes CLI commands for remote execution of Python code (`wsgi exec`), shell commands (`wsgi command`) and Django management commands (`wsgi manage`)
+- Includes CLI commands for remote execution of Python code (`wsgi exec`), shell commands (`wsgi command`), Flask CLI commands (`wsgi flask`) and Django management commands (`wsgi manage`)
 
 ## Install
 
@@ -268,6 +268,13 @@ $ sls wsgi command -f script.sh
 hello world
 ```
 
+The `wsgi flask` command lets you execute [Flask CLI custom commands](http://flask.pocoo.org/docs/latest/cli/#custom-commands) remotely:
+
+```
+$ sls wsgi flask -c "my command"
+Hello world!
+```
+
 The `wsgi manage` command lets you execute Django management commands remotely:
 
 ```
@@ -283,8 +290,8 @@ urls
 
 All commands have `local` equivalents that let you run commands through `sls invoke local` rather
 than `sls invoke`, i.e. on the local machine instead of through Lambda. The `local` commands (`sls wsgi command local`,
-`sls wsgi exec local` and `sls wsgi manage local`) take the same arguments as their remote counterparts
-documented above.
+`sls wsgi exec local`, `sls wsgi flask local` and `sls wsgi manage local`) take the same arguments
+as their remote counterparts documented above.
 
 ### Explicit routes
 

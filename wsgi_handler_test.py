@@ -688,6 +688,22 @@ def test_command_manage(mock_wsgi_app_file, mock_app, wsgi_handler):
     assert response == "Called with: check, --list-tags\n"
 
 
+def test_command_flask(mock_wsgi_app_file, mock_app, wsgi_handler):
+    class MockFlaskCli:
+        def main(ctx, args, standalone_mode, obj):
+            assert not standalone_mode
+            assert obj.create_app() == mock_app
+            print("Called with: {}".format(", ".join(args)))
+
+    mock_app.cli = MockFlaskCli()
+
+    response = wsgi_handler.handler(
+        {"_serverless-wsgi": {"command": "flask", "data": "custom command"}}, {}
+    )
+
+    assert response == "Called with: custom, command\n"
+
+
 def test_command_unknown(mock_wsgi_app_file, mock_app, wsgi_handler):
     response = wsgi_handler.handler(
         {"_serverless-wsgi": {"command": "unknown", "data": 'echo "hello world"'}}, {}

@@ -517,6 +517,10 @@ class ServerlessWSGI {
     return this.invokeHandler("manage", this.options.command, local);
   }
 
+  flask(local) {
+    return this.invokeHandler("flask", this.options.command, local);
+  }
+
   constructor(serverless, options) {
     this.serverless = serverless;
     this.options = options;
@@ -631,6 +635,30 @@ class ServerlessWSGI {
                 }
               }
             }
+          },
+          flask: {
+            usage: "Run Flask CLI commands remotely",
+            lifecycleEvents: ["flask"],
+            options: {
+              command: {
+                usage: "Flask CLI command",
+                shortcut: "c",
+                required: true
+              }
+            },
+            commands: {
+              local: {
+                usage: "Run Flask CLI commands locally",
+                lifecycleEvents: ["flask"],
+                options: {
+                  command: {
+                    usage: "Flask CLI command",
+                    shortcut: "c",
+                    required: true
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -699,6 +727,14 @@ class ServerlessWSGI {
         BbPromise.bind(this)
           .then(this.validate)
           .then(() => this.manage(true)),
+      "wsgi:flask:flask": () =>
+        BbPromise.bind(this)
+          .then(this.validate)
+          .then(() => this.flask(false)),
+      "wsgi:flask:local:flask": () =>
+        BbPromise.bind(this)
+          .then(this.validate)
+          .then(() => this.flask(true)),
 
       "wsgi:clean:clean": () => deployAfterHook().then(this.cleanRequirements),
 
