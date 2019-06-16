@@ -12,7 +12,7 @@ import os
 import sys
 from werkzeug.datastructures import Headers, MultiDict
 from werkzeug.wrappers import Response
-from werkzeug.urls import url_encode
+from werkzeug.urls import url_encode, url_unquote
 from werkzeug.http import HTTP_STATUS_CODES
 from werkzeug._compat import BytesIO, string_types, to_bytes, wsgi_encoding_dance
 
@@ -117,7 +117,7 @@ def handle_request(app, event, context):
     environ = {
         "CONTENT_LENGTH": str(len(body)),
         "CONTENT_TYPE": headers.get(u"Content-Type", ""),
-        "PATH_INFO": path_info,
+        "PATH_INFO": url_unquote(path_info),
         "QUERY_STRING": encode_query_string(event),
         "REMOTE_ADDR": event[u"requestContext"]
         .get(u"identity", {})

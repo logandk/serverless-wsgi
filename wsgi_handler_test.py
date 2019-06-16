@@ -421,8 +421,11 @@ def test_handler_api_gateway_base_path(
 ):
     event["headers"]["Host"] = "custom.domain.com"
     event["path"] = "/prod/some/path"
-    os.environ.update(API_GATEWAY_BASE_PATH="prod")
-    wsgi_handler.handler(event, {})
+    try:
+        os.environ["API_GATEWAY_BASE_PATH"] = "prod"
+        wsgi_handler.handler(event, {})
+    finally:
+        del os.environ["API_GATEWAY_BASE_PATH"]
 
     assert wsgi_handler.wsgi_app.last_environ == {
         "CONTENT_LENGTH": "0",
@@ -726,3 +729,11 @@ def test_app_import_error(mock_wsgi_app_file, mock_app_with_import_error, event)
         if "wsgi_handler" in sys.modules:
             del sys.modules["wsgi_handler"]
         import wsgi_handler  # noqa: F401
+
+
+def test_handler_with_encoded_characters_in_path(
+    mock_wsgi_app_file, mock_app, event, capsys, wsgi_handler
+):
+    event["path"] = "/city/new%20york"
+    wsgi_handler.handler(event, {"memory_limit_in_mb": "128"})
+    assert wsgi_handler.wsgi_app.last_environ["PATH_INFO"] == "/city/new york"

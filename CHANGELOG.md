@@ -1,3 +1,9 @@
+# 1.7.3
+
+## Bugs
+
+- Properly decode event `path` into environ `PATH_INFO` (#93)
+
 # 1.7.2
 
 ## Features
