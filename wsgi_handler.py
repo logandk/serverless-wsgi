@@ -92,7 +92,7 @@ def handler(event, context):
                 from flask.cli import FlaskGroup
 
                 fg = FlaskGroup()
-                fg.main(shlex.split(meta.get("data", "")), standalone_mode=False)
+                fg.main(shlex.split(meta.get("data", "")))
             else:
                 raise Exception("Unknown command: {}".format(meta.get("command")))
         except:  # noqa
