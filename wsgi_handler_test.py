@@ -698,7 +698,8 @@ def test_command_flask(mock_wsgi_app_file, mock_app, wsgi_handler):
                 self.__dict__[k] = v
 
     class MockFlaskGroup:
-        def main(ctx, args):
+        def main(ctx, args, standalone_mode):
+            assert not standalone_mode
             print("Called with: {}".format(", ".join(args)))
 
     sys.modules["flask"] = MockObject()
