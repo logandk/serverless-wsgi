@@ -385,16 +385,28 @@ class ServerlessWSGI {
 
       const port = this.options.port || 5000;
       const host = this.options.host || "localhost";
+      const disable_threading = this.options["disable-threading"] || false;
+      const num_processes = this.options["num-processes"] || 1;
+
+      var args = [
+        path.resolve(__dirname, "serve.py"),
+        this.serverless.config.servicePath,
+        this.wsgiApp,
+        port,
+        host,
+      ];
+
+      if (num_processes > 1) {
+        args.push("--num-processes", num_processes);
+      }
+
+      if(disable_threading) {
+        args.push("--disable-threading");
+      }
 
       var status = child_process.spawnSync(
         this.pythonBin,
-        [
-          path.resolve(__dirname, "serve.py"),
-          this.serverless.config.servicePath,
-          this.wsgiApp,
-          port,
-          host
-        ],
+        args,
         { stdio: "inherit" }
       );
       if (status.error) {
@@ -541,7 +553,13 @@ class ServerlessWSGI {
               },
               host: {
                 usage: "Server host, defaults to 'localhost'"
-              }
+              },
+              "disable-threading": {
+                usage: "Disables multi-threaded mode"
+              },
+              "num-processes": {
+                usage: "Number of processes for server, defaults to 1"
+              },
             }
           },
           install: {
