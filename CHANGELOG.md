@@ -14,6 +14,7 @@
 ## Bugs
 
 - Properly decode event `path` into environ `PATH_INFO` (#93)
+- Fix local serving when package `individually: true` and function `module` are provided (#98)
 
 # 1.7.2
 

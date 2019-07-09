@@ -390,7 +390,7 @@ class ServerlessWSGI {
 
       var args = [
         path.resolve(__dirname, "serve.py"),
-        this.serverless.config.servicePath,
+        this.packageRootPath,
         this.wsgiApp,
         port,
         host
