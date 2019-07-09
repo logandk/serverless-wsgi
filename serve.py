@@ -16,7 +16,7 @@ except ImportError:  # pragma: no cover
     sys.exit("Unable to import werkzeug (run: pip install werkzeug)")
 
 
-def parse_args():
+def parse_args():  # pragma: no cover
     parser = argparse.ArgumentParser(description="serverless-wsgi server")
 
     # Positional arguments for backwards compatibility
