@@ -15,7 +15,6 @@ import pytest
 from werkzeug.datastructures import MultiDict
 from werkzeug.wrappers import Request, Response
 from werkzeug.urls import url_encode
-from unittest.mock import MagicMock
 
 PY2 = sys.version_info[0] == 2
 
@@ -704,6 +703,9 @@ def test_command_flask(mock_wsgi_app_file, mock_app, wsgi_handler):
                 self.__dict__[k] = v
 
     class MockFlaskGroup:
+        def __init__(self, create_app):
+            assert create_app() == mock_app
+
         def main(ctx, args, standalone_mode):
             assert not standalone_mode
             print("Called with: {}".format(", ".join(args)))
