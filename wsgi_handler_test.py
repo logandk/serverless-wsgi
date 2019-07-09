@@ -15,12 +15,12 @@ import pytest
 from werkzeug.datastructures import MultiDict
 from werkzeug.wrappers import Request, Response
 from werkzeug.urls import url_encode
+from unittest.mock import MagicMock
 
 PY2 = sys.version_info[0] == 2
 
 # Reference to open() before monkeypatching
 original_open = open
-
 
 # This workaround is needed for coverage.py to pick up the wsgi handler module
 try:
@@ -703,16 +703,13 @@ def test_command_flask(mock_wsgi_app_file, mock_app, wsgi_handler):
             for k, v in kwargs.items():
                 self.__dict__[k] = v
 
-    class MockFlaskCli:
-        def main(ctx, args, standalone_mode, obj):
+    class MockFlaskGroup:
+        def main(ctx, args, standalone_mode):
             assert not standalone_mode
-            assert obj.create_app() == mock_app
             print("Called with: {}".format(", ".join(args)))
 
     sys.modules["flask"] = MockObject()
-    sys.modules["flask.cli"] = MockObject()
-    sys.modules["flask.cli"].ScriptInfo = MockObject
-    mock_app.cli = MockFlaskCli()
+    sys.modules["flask.cli"] = MockObject(FlaskGroup=MockFlaskGroup)
 
     response = wsgi_handler.handler(
         {"_serverless-wsgi": {"command": "flask", "data": "custom command"}}, {}

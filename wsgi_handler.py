@@ -89,13 +89,10 @@ def handler(event, context):
                 management.call_command(*shlex.split(meta.get("data", "")))
             elif meta.get("command") == "flask":
                 # Run Flask CLI commands
-                from flask.cli import ScriptInfo
+                from flask.cli import FlaskGroup
 
-                wsgi_app.cli.main(
-                    shlex.split(meta.get("data", "")),
-                    standalone_mode=False,
-                    obj=ScriptInfo(create_app=_create_app),
-                )
+                fg = FlaskGroup()
+                fg.main(shlex.split(meta.get("data", "")), standalone_mode=False)
             else:
                 raise Exception("Unknown command: {}".format(meta.get("command")))
         except:  # noqa
@@ -107,10 +104,6 @@ def handler(event, context):
         return output_buffer.getvalue()
     else:
         return serverless_wsgi.handle_request(wsgi_app, event, context)
-
-
-def _create_app():
-    return wsgi_app
 
 
 # Read configuration and import the WSGI application
