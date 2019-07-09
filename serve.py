@@ -5,6 +5,7 @@ This module serves a WSGI application using werkzeug.
 
 Author: Logan Raarup <logan@logan.dk>
 """
+import argparse
 import importlib
 import os
 import sys
@@ -15,7 +16,24 @@ except ImportError:  # pragma: no cover
     sys.exit("Unable to import werkzeug (run: pip install werkzeug)")
 
 
-def serve(cwd, app, port, host="localhost"):
+def parse_args():
+    parser = argparse.ArgumentParser(description="serverless-wsgi server")
+
+    # Positional arguments for backwards compatibility
+    parser.add_argument("cwd", help="Set current working directory for server")
+    parser.add_argument("app", help="Full import path to WSGI app")
+    parser.add_argument("port", type=int, default=5000, help="Port for server to listen on")
+    parser.add_argument("host", default="localhost", help="Host/ip to bind the server to")
+
+    # Concurrency options.
+    # For backwards compatibility, threading is enabled by default and only one process is used.
+    parser.add_argument("--disable-threading", action="store_false", dest="use_threads")
+    parser.add_argument("--num-processes", type=int, dest="processes", default=1)
+
+    return parser.parse_args()
+
+
+def serve(cwd, app, port=5000, host="localhost", threaded=True, processes=1):
     sys.path.insert(0, cwd)
 
     os.environ["IS_OFFLINE"] = "True"
@@ -40,12 +58,19 @@ def serve(cwd, app, port, host="localhost"):
         use_debugger=True,
         use_reloader=True,
         use_evalex=True,
-        threaded=True,
+        threaded=threaded,
+        processes=processes
     )
 
 
 if __name__ == "__main__":  # pragma: no cover
-    if len(sys.argv) != 5:
-        sys.exit("Usage: {} CWD APP PORT HOST".format(os.path.basename(sys.argv[0])))
+    args = parse_args()
 
-    serve(*sys.argv[1:])
+    serve(
+        cwd=args.cwd,
+        app=args.app,
+        port=args.port,
+        host=args.host,
+        threaded=args.use_threads,
+        processes=args.processes
+    )

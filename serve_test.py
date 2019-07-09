@@ -60,6 +60,7 @@ def test_serve(mock_path, mock_importlib, mock_werkzeug):
         "use_debugger": True,
         "use_evalex": True,
         "threaded": True,
+        "processes": 1,
     }
 
 
@@ -76,7 +77,42 @@ def test_serve_alternative_hostname(mock_path, mock_importlib, mock_werkzeug):
         "use_debugger": True,
         "use_evalex": True,
         "threaded": True,
+        "processes": 1,
     }
+
+
+def test_serve_disable_threading(mock_path, mock_importlib, mock_werkzeug):
+    serve.serve("/tmp1", "app.app", "5000", "0.0.0.0", threaded=False)
+    assert len(mock_path) == 1
+    assert mock_path[0] == "/tmp1"
+    assert mock_werkzeug.lastcall.host == "0.0.0.0"
+    assert mock_werkzeug.lastcall.port == 5000
+    assert mock_werkzeug.lastcall.app.module == "app"
+    assert mock_werkzeug.lastcall.app.debug
+    assert mock_werkzeug.lastcall.kwargs == {
+        "use_reloader": True,
+        "use_debugger": True,
+        "use_evalex": True,
+        "threaded": False,
+        "processes": 1,
+    }
+
+
+def test_serve_multiple_processes(mock_path, mock_importlib, mock_werkzeug):
+        serve.serve("/tmp1", "app.app", "5000", "0.0.0.0", processes=10)
+        assert len(mock_path) == 1
+        assert mock_path[0] == "/tmp1"
+        assert mock_werkzeug.lastcall.host == "0.0.0.0"
+        assert mock_werkzeug.lastcall.port == 5000
+        assert mock_werkzeug.lastcall.app.module == "app"
+        assert mock_werkzeug.lastcall.app.debug
+        assert mock_werkzeug.lastcall.kwargs == {
+            "use_reloader": True,
+            "use_debugger": True,
+            "use_evalex": True,
+            "threaded": True,
+            "processes": 10,
+        }
 
 
 def test_serve_from_subdir(mock_path, mock_importlib, mock_werkzeug):
@@ -93,6 +129,7 @@ def test_serve_from_subdir(mock_path, mock_importlib, mock_werkzeug):
         "use_debugger": True,
         "use_evalex": True,
         "threaded": True,
+        "processes": 1,
     }
 
 
