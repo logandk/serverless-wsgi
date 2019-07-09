@@ -1,5 +1,9 @@
 # 1.7.3
 
+## Features
+
+- Add log message when skipping handler on warmup events (#95)
+
 ## Bugs
 
 - Properly decode event `path` into environ `PATH_INFO` (#93)
