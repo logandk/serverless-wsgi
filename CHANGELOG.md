@@ -3,6 +3,9 @@
 ## Features
 
 - Add log message when skipping handler on warmup events (#95)
+- Add options for disabling threading and setting number of processes when invoking `sls wsgi serve` (#100)
+
+  _Bryan Worrell_
 
 ## Bugs
 
