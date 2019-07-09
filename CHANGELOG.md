@@ -7,6 +7,10 @@
 
   _Bryan Worrell_
 
+- Fix Flask CLI invocation of built-in commands (#99)
+
+  _Mischa Spiegelmock_
+
 ## Bugs
 
 - Properly decode event `path` into environ `PATH_INFO` (#93)
