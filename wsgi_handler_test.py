@@ -731,7 +731,7 @@ def test_command_unknown(mock_wsgi_app_file, mock_app, wsgi_handler):
 
 
 def test_app_import_error(mock_wsgi_app_file, mock_app_with_import_error, event):
-    with pytest.raises(Exception, message="Unable to import app.app"):
+    with pytest.raises(Exception, match="Unable to import app.app"):
         if "wsgi_handler" in sys.modules:
             del sys.modules["wsgi_handler"]
         import wsgi_handler  # noqa: F401
