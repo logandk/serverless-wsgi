@@ -21,7 +21,6 @@ PY2 = sys.version_info[0] == 2
 # Reference to open() before monkeypatching
 original_open = open
 
-
 # This workaround is needed for coverage.py to pick up the wsgi handler module
 try:
     import wsgi_handler  # noqa: F401
@@ -703,16 +702,16 @@ def test_command_flask(mock_wsgi_app_file, mock_app, wsgi_handler):
             for k, v in kwargs.items():
                 self.__dict__[k] = v
 
-    class MockFlaskCli:
-        def main(ctx, args, standalone_mode, obj):
+    class MockFlaskGroup:
+        def __init__(self, create_app):
+            assert create_app() == mock_app
+
+        def main(ctx, args, standalone_mode):
             assert not standalone_mode
-            assert obj.create_app() == mock_app
             print("Called with: {}".format(", ".join(args)))
 
     sys.modules["flask"] = MockObject()
-    sys.modules["flask.cli"] = MockObject()
-    sys.modules["flask.cli"].ScriptInfo = MockObject
-    mock_app.cli = MockFlaskCli()
+    sys.modules["flask.cli"] = MockObject(FlaskGroup=MockFlaskGroup)
 
     response = wsgi_handler.handler(
         {"_serverless-wsgi": {"command": "flask", "data": "custom command"}}, {}
