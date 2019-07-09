@@ -393,22 +393,20 @@ class ServerlessWSGI {
         this.serverless.config.servicePath,
         this.wsgiApp,
         port,
-        host,
+        host
       ];
 
       if (num_processes > 1) {
         args.push("--num-processes", num_processes);
       }
 
-      if(disable_threading) {
+      if (disable_threading) {
         args.push("--disable-threading");
       }
 
-      var status = child_process.spawnSync(
-        this.pythonBin,
-        args,
-        { stdio: "inherit" }
-      );
+      var status = child_process.spawnSync(this.pythonBin, args, {
+        stdio: "inherit"
+      });
       if (status.error) {
         if (status.error.code == "ENOENT") {
           reject(
@@ -559,7 +557,7 @@ class ServerlessWSGI {
               },
               "num-processes": {
                 usage: "Number of processes for server, defaults to 1"
-              },
+              }
             }
           },
           install: {

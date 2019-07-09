@@ -22,8 +22,12 @@ def parse_args():
     # Positional arguments for backwards compatibility
     parser.add_argument("cwd", help="Set current working directory for server")
     parser.add_argument("app", help="Full import path to WSGI app")
-    parser.add_argument("port", type=int, default=5000, help="Port for server to listen on")
-    parser.add_argument("host", default="localhost", help="Host/ip to bind the server to")
+    parser.add_argument(
+        "port", type=int, default=5000, help="Port for server to listen on"
+    )
+    parser.add_argument(
+        "host", default="localhost", help="Host/ip to bind the server to"
+    )
 
     # Concurrency options.
     # For backwards compatibility, threading is enabled by default and only one process is used.
@@ -59,7 +63,7 @@ def serve(cwd, app, port=5000, host="localhost", threaded=True, processes=1):
         use_reloader=True,
         use_evalex=True,
         threaded=threaded,
-        processes=processes
+        processes=processes,
     )
 
 
@@ -72,5 +76,5 @@ if __name__ == "__main__":  # pragma: no cover
         port=args.port,
         host=args.host,
         threaded=args.use_threads,
-        processes=args.processes
+        processes=args.processes,
     )

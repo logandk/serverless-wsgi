@@ -1268,7 +1268,7 @@ describe("serverless-wsgi", () => {
               5000,
               "localhost",
               "--num-processes",
-              10,
+              10
             ],
             { stdio: "inherit" }
           )
