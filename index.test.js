@@ -509,6 +509,7 @@ describe("serverless-wsgi", () => {
       var sandbox = sinon.createSandbox();
       var copyStub = sandbox.stub(fse, "copyAsync");
       var writeStub = sandbox.stub(fse, "writeFileAsync");
+      sandbox.stub(fse, "symlinkSync");
       sandbox.stub(fse, "readdirSync").returns(["werkzeug"]);
       sandbox.stub(fse, "existsSync").returns(true);
       var procStub = sandbox
