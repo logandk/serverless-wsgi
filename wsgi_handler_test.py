@@ -496,8 +496,8 @@ def test_handler_plain(mock_wsgi_app_file, mock_app, event, wsgi_handler):
 
     plain_mimetypes = [
         "application/vnd.api+json",
-        "application/javascript",
-        "image/svg+xml",
+        "application/javascript; charset=utf-8",
+        "image/svg+xml; charset=utf-8",
     ]
 
     for mimetype in plain_mimetypes:
