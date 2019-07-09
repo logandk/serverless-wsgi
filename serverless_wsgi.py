@@ -85,6 +85,7 @@ def encode_query_string(event):
 
 def handle_request(app, event, context):
     if event.get("source") in ["aws.events", "serverless-plugin-warmup"]:
+        print("Lambda warming event received, skipping handler")
         return {}
 
     if u"multiValueHeaders" in event:

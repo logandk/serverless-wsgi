@@ -359,10 +359,16 @@ def test_handler_schedule(mock_wsgi_app_file, mock_app, event, wsgi_handler):
     assert response == {}
 
 
-def test_handler_warmup_plugin(mock_wsgi_app_file, mock_app, event, wsgi_handler):
+def test_handler_warmup_plugin(
+    mock_wsgi_app_file, mock_app, event, wsgi_handler, capsys
+):
     event = {"source": "serverless-plugin-warmup"}
     response = wsgi_handler.handler(event, {})
     assert response == {}
+
+    out, err = capsys.readouterr()
+    assert out == "Lambda warming event received, skipping handler\n"
+    assert err == ""
 
 
 def test_handler_custom_domain(mock_wsgi_app_file, mock_app, event, wsgi_handler):
