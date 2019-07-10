@@ -365,6 +365,26 @@ custom:
     createRoute53Record: true
 ```
 
+### Using CloudFront
+
+If you're configuring CloudFront manually in front of your API and setting
+the Path in the CloudFront Origin to include your stage name, you'll need
+to strip it out from the path supplied to WSGI. This is so that your app
+doesn't generate URLs starting with `/production`.
+
+Pass the `STRIP_STAGE_PATH=yes` environment variable to your application
+to set this:
+
+```yaml
+service: example
+
+provider:
+  name: aws
+  runtime: python3.6
+  environment:
+    STRIP_STAGE_PATH: yes
+```
+
 ### File uploads
 
 In order to accept file uploads from HTML forms, make sure to add `multipart/form-data` to

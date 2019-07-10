@@ -93,7 +93,7 @@ def handle_request(app, event, context):
     else:
         headers = Headers(event[u"headers"])
 
-    if u"amazonaws.com" in headers.get(u"Host", u""):
+    if os.environ.get("STRIP_STAGE_PATH", "") != "yes" and u"amazonaws.com" in headers.get(u"Host", u""):
         script_name = "/{}".format(event[u"requestContext"].get(u"stage", ""))
     else:
         script_name = ""
