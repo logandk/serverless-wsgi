@@ -479,6 +479,16 @@ def test_handler_api_gateway_base_path(
     }
 
 
+def test_handler_strip_stage_path(mock_wsgi_app_file, mock_app, event, wsgi_handler):
+    try:
+        os.environ["STRIP_STAGE_PATH"] = "True"
+        wsgi_handler.handler(event, {})
+    finally:
+        del os.environ["STRIP_STAGE_PATH"]
+
+    assert wsgi_handler.wsgi_app.last_environ["SCRIPT_NAME"] == ""
+
+
 def test_handler_base64(mock_wsgi_app_file, mock_app, event, wsgi_handler):
     wsgi_handler.wsgi_app.cookie_count = 1
     wsgi_handler.wsgi_app.response_mimetype = "image/jpeg"

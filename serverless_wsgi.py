@@ -93,7 +93,15 @@ def handle_request(app, event, context):
     else:
         headers = Headers(event[u"headers"])
 
-    if u"amazonaws.com" in headers.get(u"Host", u""):
+    strip_stage_path = os.environ.get("STRIP_STAGE_PATH", "").lower().strip() in [
+        "yes",
+        "y",
+        "true",
+        "t",
+        "1",
+    ]
+
+    if u"amazonaws.com" in headers.get(u"Host", u"") and not strip_stage_path:
         script_name = "/{}".format(event[u"requestContext"].get(u"stage", ""))
     else:
         script_name = ""
@@ -102,7 +110,7 @@ def handle_request(app, event, context):
     # path in their URL. This allows us to strip it out via an optional
     # environment variable.
     path_info = event[u"path"]
-    base_path = os.environ.get("API_GATEWAY_BASE_PATH", "")
+    base_path = os.environ.get("API_GATEWAY_BASE_PATH")
     if base_path:
         script_name = "/" + base_path
 
