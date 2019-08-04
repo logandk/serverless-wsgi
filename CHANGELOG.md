@@ -7,6 +7,10 @@
 
   _Bryan Worrell_
 
+- Allow use of CloudFront with a pre-set path (#101)
+
+  _Paul Bowsher_
+
 - Fix Flask CLI invocation of built-in commands (#99)
 
   _Mischa Spiegelmock_
