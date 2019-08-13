@@ -387,6 +387,7 @@ class ServerlessWSGI {
       const host = this.options.host || "localhost";
       const disable_threading = this.options["disable-threading"] || false;
       const num_processes = this.options["num-processes"] || 1;
+      const ssl = this.options.ssl || false;
 
       var args = [
         path.resolve(__dirname, "serve.py"),
@@ -402,6 +403,10 @@ class ServerlessWSGI {
 
       if (disable_threading) {
         args.push("--disable-threading");
+      }
+
+      if (ssl) {
+        args.push("--ssl");
       }
 
       var status = child_process.spawnSync(this.pythonBin, args, {
@@ -557,6 +562,9 @@ class ServerlessWSGI {
               },
               "num-processes": {
                 usage: "Number of processes for server, defaults to 1"
+              },
+              ssl: {
+                usage: "Enable local serving using HTTPS"
               }
             }
           },

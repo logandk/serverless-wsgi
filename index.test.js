@@ -1278,6 +1278,43 @@ describe("serverless-wsgi", () => {
       });
     });
 
+    it("allows serving over https", () => {
+      var plugin = new Plugin(
+        {
+          config: { servicePath: "/tmp" },
+          service: {
+            provider: { runtime: "python2.7" },
+            custom: { wsgi: { app: "api.app" } }
+          },
+          classes: { Error: Error },
+          cli: { log: () => {} }
+        },
+        { ssl: true }
+      );
+
+      var sandbox = sinon.createSandbox();
+      var hasbinStub = sandbox.stub(hasbin, "sync").returns(true);
+      var procStub = sandbox.stub(child_process, "spawnSync").returns({});
+      plugin.hooks["wsgi:serve:serve"]().then(() => {
+        expect(hasbinStub.calledWith("python2.7")).to.be.true;
+        expect(
+          procStub.calledWith(
+            "python2.7",
+            [
+              path.resolve(__dirname, "serve.py"),
+              "/tmp",
+              "api.app",
+              5000,
+              "localhost",
+              "--ssl"
+            ],
+            { stdio: "inherit" }
+          )
+        ).to.be.true;
+        sandbox.restore();
+      });
+    });
+
     it("loads environment variables", () => {
       var plugin = new Plugin(
         {

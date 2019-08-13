@@ -34,10 +34,13 @@ def parse_args():  # pragma: no cover
     parser.add_argument("--disable-threading", action="store_false", dest="use_threads")
     parser.add_argument("--num-processes", type=int, dest="processes", default=1)
 
+    # Optional serving using HTTPS
+    parser.add_argument("--ssl", action="store_true", dest="ssl")
+
     return parser.parse_args()
 
 
-def serve(cwd, app, port=5000, host="localhost", threaded=True, processes=1):
+def serve(cwd, app, port=5000, host="localhost", threaded=True, processes=1, ssl=False):
     sys.path.insert(0, cwd)
 
     os.environ["IS_OFFLINE"] = "True"
@@ -48,6 +51,11 @@ def serve(cwd, app, port=5000, host="localhost", threaded=True, processes=1):
         sys.path.insert(0, os.path.join(cwd, wsgi_fqn_parts[0]))
     wsgi_module = importlib.import_module(wsgi_fqn_parts[-1])
     wsgi_app = getattr(wsgi_module, wsgi_fqn[1])
+
+    if ssl:
+        ssl_context = "adhoc"
+    else:
+        ssl_context = None
 
     # Attempt to force Flask into debug mode
     try:
@@ -64,6 +72,7 @@ def serve(cwd, app, port=5000, host="localhost", threaded=True, processes=1):
         use_evalex=True,
         threaded=threaded,
         processes=processes,
+        ssl_context=ssl_context,
     )
 
 
@@ -77,4 +86,5 @@ if __name__ == "__main__":  # pragma: no cover
         host=args.host,
         threaded=args.use_threads,
         processes=args.processes,
+        ssl=args.ssl,
     )

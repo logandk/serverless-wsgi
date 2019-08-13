@@ -2,6 +2,7 @@
 
 ## Features
 
+- Add `--ssl` flag to `sls wsgi serve` (#103)
 - Add log message when skipping handler on warmup events (#95)
 - Add options for disabling threading and setting number of processes when invoking `sls wsgi serve` (#100)
 
@@ -11,14 +12,13 @@
 
   _Paul Bowsher_
 
-- Fix Flask CLI invocation of built-in commands (#99)
-
-  _Mischa Spiegelmock_
-
 ## Bugs
 
 - Properly decode event `path` into environ `PATH_INFO` (#93)
 - Fix local serving when package `individually: true` and function `module` are provided (#98)
+- Fix Flask CLI invocation of built-in commands (#99)
+
+  _Mischa Spiegelmock_
 
 # 1.7.2
 
