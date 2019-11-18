@@ -97,6 +97,8 @@ def handler(event, context):
                 )
             else:
                 raise Exception("Unknown command: {}".format(meta.get("command")))
+        except subprocess.CalledProcessError as e:
+            return [e.returncode, e.output.decode("utf-8")]
         except:  # noqa
             return [1, traceback.format_exc()]
         finally:

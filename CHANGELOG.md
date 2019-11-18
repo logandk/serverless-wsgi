@@ -3,6 +3,7 @@
 ## Bugs
 
 - Return error exit code when `exec`, `command`, `manage` or `flask` commands fail (#114)
+- Display output from failing `command` invocations instead of throwing exception (#107)
 
 # 1.7.3
 
