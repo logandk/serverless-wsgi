@@ -1551,7 +1551,7 @@ describe("serverless-wsgi", () => {
             run: command =>
               new BbPromise(resolve => {
                 expect(command).to.deep.equal(["invoke"]);
-                console.log('"5"'); // eslint-disable-line no-console
+                console.log('[0, "5"]'); // eslint-disable-line no-console
                 resolve();
               })
           }
@@ -1596,7 +1596,7 @@ describe("serverless-wsgi", () => {
             run: command =>
               new BbPromise(resolve => {
                 expect(command).to.deep.equal(["invoke"]);
-                console.log('{"response": "5"}'); // eslint-disable-line no-console
+                console.log('[0, {"response": "5"}]'); // eslint-disable-line no-console
                 resolve();
               })
           }
@@ -1618,9 +1618,36 @@ describe("serverless-wsgi", () => {
         expect(plugin.serverless.pluginManager.cliOptions.data).to.equal(
           '{"_serverless-wsgi":{"command":"exec","data":"print(1+4)"}}'
         );
-        expect(consoleSpy.calledWith('{"response": "5"}')).to.be.true;
+        expect(consoleSpy.calledWith({ response: "5" })).to.be.true;
         sandbox.restore();
       });
+    });
+
+    it("handles unsuccessful exit from command", () => {
+      var plugin = new Plugin(
+        {
+          config: { servicePath: "/tmp" },
+          service: {
+            provider: { runtime: "python2.7" },
+            custom: { wsgi: { app: "api.app" } },
+            functions: { app: { handler: "wsgi_handler.handler" } }
+          },
+          classes: { Error: Error },
+          cli: { log: () => {} },
+          pluginManager: {
+            cliOptions: {},
+            run: command =>
+              new BbPromise(resolve => {
+                expect(command).to.deep.equal(["invoke"]);
+                console.log('[1, "Error"]'); // eslint-disable-line no-console
+                resolve();
+              })
+          }
+        },
+        { command: "print(1+4)" }
+      );
+
+      expect(plugin.hooks["wsgi:exec:exec"]()).to.be.rejectedWith("Error");
     });
   });
 
@@ -1660,7 +1687,7 @@ describe("serverless-wsgi", () => {
             run: command =>
               new BbPromise(resolve => {
                 expect(command).to.deep.equal(["invoke", "local"]);
-                console.log('"5"'); // eslint-disable-line no-console
+                console.log('[0, "5"]'); // eslint-disable-line no-console
                 resolve();
               })
           }
@@ -1705,7 +1732,7 @@ describe("serverless-wsgi", () => {
             run: command =>
               new BbPromise(resolve => {
                 expect(command).to.deep.equal(["invoke", "local"]);
-                console.log('{"response": "5"}'); // eslint-disable-line no-console
+                console.log('[0, {"response": "5"}]'); // eslint-disable-line no-console
                 resolve();
               })
           }
@@ -1727,7 +1754,7 @@ describe("serverless-wsgi", () => {
         expect(plugin.serverless.pluginManager.cliOptions.data).to.equal(
           '{"_serverless-wsgi":{"command":"exec","data":"print(1+4)"}}'
         );
-        expect(consoleSpy.calledWith('{"response": "5"}')).to.be.true;
+        expect(consoleSpy.calledWith({ response: "5" })).to.be.true;
         sandbox.restore();
       });
     });
@@ -1834,7 +1861,7 @@ describe("serverless-wsgi", () => {
             run: command =>
               new BbPromise(resolve => {
                 expect(command).to.deep.equal(["invoke"]);
-                console.log('"/var/task"'); // eslint-disable-line no-console
+                console.log('[0, "/var/task"]'); // eslint-disable-line no-console
                 resolve();
               })
           }
@@ -1963,7 +1990,7 @@ describe("serverless-wsgi", () => {
             run: command =>
               new BbPromise(resolve => {
                 expect(command).to.deep.equal(["invoke", "local"]);
-                console.log('"/var/task"'); // eslint-disable-line no-console
+                console.log('[0, "/var/task"]'); // eslint-disable-line no-console
                 resolve();
               })
           }
@@ -2008,7 +2035,7 @@ describe("serverless-wsgi", () => {
             run: command =>
               new BbPromise(resolve => {
                 expect(command).to.deep.equal(["invoke"]);
-                console.log('"manage command output"'); // eslint-disable-line no-console
+                console.log('[0, "manage command output"]'); // eslint-disable-line no-console
                 resolve();
               })
           }
@@ -2052,7 +2079,7 @@ describe("serverless-wsgi", () => {
             run: command =>
               new BbPromise(resolve => {
                 expect(command).to.deep.equal(["invoke", "local"]);
-                console.log('"manage command output"'); // eslint-disable-line no-console
+                console.log('[0, "manage command output"]'); // eslint-disable-line no-console
                 resolve();
               })
           }
@@ -2099,7 +2126,7 @@ describe("serverless-wsgi", () => {
             run: command =>
               new BbPromise(resolve => {
                 expect(command).to.deep.equal(["invoke"]);
-                console.log('"flask command output"'); // eslint-disable-line no-console
+                console.log('[0, "flask command output"]'); // eslint-disable-line no-console
                 resolve();
               })
           }
@@ -2143,7 +2170,7 @@ describe("serverless-wsgi", () => {
             run: command =>
               new BbPromise(resolve => {
                 expect(command).to.deep.equal(["invoke", "local"]);
-                console.log('"flask command output"'); // eslint-disable-line no-console
+                console.log('[0, "flask command output"]'); // eslint-disable-line no-console
                 resolve();
               })
           }

@@ -669,14 +669,16 @@ def test_command_exec(mock_wsgi_app_file, mock_app, wsgi_handler):
         {"_serverless-wsgi": {"command": "exec", "data": "print(1+4)"}}, {}
     )
 
-    assert response == "5\n"
+    assert response[0] == 0
+    assert response[1] == "5\n"
 
     response = wsgi_handler.handler(
         {"_serverless-wsgi": {"command": "exec", "data": "invalid code"}}, {}
     )
 
-    assert "Traceback (most recent call last):" in response
-    assert "SyntaxError: invalid syntax" in response
+    assert response[0] == 1
+    assert "Traceback (most recent call last):" in response[1]
+    assert "SyntaxError: invalid syntax" in response[1]
 
 
 def test_command_command(mock_wsgi_app_file, mock_app, wsgi_handler):
@@ -684,7 +686,8 @@ def test_command_command(mock_wsgi_app_file, mock_app, wsgi_handler):
         {"_serverless-wsgi": {"command": "command", "data": 'echo "hello world"'}}, {}
     )
 
-    assert response == "hello world\n"
+    assert response[0] == 0
+    assert response[1] == "hello world\n"
 
 
 def test_command_manage(mock_wsgi_app_file, mock_app, wsgi_handler):
@@ -703,7 +706,8 @@ def test_command_manage(mock_wsgi_app_file, mock_app, wsgi_handler):
         {"_serverless-wsgi": {"command": "manage", "data": "check --list-tags"}}, {}
     )
 
-    assert response == "Called with: check, --list-tags\n"
+    assert response[0] == 0
+    assert response[1] == "Called with: check, --list-tags\n"
 
 
 def test_command_flask(mock_wsgi_app_file, mock_app, wsgi_handler):
@@ -727,7 +731,8 @@ def test_command_flask(mock_wsgi_app_file, mock_app, wsgi_handler):
         {"_serverless-wsgi": {"command": "flask", "data": "custom command"}}, {}
     )
 
-    assert response == "Called with: custom, command\n"
+    assert response[0] == 0
+    assert response[1] == "Called with: custom, command\n"
 
 
 def test_command_unknown(mock_wsgi_app_file, mock_app, wsgi_handler):
@@ -735,8 +740,9 @@ def test_command_unknown(mock_wsgi_app_file, mock_app, wsgi_handler):
         {"_serverless-wsgi": {"command": "unknown", "data": 'echo "hello world"'}}, {}
     )
 
-    assert "Traceback (most recent call last):" in response
-    assert "Exception: Unknown command: unknown" in response
+    assert response[0] == 1
+    assert "Traceback (most recent call last):" in response[1]
+    assert "Exception: Unknown command: unknown" in response[1]
 
 
 def test_app_import_error(mock_wsgi_app_file, mock_app_with_import_error, event):

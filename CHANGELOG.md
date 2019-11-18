@@ -1,3 +1,9 @@
+# 1.7.4
+
+## Bugs
+
+- Return error exit code when `exec`, `command`, `manage` or `flask` commands fail (#114)
+
 # 1.7.3
 
 ## Features

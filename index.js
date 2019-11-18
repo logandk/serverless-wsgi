@@ -465,35 +465,43 @@ class ServerlessWSGI {
     //
     // Thus, console.log is temporarily hijacked to capture the output and parse it as JSON. This
     // hack is needed to avoid having to call the provider-specific invoke plugins.
-    return new BbPromise(resolve => {
-      let output = "";
+    let output = "";
 
-      /* eslint-disable no-console */
-      const native_log = console.log;
-      console.log = msg => (output += msg + "\n");
+    /* eslint-disable no-console */
+    const native_log = console.log;
+    console.log = msg => (output += msg + "\n");
 
-      resolve(
-        this.serverless.pluginManager
-          .run(local ? ["invoke", "local"] : ["invoke"])
-          .then(() => {
+    return this.serverless.pluginManager
+      .run(local ? ["invoke", "local"] : ["invoke"])
+      .then(
+        () =>
+          new BbPromise((resolve, reject) => {
             output = _.trimEnd(output, "\n");
             try {
-              const output_data = JSON.parse(output);
-              if (_.isString(output_data)) {
-                native_log(_.trimEnd(output_data, "\n"));
-              } else {
-                native_log(output);
-              }
+              output = JSON.parse(output);
             } catch (e) {
+              // Swallow exception
+            }
+            if (_.isArray(output) && output.length == 2) {
+              const return_code = output[0];
+              const output_data = _.isString(output[1])
+                ? _.trimEnd(output[1], "\n")
+                : output[1];
+              if (return_code == 0) {
+                native_log(output_data);
+              } else {
+                return reject(output_data);
+              }
+            } else {
               native_log(output);
             }
+            return resolve();
           })
-          .finally(() => {
-            console.log = native_log;
-          })
-      );
-      /* eslint-enable no-console */
-    });
+      )
+      .finally(() => {
+        console.log = native_log;
+      });
+    /* eslint-enable no-console */
   }
 
   command(local) {

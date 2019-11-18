@@ -98,12 +98,12 @@ def handler(event, context):
             else:
                 raise Exception("Unknown command: {}".format(meta.get("command")))
         except:  # noqa
-            return traceback.format_exc()
+            return [1, traceback.format_exc()]
         finally:
             sys.stdout = native_stdout
             sys.stderr = native_stderr
 
-        return output_buffer.getvalue()
+        return [0, output_buffer.getvalue()]
     else:
         return serverless_wsgi.handle_request(wsgi_app, event, context)
 
