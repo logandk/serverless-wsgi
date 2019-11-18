@@ -700,10 +700,7 @@ def test_command_command(mock_wsgi_app_file, mock_app, wsgi_handler):
     )
 
     assert response[0] == 2
-    assert (
-        response[1]
-        == "ls: cannot access 'non-existing-filename': No such file or directory\n"
-    )
+    assert "'non-existing-filename': No such file or directory" in response[1]
 
 
 def test_command_manage(mock_wsgi_app_file, mock_app, wsgi_handler):
