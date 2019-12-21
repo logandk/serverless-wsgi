@@ -75,12 +75,44 @@ def group_headers(headers):
     return new_headers
 
 
+def get_path(event):
+    # If a user using a custom domain on API Gateway along with query param,
+    # they may have a base path in url. This allows us to strip out the via an
+    # following trick
+    path = event[u"path"]
+    if '?' in path:
+        path = event[u"path"].split('?')[0]
+    return path
+
+
+def get_multi_querystring(event):
+    if 'multiValueQueryStringParameters' in event and \
+            bool(event['multiValueQueryStringParameters']):
+        return event.get(u"multiValueQueryStringParameters")
+    elif 'multiValueQuery' in event and \
+            bool(event['multiValueQuery']):
+        return event.get(u"multiValueQuery")
+    else:
+        return None
+
+
+def get_query_string(event):
+    if 'queryStringParameters' in event and \
+            bool(event['queryStringParameters']):
+        return event.get(u"queryStringParameters")
+    elif 'query' in event and \
+            bool(event['query']):
+        return event.get(u"query")
+    else:
+        return {}
+
+
 def encode_query_string(event):
-    multi = event.get(u"multiValueQueryStringParameters")
+    multi = get_multi_querystring(event)
     if multi:
         return url_encode(MultiDict((i, j) for i in multi for j in multi[i]))
     else:
-        return url_encode(event.get(u"queryStringParameters") or {})
+        return url_encode(get_query_string(event))
 
 
 def handle_request(app, event, context):
@@ -109,7 +141,7 @@ def handle_request(app, event, context):
     # If a user is using a custom domain on API Gateway, they may have a base
     # path in their URL. This allows us to strip it out via an optional
     # environment variable.
-    path_info = event[u"path"]
+    path_info = get_path(event)
     base_path = os.environ.get("API_GATEWAY_BASE_PATH")
     if base_path:
         script_name = "/" + base_path
