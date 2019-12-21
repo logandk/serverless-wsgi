@@ -33,6 +33,9 @@ node_modules
 #IDE Stuff
 **/.idea
 
+#VS Code
+**/.vscode
+
 #OS STUFF
 .DS_Store
 .tmp
