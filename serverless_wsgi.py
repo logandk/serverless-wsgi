@@ -85,12 +85,34 @@ def get_path(event):
     return path
 
 
+def get_multi_querystring(event):
+    if 'multiValueQueryStringParameters' in event and \
+            bool(event['multiValueQueryStringParameters']):
+        return event.get(u"multiValueQueryStringParameters")
+    elif 'multiValueQuery' in event and \
+            bool(event['multiValueQuery']):
+        return event.get(u"multiValueQuery")
+    else:
+        return None
+
+
+def get_query_string(event):
+    if 'queryStringParameters' in event and \
+            bool(event['queryStringParameters']):
+        return event.get(u"queryStringParameters")
+    elif 'query' in event and \
+            bool(event['query']):
+        return event.get(u"query")
+    else:
+        return {}
+
+
 def encode_query_string(event):
-    multi = event.get(u"multiValueQueryStringParameters")
+    multi = get_multi_querystring(event)
     if multi:
         return url_encode(MultiDict((i, j) for i in multi for j in multi[i]))
     else:
-        return url_encode(event.get(u"queryStringParameters") or {})
+        return url_encode(get_query_string(event))
 
 
 def handle_request(app, event, context):
