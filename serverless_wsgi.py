@@ -76,32 +76,25 @@ def group_headers(headers):
 
 
 def get_path(event):
-    # If a user using a custom domain on API Gateway along with query param,
-    # they may have a base path in url. This allows us to strip out the via an
-    # following trick
     return event[u"path"].split('?')[0]
 
 
 def get_multi_querystring(event):
     multi_query = None
-    if 'multiValueQueryStringParameters' in event and \
-            bool(event['multiValueQueryStringParameters']):
+    if 'multiValueQueryStringParameters' in event and bool(event['multiValueQueryStringParameters']):
         multi_query = event.get(u"multiValueQueryStringParameters")
-    elif 'multiValueQuery' in event and \
-            bool(event['multiValueQuery']):
+    else:
         multi_query = event.get(u"multiValueQuery")
     return multi_query
 
 
 def get_query_string(event):
-    if 'queryStringParameters' in event and \
-            bool(event['queryStringParameters']):
-        return event.get(u"queryStringParameters")
-    elif 'query' in event and \
-            bool(event['query']):
-        return event.get(u"query")
+    query = {}
+    if u"queryStringParameters" in event and bool(event["queryStringParameters"]):
+        query = event.get(u"queryStringParameters")
     else:
-        return {}
+        query = event.get(u"query")
+    return query
 
 
 def encode_query_string(event):
