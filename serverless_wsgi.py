@@ -79,9 +79,7 @@ def get_path(event):
     # If a user using a custom domain on API Gateway along with query param,
     # they may have a base path in url. This allows us to strip out the via an
     # following trick
-    if '?' in event[u"path"]:
-        return event[u"path"].split('?')[0]
-    return event[u"path"]
+    return event[u"path"].split('?')[0]
 
 
 def get_multi_querystring(event):
