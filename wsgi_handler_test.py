@@ -198,7 +198,7 @@ def event():
 
 
 @pytest.fixture  # noqa: F811
-def wsgi_handler():
+def wsgi_handler():  # noqa: F811
     if "wsgi_handler" in sys.modules:
         del sys.modules["wsgi_handler"]
     import wsgi_handler
