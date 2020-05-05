@@ -331,6 +331,8 @@ custom:
 If you use custom domain names with API Gateway, you might have a base path that is
 at the beginning of your path, such as the stage (`/dev`, `/stage`, `/prod`). In this case, set
 the `API_GATEWAY_BASE_PATH` environment variable to let `serverless-wsgi` know.
+E.g, if you deploy your WSGI application to https://mydomain.com/api/myservice,
+set `API_GATEWAY_BASE_PATH` to `api/myservice` (no `/` first).
 
 The example below uses the [serverless-domain-manager](https://github.com/amplify-education/serverless-domain-manager)
 plugin to handle custom domains in API Gateway:
