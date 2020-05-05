@@ -412,6 +412,9 @@ def index():
     print(request.environ['serverless.event'])
 ```
 
+For more information on these objects, read the documentation on [events](https://docs.aws.amazon.com/lambda/latest/dg/lambda-services.html)
+and the [invocation context](https://docs.aws.amazon.com/lambda/latest/dg/python-context.html).
+
 ### Text MIME types
 
 By default, all MIME types starting with `text/` and the following whitelist are sent
