@@ -41,12 +41,15 @@ def package(req_files, target_dir, pip_args=""):
     if os.path.exists(tmp_dir):
         shutil.rmtree(tmp_dir)
 
-    original = sys.argv
-    sys.argv = ["", venv_dir, "--quiet", "-p", sys.executable]
-    try:
-        virtualenv.main()
-    finally:
-        sys.argv = original
+    if hasattr(virtualenv, "main"):
+        original = sys.argv
+        sys.argv = ["", venv_dir, "--quiet", "-p", sys.executable]
+        try:
+            virtualenv.main()
+        finally:
+            sys.argv = original
+    else:
+        virtualenv.cli_run([venv_dir, "--quiet", "-p", sys.executable])
 
     if platform.system() == "Windows":
         pip_exe = os.path.join(venv_dir, "Scripts", "pip.exe")
@@ -90,6 +93,7 @@ def package(req_files, target_dir, pip_args=""):
         "easy_install.*",
         "*.pyc",
         "__pycache__",
+        "_virtualenv.*",
     ]
 
     shutil.copytree(

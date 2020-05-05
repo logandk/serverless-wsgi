@@ -1,3 +1,9 @@
+# 1.7.5
+
+## Bugs
+
+- Fix integration with virtualenv for latest version (20.x)
+
 # 1.7.4
 
 ## Bugs

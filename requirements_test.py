@@ -23,10 +23,18 @@ class PopenStub:
 def mock_virtualenv(monkeypatch):
     virtualenv_calls = []
 
-    def mock_virtualenv_main():
-        virtualenv_calls.append(sys.argv[:])
+    if hasattr(virtualenv, "main"):
 
-    monkeypatch.setattr(virtualenv, "main", mock_virtualenv_main)
+        def mock_virtualenv_main():
+            virtualenv_calls.append(sys.argv[:])
+
+        monkeypatch.setattr(virtualenv, "main", mock_virtualenv_main)
+    else:
+
+        def mock_virtualenv_cli_run(args):
+            virtualenv_calls.append([""] + args)
+
+        monkeypatch.setattr(virtualenv, "cli_run", mock_virtualenv_cli_run)
 
     return virtualenv_calls
 
