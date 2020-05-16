@@ -232,7 +232,7 @@ class ServerlessWSGI {
 
       this.serverless.cli.log("Packaging required Python packages...");
 
-      const res = child_process.spawnSync(this.pythonBin, args);
+      const res = child_process.spawnSync(this.pythonBin, args, {'encoding': 'utf8'});
       if (res.error) {
         if (res.error.code == "ENOENT") {
           return reject(
