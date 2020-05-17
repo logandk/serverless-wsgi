@@ -3,6 +3,9 @@
 ## Bugs
 
 - Fix integration with virtualenv for latest version (20.x)
+- Fix wrong encoding of error messages during packaging (#122, #139)
+
+  _Jan Varho_
 
 # 1.7.4
 
