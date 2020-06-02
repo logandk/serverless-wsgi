@@ -2,13 +2,13 @@
   <img src="https://logandk.github.io/serverless-wsgi/assets/header.svg">
 </p>
 
-[![npm package](https://nodei.co/npm/serverless-wsgi.png?downloads=true&downloadRank=true&stars=true)](https://nodei.co/npm/serverless-wsgi/)
+[![npm package](https://nodei.co/npm/serverless-wsgi.svg?downloads=true&downloadRank=true&stars=true)](https://nodei.co/npm/serverless-wsgi/)
 
 [![serverless](http://public.serverless.com/badges/v3.svg)](http://www.serverless.com)
-[![Build Status](https://travis-ci.org/logandk/serverless-wsgi.png?branch=master)](https://travis-ci.org/logandk/serverless-wsgi)
+[![Build Status](https://travis-ci.org/logandk/serverless-wsgi.svg?branch=master)](https://travis-ci.org/logandk/serverless-wsgi)
 [![Coverage Status](https://codecov.io/gh/logandk/serverless-wsgi/branch/master/graph/badge.svg)](https://codecov.io/gh/logandk/serverless-wsgi)
-[![Dependency Status](https://david-dm.org/logandk/serverless-wsgi.png)](https://david-dm.org/logandk/serverless-wsgi)
-[![Dev Dependency Status](https://david-dm.org/logandk/serverless-wsgi/dev-status.png)](https://david-dm.org/logandk/serverless-wsgi?type=dev)
+[![Dependency Status](https://david-dm.org/logandk/serverless-wsgi.svg)](https://david-dm.org/logandk/serverless-wsgi)
+[![Dev Dependency Status](https://david-dm.org/logandk/serverless-wsgi/dev-status.svg)](https://david-dm.org/logandk/serverless-wsgi?type=dev)
 
 A Serverless v1.x plugin to build your deploy Python WSGI applications using Serverless. Compatible
 WSGI application frameworks include Flask, Django and Pyramid - for a complete list, see:
