@@ -667,12 +667,12 @@ def test_handler_alb(mock_wsgi_app_file, mock_app, wsgi_handler, elb_event):
 
 
 def test_alb_query_params(mock_wsgi_app_file, mock_app, wsgi_handler, elb_event):
-    elb_event['queryStringParameters'] = {
-        'test': 'test%20test'
+    elb_event["queryStringParameters"] = {
+        "test": "test%20test"
     }
     response = wsgi_handler.handler(elb_event, {})
     query_string = wsgi_handler.wsgi_app.last_environ["QUERY_STRING"]
-    assert query_string == 'test=test+test'
+    assert query_string == "test=test+test"
 
     assert response == {
         "body": u"Hello World ☃!",
@@ -690,14 +690,17 @@ def test_alb_query_params(mock_wsgi_app_file, mock_app, wsgi_handler, elb_event)
 
 
 def test_alb_multi_query_params(mock_wsgi_app_file, mock_app, wsgi_handler, elb_event):
-    del(elb_event['queryStringParameters'])
-    elb_event['multiValueQueryStringParameters'] = {
-        '%E6%B8%AC%E8%A9%A6': ['%E3%83%86%E3%82%B9%E3%83%88', 'test'],
-        'test': 'test%20test'
+    del(elb_event["queryStringParameters"])
+    elb_event["multiValueQueryStringParameters"] = {
+        "%E6%B8%AC%E8%A9%A6": ["%E3%83%86%E3%82%B9%E3%83%88", "test"],
+        "test": "test%20test"
     }
     response = wsgi_handler.handler(elb_event, {})
     query_string = wsgi_handler.wsgi_app.last_environ["QUERY_STRING"]
-    assert query_string == 'test=test+test&%E6%B8%AC%E8%A9%A6=%E3%83%86%E3%82%B9%E3%83%88&%E6%B8%AC%E8%A9%A6=test'
+    assert query_string == url_encode({
+        "測試": ["テスト", "test"],
+        "test": "test test"
+    })
 
     assert response == {
         "body": u"Hello World ☃!",

@@ -76,7 +76,7 @@ def group_headers(headers):
 
 
 def encode_query_string(event, from_alb):
-    params = event.get(u"multiValueQueryStringParameters") or event.get(u"queryStringParameters")
+    params = event.get(u"multiValueQueryStringParameters") or event.get(u"queryStringParameters", {})
     if from_alb:
         params = MultiDict(
             (url_unquote(k), url_unquote(v)) for k, v in iter_multi_items(params)
