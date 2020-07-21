@@ -10,7 +10,7 @@ Author: Logan Raarup <logan@logan.dk>
 import base64
 import os
 import sys
-from werkzeug.datastructures import Headers, MultiDict
+from werkzeug.datastructures import Headers, iter_multi_items, MultiDict
 from werkzeug.wrappers import Response
 from werkzeug.urls import url_encode, url_unquote
 from werkzeug.http import HTTP_STATUS_CODES
@@ -75,18 +75,20 @@ def group_headers(headers):
     return new_headers
 
 
-def encode_query_string(event):
-    multi = event.get(u"multiValueQueryStringParameters")
-    if multi:
-        return url_encode(MultiDict((i, j) for i in multi for j in multi[i]))
-    else:
-        return url_encode(event.get(u"queryStringParameters") or {})
+def encode_query_string(event, from_alb):
+    params = event.get(u"multiValueQueryStringParameters") or event.get(u"queryStringParameters")
+    if from_alb:
+        params = MultiDict(
+            (url_unquote(k), url_unquote(v)) for k, v in iter_multi_items(params)
+        )
+    return url_encode(params)
 
 
 def handle_request(app, event, context):
     if event.get("source") in ["aws.events", "serverless-plugin-warmup"]:
         print("Lambda warming event received, skipping handler")
         return {}
+    from_alb = event.get("requestContext").get("elb")
 
     if u"multiValueHeaders" in event:
         headers = Headers(event[u"multiValueHeaders"])
@@ -127,7 +129,7 @@ def handle_request(app, event, context):
         "CONTENT_LENGTH": str(len(body)),
         "CONTENT_TYPE": headers.get(u"Content-Type", ""),
         "PATH_INFO": url_unquote(path_info),
-        "QUERY_STRING": encode_query_string(event),
+        "QUERY_STRING": encode_query_string(event, from_alb),
         "REMOTE_ADDR": event[u"requestContext"]
         .get(u"identity", {})
         .get(u"sourceIp", ""),
@@ -179,7 +181,7 @@ def handle_request(app, event, context):
     else:
         returndict[u"headers"] = split_headers(response.headers)
 
-    if event.get("requestContext").get("elb"):
+    if from_alb:
         # If the request comes from ALB we need to add a status description
         returndict["statusDescription"] = u"%d %s" % (
             response.status_code,

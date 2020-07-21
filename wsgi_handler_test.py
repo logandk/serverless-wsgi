@@ -197,6 +197,36 @@ def event():
     }
 
 
+@pytest.fixture
+def elb_event():
+    return {
+        "requestContext": {
+            "elb": {
+                "targetGroupArn": "arn:aws:elasticloadbalancing:us-east-1:12345:targetgroup/xxxx/5e43816d76759862"
+            }
+        },
+        "httpMethod": "GET",
+        "path": "/cats",
+        "queryStringParameters": {},
+        "headers": {
+            "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
+            "accept-encoding": "gzip, deflate",
+            "accept-language": "en-US,en;q=0.9,da;q=0.8",
+            "cache-control": "max-age=0",
+            "connection": "keep-alive",
+            "host": "xxxx-203391234.us-east-1.elb.amazonaws.com",
+            "upgrade-insecure-requests": "1",
+            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.110 Safari/537.36",
+            "x-amzn-trace-id": "Root=1-5f05949b-77e2b0f9434e2acbf5ad8ce8",
+            "x-forwarded-for": "95.181.37.218",
+            "x-forwarded-port": "80",
+            "x-forwarded-proto": "http",
+        },
+        "body": "",
+        "isBase64Encoded": False,
+    }
+
+
 @pytest.fixture  # noqa: F811
 def wsgi_handler():  # noqa: F811
     if "wsgi_handler" in sys.modules:
@@ -618,36 +648,56 @@ def test_handler_custom_text_mime_types(
     }
 
 
-def test_handler_alb(mock_wsgi_app_file, mock_app, wsgi_handler):
-    response = wsgi_handler.handler(
-        {
-            "requestContext": {
-                "elb": {
-                    "targetGroupArn": "arn:aws:elasticloadbalancing:us-east-1:12345:targetgroup/xxxx/5e43816d76759862"
-                }
-            },
-            "httpMethod": "GET",
-            "path": "/cats",
-            "queryStringParameters": {},
-            "headers": {
-                "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
-                "accept-encoding": "gzip, deflate",
-                "accept-language": "en-US,en;q=0.9,da;q=0.8",
-                "cache-control": "max-age=0",
-                "connection": "keep-alive",
-                "host": "xxxx-203391234.us-east-1.elb.amazonaws.com",
-                "upgrade-insecure-requests": "1",
-                "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.110 Safari/537.36",
-                "x-amzn-trace-id": "Root=1-5f05949b-77e2b0f9434e2acbf5ad8ce8",
-                "x-forwarded-for": "95.181.37.218",
-                "x-forwarded-port": "80",
-                "x-forwarded-proto": "http",
-            },
-            "body": "",
-            "isBase64Encoded": False,
+def test_handler_alb(mock_wsgi_app_file, mock_app, wsgi_handler, elb_event):
+    response = wsgi_handler.handler(elb_event, {})
+
+    assert response == {
+        "body": u"Hello World ☃!",
+        "headers": {
+            "set-cookie": "CUSTOMER=WILE_E_COYOTE; Path=/",
+            "Content-Length": "16",
+            "Content-Type": "text/plain; charset=utf-8",
+            "sEt-cookie": "LOT_NUMBER=42; Path=/",
+            "Set-cookie": "PART_NUMBER=ROCKET_LAUNCHER_0002; Path=/",
         },
-        {},
-    )
+        "statusDescription": "200 OK",
+        "statusCode": 200,
+        "isBase64Encoded": False,
+    }
+
+
+def test_alb_query_params(mock_wsgi_app_file, mock_app, wsgi_handler, elb_event):
+    elb_event['queryStringParameters'] = {
+        'test': 'test%20test'
+    }
+    response = wsgi_handler.handler(elb_event, {})
+    query_string = wsgi_handler.wsgi_app.last_environ["QUERY_STRING"]
+    assert query_string == 'test=test+test'
+
+    assert response == {
+        "body": u"Hello World ☃!",
+        "headers": {
+            "set-cookie": "CUSTOMER=WILE_E_COYOTE; Path=/",
+            "Content-Length": "16",
+            "Content-Type": "text/plain; charset=utf-8",
+            "sEt-cookie": "LOT_NUMBER=42; Path=/",
+            "Set-cookie": "PART_NUMBER=ROCKET_LAUNCHER_0002; Path=/",
+        },
+        "statusDescription": "200 OK",
+        "statusCode": 200,
+        "isBase64Encoded": False,
+    }
+
+
+def test_alb_multi_query_params(mock_wsgi_app_file, mock_app, wsgi_handler, elb_event):
+    del(elb_event['queryStringParameters'])
+    elb_event['multiValueQueryStringParameters'] = {
+        '%E6%B8%AC%E8%A9%A6': ['%E3%83%86%E3%82%B9%E3%83%88', 'test'],
+        'test': 'test%20test'
+    }
+    response = wsgi_handler.handler(elb_event, {})
+    query_string = wsgi_handler.wsgi_app.last_environ["QUERY_STRING"]
+    assert query_string == 'test=test+test&%E6%B8%AC%E8%A9%A6=%E3%83%86%E3%82%B9%E3%83%88&%E6%B8%AC%E8%A9%A6=test'
 
     assert response == {
         "body": u"Hello World ☃!",
