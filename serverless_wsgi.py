@@ -12,7 +12,7 @@ import os
 import sys
 from werkzeug.datastructures import Headers, iter_multi_items, MultiDict
 from werkzeug.wrappers import Response
-from werkzeug.urls import url_encode, url_unquote
+from werkzeug.urls import url_encode, url_unquote, url_unquote_plus
 from werkzeug.http import HTTP_STATUS_CODES
 from werkzeug._compat import BytesIO, string_types, to_bytes, wsgi_encoding_dance
 
@@ -79,7 +79,7 @@ def encode_query_string(event, from_alb):
     params = event.get(u"multiValueQueryStringParameters") or event.get(u"queryStringParameters") or {}
     if from_alb:
         params = MultiDict(
-            (url_unquote(k), url_unquote(v)) for k, v in iter_multi_items(params)
+            (url_unquote_plus(k), url_unquote_plus(v)) for k, v in iter_multi_items(params)
         )
     return url_encode(params)
 
