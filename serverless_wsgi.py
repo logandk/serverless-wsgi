@@ -88,6 +88,9 @@ def handle_request(app, event, context):
         print("Lambda warming event received, skipping handler")
         return {}
 
+    if event.get("version") == "2.0":
+        return handle_payload_v2(app, event, context)
+
     if u"multiValueHeaders" in event:
         headers = Headers(event[u"multiValueHeaders"])
     else:
@@ -190,6 +193,104 @@ def handle_request(app, event, context):
         mimetype = response.mimetype or "text/plain"
         if (
             mimetype.startswith("text/") or mimetype in TEXT_MIME_TYPES
+        ) and not response.headers.get("Content-Encoding", ""):
+            returndict["body"] = response.get_data(as_text=True)
+            returndict["isBase64Encoded"] = False
+        else:
+            returndict["body"] = base64.b64encode(response.data).decode("utf-8")
+            returndict["isBase64Encoded"] = True
+
+    return returndict
+
+def handle_payload_v2(app, event, context):
+    headers = Headers(event[u"headers"])
+    strip_stage_path = os.environ.get("STRIP_STAGE_PATH", "").lower().strip() in [
+        "yes",
+        "y",
+        "true",
+        "t",
+        "1",
+    ]
+
+    if u"amazonaws.com" in headers.get(u"Host", u"") and not strip_stage_path:
+        script_name = "/{}".format(event[u"requestContext"].get(u"stage", ""))
+    else:
+        script_name = ""
+
+    path_info = event[u"rawPath"]
+
+    body = event.get("body", "")
+    if event.get("isBase64Encoded", False):
+        body = base64.b64decode(body)
+    if isinstance(body, string_types):
+        body = to_bytes(body, charset="utf-8")
+
+    environ = {
+        "CONTENT_LENGTH": str(len(body)),
+        "CONTENT_TYPE": headers.get(u"Content-Type", ""),
+        "PATH_INFO": url_unquote(path_info),
+        "QUERY_STRING": url_encode(event.get(u"queryStringParameters", {})),
+        "REMOTE_ADDR": event[u"requestContext"]
+            .get(u"http", {})
+            .get(u"sourceIp", ""),
+        "REMOTE_USER": event[u"requestContext"]
+            .get(u"authorizer", {})
+            .get(u"principalId", ""),
+        "REQUEST_METHOD": event[u"requestContext"]
+            .get("http", {})
+            .get("method", ""),
+        "SCRIPT_NAME": script_name,
+        "SERVER_NAME": headers.get(u"Host", "lambda"),
+        "SERVER_PORT": headers.get(u"X-Forwarded-Port", "80"),
+        "SERVER_PROTOCOL": "HTTP/1.1",
+        "wsgi.errors": sys.stderr,
+        "wsgi.input": BytesIO(body),
+        "wsgi.multiprocess": False,
+        "wsgi.multithread": False,
+        "wsgi.run_once": False,
+        "wsgi.url_scheme": headers.get(u"X-Forwarded-Proto", "http"),
+        "wsgi.version": (1, 0),
+        "serverless.authorizer": event[u"requestContext"].get(u"authorizer"),
+        "serverless.event": event,
+        "serverless.context": context,
+        # TODO: Deprecate the following entries, as they do not comply with the WSGI
+        # spec. For custom variables, the spec says:
+        #
+        #   Finally, the environ dictionary may also contain server-defined variables.
+        #   These variables should be named using only lower-case letters, numbers, dots,
+        #   and underscores, and should be prefixed with a name that is unique to the
+        #   defining server or gateway.
+        "API_GATEWAY_AUTHORIZER": event[u"requestContext"].get(u"authorizer"),
+        "event": event,
+        "context": context,
+    }
+
+    for key, value in environ.items():
+        if isinstance(value, string_types):
+            environ[key] = wsgi_encoding_dance(value)
+
+    for key, value in headers.items():
+        key = "HTTP_" + key.upper().replace("-", "_")
+        if key not in ("HTTP_CONTENT_TYPE", "HTTP_CONTENT_LENGTH"):
+            environ[key] = value
+
+    response = Response.from_app(app, environ)
+
+    returndict = {u"statusCode": response.status_code}
+
+    returndict[u"headers"] = split_headers(response.headers)
+
+    if event.get("requestContext").get("elb"):
+        # If the request comes from ALB we need to add a status description
+        returndict["statusDescription"] = u"%d %s" % (
+            response.status_code,
+            HTTP_STATUS_CODES[response.status_code],
+        )
+
+    if response.data:
+        mimetype = response.mimetype or "text/plain"
+        if (
+                mimetype.startswith("text/") or mimetype in TEXT_MIME_TYPES
         ) and not response.headers.get("Content-Encoding", ""):
             returndict["body"] = response.get_data(as_text=True)
             returndict["isBase64Encoded"] = False

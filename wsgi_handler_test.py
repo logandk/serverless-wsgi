@@ -139,7 +139,7 @@ def mock_text_mime_wsgi_app_file(monkeypatch):
 
 
 @pytest.fixture
-def event():
+def event_v1():
     return {
         "body": None,
         "headers": {
@@ -206,8 +206,8 @@ def wsgi_handler():  # noqa: F811
     return wsgi_handler
 
 
-def test_handler(mock_wsgi_app_file, mock_app, event, capsys, wsgi_handler):
-    response = wsgi_handler.handler(event, {"memory_limit_in_mb": "128"})
+def test_handler(mock_wsgi_app_file, mock_app, event_v1, capsys, wsgi_handler):
+    response = wsgi_handler.handler(event_v1, {"memory_limit_in_mb": "128"})
 
     assert response == {
         "body": u"Hello World ☃!",
@@ -245,7 +245,7 @@ def test_handler(mock_wsgi_app_file, mock_app, event, capsys, wsgi_handler):
         "HTTP_X_FORWARDED_PORT": "443",
         "HTTP_X_FORWARDED_PROTO": "https",
         "PATH_INFO": "/some/path",
-        "QUERY_STRING": url_encode(event["queryStringParameters"]),
+        "QUERY_STRING": url_encode(event_v1["queryStringParameters"]),
         "REMOTE_ADDR": "76.20.166.147",
         "REMOTE_USER": "wile_e_coyote",
         "REQUEST_METHOD": "GET",
@@ -262,10 +262,10 @@ def test_handler(mock_wsgi_app_file, mock_app, event, capsys, wsgi_handler):
         "wsgi.version": (1, 0),
         "API_GATEWAY_AUTHORIZER": {"principalId": "wile_e_coyote"},
         "context": {"memory_limit_in_mb": "128"},
-        "event": event,
+        "event": event_v1,
         "serverless.authorizer": {"principalId": "wile_e_coyote"},
         "serverless.context": {"memory_limit_in_mb": "128"},
-        "serverless.event": event,
+        "serverless.event": event_v1,
     }
 
     out, err = capsys.readouterr()
@@ -273,27 +273,27 @@ def test_handler(mock_wsgi_app_file, mock_app, event, capsys, wsgi_handler):
     assert err == "application debug #1\n"
 
 
-def test_handler_multivalue(mock_wsgi_app_file, mock_app, event, capsys, wsgi_handler):
-    event["multiValueQueryStringParameters"] = {
+def test_handler_multivalue(mock_wsgi_app_file, mock_app, event_v1, capsys, wsgi_handler):
+    event_v1["multiValueQueryStringParameters"] = {
         "param1": ["value1"],
         "param2": ["value2", "value3"],
     }
 
     # Convert regular headers request to multiValueHeaders
     multi_headers = {}
-    for key, value in event["headers"].items():
+    for key, value in event_v1["headers"].items():
         if key not in multi_headers:
             multi_headers[key] = []
         multi_headers[key].append(value)
-    event["multiValueHeaders"] = multi_headers
 
-    response = wsgi_handler.handler(event, {"memory_limit_in_mb": "128"})
+    event_v1["multiValueHeaders"] = multi_headers
+    response = wsgi_handler.handler(event_v1, {"memory_limit_in_mb": "128"})
     query_string = wsgi_handler.wsgi_app.last_environ["QUERY_STRING"]
 
     assert query_string == url_encode(
         MultiDict(
             (i, k)
-            for i, j in event["multiValueQueryStringParameters"].items()
+            for i, j in event_v1["multiValueQueryStringParameters"].items()
             for k in j
         )
     )
@@ -314,16 +314,16 @@ def test_handler_multivalue(mock_wsgi_app_file, mock_app, event, capsys, wsgi_ha
     }
 
 
-def test_handler_china(mock_wsgi_app_file, mock_app, event, capsys, wsgi_handler):
-    event["headers"]["Host"] = "x.amazonaws.com.cn"
-    wsgi_handler.handler(event, {"memory_limit_in_mb": "128"})
+def test_handler_china(mock_wsgi_app_file, mock_app, event_v1, capsys, wsgi_handler):
+    event_v1["headers"]["Host"] = "x.amazonaws.com.cn"
+    wsgi_handler.handler(event_v1, {"memory_limit_in_mb": "128"})
 
     assert wsgi_handler.wsgi_app.last_environ["SCRIPT_NAME"] == "/dev"
 
 
-def test_handler_single_cookie(mock_wsgi_app_file, mock_app, event, wsgi_handler):
+def test_handler_single_cookie(mock_wsgi_app_file, mock_app, event_v1, wsgi_handler):
     wsgi_handler.wsgi_app.cookie_count = 1
-    response = wsgi_handler.handler(event, {})
+    response = wsgi_handler.handler(event_v1, {})
 
     assert response == {
         "body": u"Hello World ☃!",
@@ -337,9 +337,9 @@ def test_handler_single_cookie(mock_wsgi_app_file, mock_app, event, wsgi_handler
     }
 
 
-def test_handler_no_cookie(mock_wsgi_app_file, mock_app, event, wsgi_handler):
+def test_handler_no_cookie(mock_wsgi_app_file, mock_app, event_v1, wsgi_handler):
     wsgi_handler.wsgi_app.cookie_count = 0
-    response = wsgi_handler.handler(event, {})
+    response = wsgi_handler.handler(event_v1, {})
 
     assert response == {
         "body": u"Hello World ☃!",
@@ -352,17 +352,17 @@ def test_handler_no_cookie(mock_wsgi_app_file, mock_app, event, wsgi_handler):
     }
 
 
-def test_handler_schedule(mock_wsgi_app_file, mock_app, event, wsgi_handler):
-    event = {"source": "aws.events"}
-    response = wsgi_handler.handler(event, {})
+def test_handler_schedule(mock_wsgi_app_file, mock_app, event_v1, wsgi_handler):
+    event_v1 = {"source": "aws.events"}
+    response = wsgi_handler.handler(event_v1, {})
     assert response == {}
 
 
 def test_handler_warmup_plugin(
-    mock_wsgi_app_file, mock_app, event, wsgi_handler, capsys
+    mock_wsgi_app_file, mock_app, event_v1, wsgi_handler, capsys
 ):
-    event = {"source": "serverless-plugin-warmup"}
-    response = wsgi_handler.handler(event, {})
+    event_v1 = {"source": "serverless-plugin-warmup"}
+    response = wsgi_handler.handler(event_v1, {})
     assert response == {}
 
     out, err = capsys.readouterr()
@@ -370,9 +370,9 @@ def test_handler_warmup_plugin(
     assert err == ""
 
 
-def test_handler_custom_domain(mock_wsgi_app_file, mock_app, event, wsgi_handler):
-    event["headers"]["Host"] = "custom.domain.com"
-    wsgi_handler.handler(event, {})
+def test_handler_custom_domain(mock_wsgi_app_file, mock_app, event_v1, wsgi_handler):
+    event_v1["headers"]["Host"] = "custom.domain.com"
+    wsgi_handler.handler(event_v1, {})
 
     assert wsgi_handler.wsgi_app.last_environ == {
         "CONTENT_LENGTH": "0",
@@ -397,7 +397,7 @@ def test_handler_custom_domain(mock_wsgi_app_file, mock_app, event, wsgi_handler
         "HTTP_X_FORWARDED_PORT": "443",
         "HTTP_X_FORWARDED_PROTO": "https",
         "PATH_INFO": "/some/path",
-        "QUERY_STRING": url_encode(event["queryStringParameters"]),
+        "QUERY_STRING": url_encode(event_v1["queryStringParameters"]),
         "REMOTE_ADDR": "76.20.166.147",
         "REMOTE_USER": "wile_e_coyote",
         "REQUEST_METHOD": "GET",
@@ -414,21 +414,21 @@ def test_handler_custom_domain(mock_wsgi_app_file, mock_app, event, wsgi_handler
         "wsgi.version": (1, 0),
         "API_GATEWAY_AUTHORIZER": {"principalId": "wile_e_coyote"},
         "context": {},
-        "event": event,
+        "event": event_v1,
         "serverless.authorizer": {"principalId": "wile_e_coyote"},
         "serverless.context": {},
-        "serverless.event": event,
+        "serverless.event": event_v1,
     }
 
 
 def test_handler_api_gateway_base_path(
-    mock_wsgi_app_file, mock_app, event, wsgi_handler
+    mock_wsgi_app_file, mock_app, event_v1, wsgi_handler
 ):
-    event["headers"]["Host"] = "custom.domain.com"
-    event["path"] = "/prod/some/path"
+    event_v1["headers"]["Host"] = "custom.domain.com"
+    event_v1["path"] = "/prod/some/path"
     try:
         os.environ["API_GATEWAY_BASE_PATH"] = "prod"
-        wsgi_handler.handler(event, {})
+        wsgi_handler.handler(event_v1, {})
     finally:
         del os.environ["API_GATEWAY_BASE_PATH"]
 
@@ -455,7 +455,7 @@ def test_handler_api_gateway_base_path(
         "HTTP_X_FORWARDED_PORT": "443",
         "HTTP_X_FORWARDED_PROTO": "https",
         "PATH_INFO": "/some/path",
-        "QUERY_STRING": url_encode(event["queryStringParameters"]),
+        "QUERY_STRING": url_encode(event_v1["queryStringParameters"]),
         "REMOTE_ADDR": "76.20.166.147",
         "REMOTE_USER": "wile_e_coyote",
         "REQUEST_METHOD": "GET",
@@ -472,27 +472,27 @@ def test_handler_api_gateway_base_path(
         "wsgi.version": (1, 0),
         "API_GATEWAY_AUTHORIZER": {"principalId": "wile_e_coyote"},
         "context": {},
-        "event": event,
+        "event": event_v1,
         "serverless.authorizer": {"principalId": "wile_e_coyote"},
         "serverless.context": {},
-        "serverless.event": event,
+        "serverless.event": event_v1,
     }
 
 
-def test_handler_strip_stage_path(mock_wsgi_app_file, mock_app, event, wsgi_handler):
+def test_handler_strip_stage_path(mock_wsgi_app_file, mock_app, event_v1, wsgi_handler):
     try:
         os.environ["STRIP_STAGE_PATH"] = "True"
-        wsgi_handler.handler(event, {})
+        wsgi_handler.handler(event_v1, {})
     finally:
         del os.environ["STRIP_STAGE_PATH"]
 
     assert wsgi_handler.wsgi_app.last_environ["SCRIPT_NAME"] == ""
 
 
-def test_handler_base64(mock_wsgi_app_file, mock_app, event, wsgi_handler):
+def test_handler_base64(mock_wsgi_app_file, mock_app, event_v1, wsgi_handler):
     wsgi_handler.wsgi_app.cookie_count = 1
     wsgi_handler.wsgi_app.response_mimetype = "image/jpeg"
-    response = wsgi_handler.handler(event, {})
+    response = wsgi_handler.handler(event_v1, {})
 
     assert response == {
         "body": u"SGVsbG8gV29ybGQg4piDIQ==",
@@ -506,7 +506,7 @@ def test_handler_base64(mock_wsgi_app_file, mock_app, event, wsgi_handler):
     }
 
 
-def test_handler_plain(mock_wsgi_app_file, mock_app, event, wsgi_handler):
+def test_handler_plain(mock_wsgi_app_file, mock_app, event_v1, wsgi_handler):
     wsgi_handler.wsgi_app.cookie_count = 1
 
     plain_mimetypes = [
@@ -517,7 +517,7 @@ def test_handler_plain(mock_wsgi_app_file, mock_app, event, wsgi_handler):
 
     for mimetype in plain_mimetypes:
         wsgi_handler.wsgi_app.response_mimetype = mimetype
-        response = wsgi_handler.handler(event, {})
+        response = wsgi_handler.handler(event_v1, {})
 
         assert response == {
             "body": u"Hello World ☃!",
@@ -531,13 +531,13 @@ def test_handler_plain(mock_wsgi_app_file, mock_app, event, wsgi_handler):
         }
 
 
-def test_handler_base64_request(mock_wsgi_app_file, mock_app, event, wsgi_handler):
-    event["body"] = "SGVsbG8gd29ybGQ="
-    event["headers"]["Content-Type"] = "text/plain"
-    event["isBase64Encoded"] = True
-    event["httpMethod"] = "PUT"
+def test_handler_base64_request(mock_wsgi_app_file, mock_app, event_v1, wsgi_handler):
+    event_v1["body"] = "SGVsbG8gd29ybGQ="
+    event_v1["headers"]["Content-Type"] = "text/plain"
+    event_v1["isBase64Encoded"] = True
+    event_v1["httpMethod"] = "PUT"
 
-    wsgi_handler.handler(event, {})
+    wsgi_handler.handler(event_v1, {})
 
     environ = wsgi_handler.wsgi_app.last_environ
 
@@ -551,8 +551,8 @@ def test_non_package_subdir_app(mock_subdir_wsgi_app_file, mock_app, wsgi_handle
     assert wsgi_handler.wsgi_app.module == "app"
 
 
-def test_handler_binary_request_body(mock_wsgi_app_file, mock_app, event, wsgi_handler):
-    event["body"] = (
+def test_handler_binary_request_body(mock_wsgi_app_file, mock_app, event_v1, wsgi_handler):
+    event_v1["body"] = (
         u"LS0tLS0tV2ViS2l0Rm9ybUJvdW5kYXJ5VTRDZE5CRWVLQWxIaGRRcQ0KQ29udGVu"
         u"dC1EaXNwb3NpdGlvbjogZm9ybS1kYXRhOyBuYW1lPSJ3YXQiDQoNCmhleW9vb3Bw"
         u"cHBwDQotLS0tLS1XZWJLaXRGb3JtQm91bmRhcnlVNENkTkJFZUtBbEhoZFFxDQpD"
@@ -565,13 +565,13 @@ def test_handler_binary_request_body(mock_wsgi_app_file, mock_app, event, wsgi_h
         u"dCINCg0KVXBsb2FkIEltYWdlDQotLS0tLS1XZWJLaXRGb3JtQm91bmRhcnlVNENk"
         u"TkJFZUtBbEhoZFFxLS0NCg=="
     )
-    event["headers"][
+    event_v1["headers"][
         "Content-Type"
     ] = "multipart/form-data; boundary=----WebKitFormBoundaryU4CdNBEeKAlHhdQq"
-    event["isBase64Encoded"] = True
-    event["httpMethod"] = "POST"
+    event_v1["isBase64Encoded"] = True
+    event_v1["httpMethod"] = "POST"
 
-    wsgi_handler.handler(event, {})
+    wsgi_handler.handler(event_v1, {})
 
     environ = wsgi_handler.wsgi_app.last_environ
 
@@ -580,31 +580,31 @@ def test_handler_binary_request_body(mock_wsgi_app_file, mock_app, event, wsgi_h
 
 
 def test_handler_request_body_undecodable_with_latin1(
-    mock_wsgi_app_file, mock_app, event, wsgi_handler
+    mock_wsgi_app_file, mock_app, event_v1, wsgi_handler
 ):
-    event["body"] = (
+    event_v1["body"] = (
         u"------WebKitFormBoundary3vA72kRLuq9D3NdL\r\n"
         u'Content-Disposition: form-data; name="text"\r\n\r\n'
         u"テスト 테스트 测试\r\n"
         u"------WebKitFormBoundary3vA72kRLuq9D3NdL--"
     )
-    event["headers"][
+    event_v1["headers"][
         "Content-Type"
     ] = "multipart/form-data; boundary=----WebKitFormBoundary3vA72kRLuq9D3NdL"
-    event["httpMethod"] = "POST"
+    event_v1["httpMethod"] = "POST"
 
-    wsgi_handler.handler(event, {})
+    wsgi_handler.handler(event_v1, {})
 
     environ = wsgi_handler.wsgi_app.last_environ
     assert Request(environ).form["text"] == u"テスト 테스트 测试"
 
 
 def test_handler_custom_text_mime_types(
-    mock_text_mime_wsgi_app_file, mock_app, event, wsgi_handler
+    mock_text_mime_wsgi_app_file, mock_app, event_v1, wsgi_handler
 ):
     wsgi_handler.wsgi_app.cookie_count = 1
     wsgi_handler.wsgi_app.response_mimetype = "application/custom+json"
-    response = wsgi_handler.handler(event, {})
+    response = wsgi_handler.handler(event_v1, {})
 
     assert response == {
         "body": u"Hello World ☃!",
@@ -758,7 +758,7 @@ def test_command_unknown(mock_wsgi_app_file, mock_app, wsgi_handler):
     assert "Exception: Unknown command: unknown" in response[1]
 
 
-def test_app_import_error(mock_wsgi_app_file, mock_app_with_import_error, event):
+def test_app_import_error(mock_wsgi_app_file, mock_app_with_import_error, event_v1):
     with pytest.raises(Exception, match="Unable to import app.app"):
         if "wsgi_handler" in sys.modules:
             del sys.modules["wsgi_handler"]
@@ -766,8 +766,130 @@ def test_app_import_error(mock_wsgi_app_file, mock_app_with_import_error, event)
 
 
 def test_handler_with_encoded_characters_in_path(
-    mock_wsgi_app_file, mock_app, event, capsys, wsgi_handler
+    mock_wsgi_app_file, mock_app, event_v1, capsys, wsgi_handler
 ):
-    event["path"] = "/city/new%20york"
-    wsgi_handler.handler(event, {"memory_limit_in_mb": "128"})
+    event_v1["path"] = "/city/new%20york"
+    wsgi_handler.handler(event_v1, {"memory_limit_in_mb": "128"})
     assert wsgi_handler.wsgi_app.last_environ["PATH_INFO"] == "/city/new york"
+
+
+@pytest.fixture
+def event_v2():
+    return {
+        "version": "2.0",
+        "routeKey": "GET /some/path",
+        "rawPath": "/some/path",
+        "rawQueryString": "param1=value1&param2=value2&param2=value3",
+        "cookies": ["CUSTOMER=WILE_E_COYOTE", "PART_NUMBER=ROCKET_LAUNCHER_0001"],
+        "headers": {
+            "Accept": "*/*",
+            "Accept-Encoding": "gzip, deflate",
+            "CloudFront-Forwarded-Proto": "https",
+            "CloudFront-Is-Desktop-Viewer": "true",
+            "CloudFront-Is-Mobile-Viewer": "false",
+            "CloudFront-Is-SmartTV-Viewer": "false",
+            "CloudFront-Is-Tablet-Viewer": "false",
+            "CloudFront-Viewer-Country": "DK",
+            "Host": "3z6kd9fbb1.execute-api.us-east-1.amazonaws.com",
+            "Postman-Token": "778a706e-d6b0-48d5-94dd-9e98c22f12fe",
+            "User-Agent": "PostmanRuntime/3.0.11-hotfix.2",
+            "Via": "1.1 b8fa.cloudfront.net (CloudFront)",
+            "X-Amz-Cf-Id": "jx0Bvz9rm--Mz3wAj4i46FdOQQK3RHF4H0moJjBsQ==",
+            "X-Amzn-Trace-Id": "Root=1-58d534a5-1e7cffe644b086304dce7a1e",
+            "X-Forwarded-For": "76.20.166.147, 205.251.218.72",
+            "X-Forwarded-Port": "443",
+            "X-Forwarded-Proto": "https",
+            "cache-control": "no-cache",
+        },
+        "queryStringParameters": {"param1": "value1", "param2": "value2, value3"},
+        "requestContext": {
+            "accountId": "16794",
+            "apiId": "3z6kd9fbb1",
+            "authorizer": {"principalId": "wile_e_coyote"},
+            "domainName": "id.execute-api.us-east-1.amazonaws.com",
+            "domainPrefix": "id",
+            "http": {
+                "method": "GET",
+                "path": "/some/path",
+                "protocol": "HTTP/1.1",
+                "sourceIp": "76.20.166.147",
+                "userAgent": "agent"
+            },
+            "requestId": "ad2db740-10a2-11e7-8ced-35048084babb",
+            "stage": "dev",
+            "routeKey": "$default",
+            "time": "12/Mar/2020:19:03:58 +0000",
+            "timeEpoch": 1583348638390
+        },
+        "pathParameters": {"proxy": "some/path"},
+        "isBase64Encoded": False,
+        "stageVariables": None,
+    }
+
+
+def test_handler_v2(mock_wsgi_app_file, mock_app, event_v2, capsys, wsgi_handler):
+    response = wsgi_handler.handler(event_v2, {"memory_limit_in_mb": "128"})
+
+    assert response == {
+        "body": u"Hello World ☃!",
+        "headers": {
+            "set-cookie": "CUSTOMER=WILE_E_COYOTE; Path=/",
+            "Content-Length": "16",
+            "Content-Type": "text/plain; charset=utf-8",
+            "sEt-cookie": "LOT_NUMBER=42; Path=/",
+            "Set-cookie": "PART_NUMBER=ROCKET_LAUNCHER_0002; Path=/",
+        },
+        "statusCode": 200,
+        "isBase64Encoded": False,
+    }
+
+    assert wsgi_handler.wsgi_app.last_environ == {
+        "CONTENT_LENGTH": "0",
+        "CONTENT_TYPE": "",
+        "HTTP_ACCEPT": "*/*",
+        "HTTP_ACCEPT_ENCODING": "gzip, deflate",
+        "HTTP_CACHE_CONTROL": "no-cache",
+        "HTTP_CLOUDFRONT_FORWARDED_PROTO": "https",
+        "HTTP_CLOUDFRONT_IS_DESKTOP_VIEWER": "true",
+        "HTTP_CLOUDFRONT_IS_MOBILE_VIEWER": "false",
+        "HTTP_CLOUDFRONT_IS_SMARTTV_VIEWER": "false",
+        "HTTP_CLOUDFRONT_IS_TABLET_VIEWER": "false",
+        "HTTP_CLOUDFRONT_VIEWER_COUNTRY": "DK",
+        #"HTTP_COOKIE": "CUSTOMER=WILE_E_COYOTE; PART_NUMBER=ROCKET_LAUNCHER_0001",
+        "HTTP_HOST": "3z6kd9fbb1.execute-api.us-east-1.amazonaws.com",
+        "HTTP_POSTMAN_TOKEN": "778a706e-d6b0-48d5-94dd-9e98c22f12fe",
+        "HTTP_USER_AGENT": "PostmanRuntime/3.0.11-hotfix.2",
+        "HTTP_VIA": "1.1 b8fa.cloudfront.net (CloudFront)",
+        "HTTP_X_AMZN_TRACE_ID": "Root=1-58d534a5-1e7cffe644b086304dce7a1e",
+        "HTTP_X_AMZ_CF_ID": "jx0Bvz9rm--Mz3wAj4i46FdOQQK3RHF4H0moJjBsQ==",
+        "HTTP_X_FORWARDED_FOR": "76.20.166.147, 205.251.218.72",
+        "HTTP_X_FORWARDED_PORT": "443",
+        "HTTP_X_FORWARDED_PROTO": "https",
+        "PATH_INFO": "/some/path",
+        "QUERY_STRING": url_encode(event_v2["queryStringParameters"]),
+        "REMOTE_ADDR": "76.20.166.147",
+        "REMOTE_USER": "wile_e_coyote",
+        "REQUEST_METHOD": "GET",
+        "SCRIPT_NAME": "/dev",
+        "SERVER_NAME": "3z6kd9fbb1.execute-api.us-east-1.amazonaws.com",
+        "SERVER_PORT": "443",
+        "SERVER_PROTOCOL": "HTTP/1.1",
+        "wsgi.errors": wsgi_handler.wsgi_app.last_environ["wsgi.errors"],
+        "wsgi.input": wsgi_handler.wsgi_app.last_environ["wsgi.input"],
+        "wsgi.multiprocess": False,
+        "wsgi.multithread": False,
+        "wsgi.run_once": False,
+        "wsgi.url_scheme": "https",
+        "wsgi.version": (1, 0),
+        "API_GATEWAY_AUTHORIZER": {"principalId": "wile_e_coyote"},
+        "context": {"memory_limit_in_mb": "128"},
+        "event": event_v2,
+        "serverless.authorizer": {"principalId": "wile_e_coyote"},
+        "serverless.context": {"memory_limit_in_mb": "128"},
+        "serverless.event": event_v2,
+    }
+
+    out, err = capsys.readouterr()
+    assert out == ""
+    assert err == "application debug #1\n"
+
