@@ -83,19 +83,7 @@ def encode_query_string(event):
         return url_encode(event.get(u"queryStringParameters") or {})
 
 
-def handle_request(app, event, context):
-    if event.get("source") in ["aws.events", "serverless-plugin-warmup"]:
-        print("Lambda warming event received, skipping handler")
-        return {}
-
-    if event.get("version") == "2.0":
-        return handle_payload_v2(app, event, context)
-
-    if u"multiValueHeaders" in event:
-        headers = Headers(event[u"multiValueHeaders"])
-    else:
-        headers = Headers(event[u"headers"])
-
+def get_script_name(headers, request_context):
     strip_stage_path = os.environ.get("STRIP_STAGE_PATH", "").lower().strip() in [
         "yes",
         "y",
@@ -105,9 +93,79 @@ def handle_request(app, event, context):
     ]
 
     if u"amazonaws.com" in headers.get(u"Host", u"") and not strip_stage_path:
-        script_name = "/{}".format(event[u"requestContext"].get(u"stage", ""))
+        script_name = "/{}".format(request_context.get(u"stage", ""))
     else:
         script_name = ""
+    return script_name
+
+
+def get_body_bytes(event, body):
+    if event.get("isBase64Encoded", False):
+        body = base64.b64decode(body)
+    if isinstance(body, string_types):
+        body = to_bytes(body, charset="utf-8")
+    return body
+
+
+def setup_environ_items(environ, headers):
+    for key, value in environ.items():
+        if isinstance(value, string_types):
+            environ[key] = wsgi_encoding_dance(value)
+
+    for key, value in headers.items():
+        key = "HTTP_" + key.upper().replace("-", "_")
+        if key not in ("HTTP_CONTENT_TYPE", "HTTP_CONTENT_LENGTH"):
+            environ[key] = value
+    return environ
+
+
+def generate_response(response, event):
+    returndict = {u"statusCode": response.status_code}
+
+    if u"multiValueHeaders" in event:
+        returndict[u"multiValueHeaders"] = group_headers(response.headers)
+    else:
+        returndict[u"headers"] = split_headers(response.headers)
+
+    if event.get("requestContext").get("elb"):
+        # If the request comes from ALB we need to add a status description
+        returndict["statusDescription"] = u"%d %s" % (
+            response.status_code,
+            HTTP_STATUS_CODES[response.status_code],
+        )
+
+    if response.data:
+        mimetype = response.mimetype or "text/plain"
+        if (
+                mimetype.startswith("text/") or mimetype in TEXT_MIME_TYPES
+        ) and not response.headers.get("Content-Encoding", ""):
+            returndict["body"] = response.get_data(as_text=True)
+            returndict["isBase64Encoded"] = False
+        else:
+            returndict["body"] = base64.b64encode(response.data).decode("utf-8")
+            returndict["isBase64Encoded"] = True
+
+    return returndict
+
+
+def handle_request(app, event, context):
+    if event.get("source") in ["aws.events", "serverless-plugin-warmup"]:
+        print("Lambda warming event received, skipping handler")
+        return {}
+
+    if event.get("version") == "2.0":
+        return handle_payload_v2(app, event, context)
+
+    return handle_payload_v1(app, event, context)
+
+
+def handle_payload_v1(app, event, context):
+    if u"multiValueHeaders" in event:
+        headers = Headers(event[u"multiValueHeaders"])
+    else:
+        headers = Headers(event[u"headers"])
+
+    script_name = get_script_name(headers, event[u"requestContext"])
 
     # If a user is using a custom domain on API Gateway, they may have a base
     # path in their URL. This allows us to strip it out via an optional
@@ -118,13 +176,10 @@ def handle_request(app, event, context):
         script_name = "/" + base_path
 
         if path_info.startswith(script_name):
-            path_info = path_info[len(script_name) :]
+            path_info = path_info[len(script_name):]
 
     body = event[u"body"] or ""
-    if event.get("isBase64Encoded", False):
-        body = base64.b64decode(body)
-    if isinstance(body, string_types):
-        body = to_bytes(body, charset="utf-8")
+    body = get_body_bytes(event, body)
 
     environ = {
         "CONTENT_LENGTH": str(len(body)),
@@ -132,11 +187,11 @@ def handle_request(app, event, context):
         "PATH_INFO": url_unquote(path_info),
         "QUERY_STRING": encode_query_string(event),
         "REMOTE_ADDR": event[u"requestContext"]
-        .get(u"identity", {})
-        .get(u"sourceIp", ""),
+            .get(u"identity", {})
+            .get(u"sourceIp", ""),
         "REMOTE_USER": event[u"requestContext"]
-        .get(u"authorizer", {})
-        .get(u"principalId", ""),
+            .get(u"authorizer", {})
+            .get(u"principalId", ""),
         "REQUEST_METHOD": event[u"httpMethod"],
         "SCRIPT_NAME": script_name,
         "SERVER_NAME": headers.get(u"Host", "lambda"),
@@ -164,66 +219,25 @@ def handle_request(app, event, context):
         "context": context,
     }
 
-    for key, value in environ.items():
-        if isinstance(value, string_types):
-            environ[key] = wsgi_encoding_dance(value)
-
-    for key, value in headers.items():
-        key = "HTTP_" + key.upper().replace("-", "_")
-        if key not in ("HTTP_CONTENT_TYPE", "HTTP_CONTENT_LENGTH"):
-            environ[key] = value
+    environ = setup_environ_items(environ, headers)
 
     response = Response.from_app(app, environ)
-
-    returndict = {u"statusCode": response.status_code}
-
-    if u"multiValueHeaders" in event:
-        returndict[u"multiValueHeaders"] = group_headers(response.headers)
-    else:
-        returndict[u"headers"] = split_headers(response.headers)
-
-    if event.get("requestContext").get("elb"):
-        # If the request comes from ALB we need to add a status description
-        returndict["statusDescription"] = u"%d %s" % (
-            response.status_code,
-            HTTP_STATUS_CODES[response.status_code],
-        )
-
-    if response.data:
-        mimetype = response.mimetype or "text/plain"
-        if (
-            mimetype.startswith("text/") or mimetype in TEXT_MIME_TYPES
-        ) and not response.headers.get("Content-Encoding", ""):
-            returndict["body"] = response.get_data(as_text=True)
-            returndict["isBase64Encoded"] = False
-        else:
-            returndict["body"] = base64.b64encode(response.data).decode("utf-8")
-            returndict["isBase64Encoded"] = True
+    returndict = generate_response(response, event)
 
     return returndict
 
+
 def handle_payload_v2(app, event, context):
     headers = Headers(event[u"headers"])
-    strip_stage_path = os.environ.get("STRIP_STAGE_PATH", "").lower().strip() in [
-        "yes",
-        "y",
-        "true",
-        "t",
-        "1",
-    ]
 
-    if u"amazonaws.com" in headers.get(u"Host", u"") and not strip_stage_path:
-        script_name = "/{}".format(event[u"requestContext"].get(u"stage", ""))
-    else:
-        script_name = ""
+    script_name = get_script_name(headers, event[u"requestContext"])
 
     path_info = event[u"rawPath"]
 
     body = event.get("body", "")
-    if event.get("isBase64Encoded", False):
-        body = base64.b64decode(body)
-    if isinstance(body, string_types):
-        body = to_bytes(body, charset="utf-8")
+    body = get_body_bytes(event, body)
+
+    headers["Cookie"] = "; ".join(event.get("cookies", []))
 
     environ = {
         "CONTENT_LENGTH": str(len(body)),
@@ -265,37 +279,10 @@ def handle_payload_v2(app, event, context):
         "context": context,
     }
 
-    for key, value in environ.items():
-        if isinstance(value, string_types):
-            environ[key] = wsgi_encoding_dance(value)
-
-    for key, value in headers.items():
-        key = "HTTP_" + key.upper().replace("-", "_")
-        if key not in ("HTTP_CONTENT_TYPE", "HTTP_CONTENT_LENGTH"):
-            environ[key] = value
+    environ = setup_environ_items(environ, headers)
 
     response = Response.from_app(app, environ)
 
-    returndict = {u"statusCode": response.status_code}
-
-    returndict[u"headers"] = split_headers(response.headers)
-
-    if event.get("requestContext").get("elb"):
-        # If the request comes from ALB we need to add a status description
-        returndict["statusDescription"] = u"%d %s" % (
-            response.status_code,
-            HTTP_STATUS_CODES[response.status_code],
-        )
-
-    if response.data:
-        mimetype = response.mimetype or "text/plain"
-        if (
-                mimetype.startswith("text/") or mimetype in TEXT_MIME_TYPES
-        ) and not response.headers.get("Content-Encoding", ""):
-            returndict["body"] = response.get_data(as_text=True)
-            returndict["isBase64Encoded"] = False
-        else:
-            returndict["body"] = base64.b64encode(response.data).decode("utf-8")
-            returndict["isBase64Encoded"] = True
+    returndict = generate_response(response, event)
 
     return returndict

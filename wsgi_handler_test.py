@@ -855,7 +855,7 @@ def test_handler_v2(mock_wsgi_app_file, mock_app, event_v2, capsys, wsgi_handler
         "HTTP_CLOUDFRONT_IS_SMARTTV_VIEWER": "false",
         "HTTP_CLOUDFRONT_IS_TABLET_VIEWER": "false",
         "HTTP_CLOUDFRONT_VIEWER_COUNTRY": "DK",
-        #"HTTP_COOKIE": "CUSTOMER=WILE_E_COYOTE; PART_NUMBER=ROCKET_LAUNCHER_0001",
+        "HTTP_COOKIE": "CUSTOMER=WILE_E_COYOTE; PART_NUMBER=ROCKET_LAUNCHER_0001",
         "HTTP_HOST": "3z6kd9fbb1.execute-api.us-east-1.amazonaws.com",
         "HTTP_POSTMAN_TOKEN": "778a706e-d6b0-48d5-94dd-9e98c22f12fe",
         "HTTP_USER_AGENT": "PostmanRuntime/3.0.11-hotfix.2",
