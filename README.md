@@ -21,6 +21,7 @@ http://wsgi.readthedocs.io/en/latest/frameworks.html.
 - Automatically downloads Python packages that you specify in `requirements.txt` and deploys them along with your application
 - Convenient `wsgi serve` command for serving your application locally during development
 - Includes CLI commands for remote execution of Python code (`wsgi exec`), shell commands (`wsgi command`), Flask CLI commands (`wsgi flask`) and Django management commands (`wsgi manage`)
+- Supports both APIGatewayV1 and APIGatewayV2 payloads
 
 ## Install
 
