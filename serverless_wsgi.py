@@ -187,11 +187,11 @@ def handle_payload_v1(app, event, context):
         "PATH_INFO": url_unquote(path_info),
         "QUERY_STRING": encode_query_string(event),
         "REMOTE_ADDR": event[u"requestContext"]
-            .get(u"identity", {})
-            .get(u"sourceIp", ""),
+        .get(u"identity", {})
+        .get(u"sourceIp", ""),
         "REMOTE_USER": event[u"requestContext"]
-            .get(u"authorizer", {})
-            .get(u"principalId", ""),
+        .get(u"authorizer", {})
+        .get(u"principalId", ""),
         "REQUEST_METHOD": event[u"httpMethod"],
         "SCRIPT_NAME": script_name,
         "SERVER_NAME": headers.get(u"Host", "lambda"),
@@ -245,14 +245,14 @@ def handle_payload_v2(app, event, context):
         "PATH_INFO": url_unquote(path_info),
         "QUERY_STRING": url_encode(event.get(u"queryStringParameters", {})),
         "REMOTE_ADDR": event[u"requestContext"]
-            .get(u"http", {})
-            .get(u"sourceIp", ""),
+        .get(u"http", {})
+        .get(u"sourceIp", ""),
         "REMOTE_USER": event[u"requestContext"]
-            .get(u"authorizer", {})
-            .get(u"principalId", ""),
+        .get(u"authorizer", {})
+        .get(u"principalId", ""),
         "REQUEST_METHOD": event[u"requestContext"]
-            .get("http", {})
-            .get("method", ""),
+        .get("http", {})
+        .get("method", ""),
         "SCRIPT_NAME": script_name,
         "SERVER_NAME": headers.get(u"Host", "lambda"),
         "SERVER_PORT": headers.get(u"X-Forwarded-Port", "80"),
