@@ -893,3 +893,10 @@ def test_handler_v2(mock_wsgi_app_file, mock_app, event_v2, capsys, wsgi_handler
     assert out == ""
     assert err == "application debug #1\n"
 
+
+def test_handler_with_encoded_characters_in_path_v2(
+        mock_wsgi_app_file, mock_app, event_v2, capsys, wsgi_handler
+):
+    event_v2["rawPath"] = "/city/new%20york"
+    wsgi_handler.handler(event_v2, {"memory_limit_in_mb": "128"})
+    assert wsgi_handler.wsgi_app.last_environ["PATH_INFO"] == "/city/new york"
