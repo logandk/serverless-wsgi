@@ -368,6 +368,7 @@ custom:
     createRoute53Record: true
 ```
 
+**Note**: The **API_GATEWAY_BASE_PATH** configuration is only needed when using the payload V1. In the V2, the path does not have the **basePath** in the beginning.
 ### Using CloudFront
 
 If you're configuring CloudFront manually in front of your API and setting
