@@ -2,7 +2,7 @@
   "name": "serverless-wsgi",
   "version": "1.7.6",
   "engines": {
-    "node": ">=4.0"
+    "node": ">=10"
   },
   "description": "Serverless WSGI Plugin",
   "author": "logan.dk",
