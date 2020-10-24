@@ -1,3 +1,21 @@
+# 1.7.6
+
+## Features
+
+- Support for the new HTTP API lambda proxy response payload v2.0 (#149)
+
+  _Ronald Tscherepanow_
+
+## Bugs
+
+- Fix eventContext for KONG gateway (#147)
+
+  _Grant Johnson_
+
+- Fix the ALB query parameter handling (#146)
+
+  _Hsiao-Ting Yu_
+
 # 1.7.5
 
 ## Bugs
