@@ -80,11 +80,11 @@ def is_alb_event(event):
 
 
 def encode_query_string(event):
-    params = (
-        event.get(u"multiValueQueryStringParameters")
-        or event.get(u"queryStringParameters")
-        or {}
-    )
+    params = event.get(u"multiValueQueryStringParameters")
+    if not params:
+        params = event.get(u"queryStringParameters")
+    if not params:
+        params = ""
     if is_alb_event(event):
         params = MultiDict(
             (url_unquote_plus(k), url_unquote_plus(v))
