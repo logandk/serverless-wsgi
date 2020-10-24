@@ -21,6 +21,7 @@ http://wsgi.readthedocs.io/en/latest/frameworks.html.
 - Automatically downloads Python packages that you specify in `requirements.txt` and deploys them along with your application
 - Convenient `wsgi serve` command for serving your application locally during development
 - Includes CLI commands for remote execution of Python code (`wsgi exec`), shell commands (`wsgi command`), Flask CLI commands (`wsgi flask`) and Django management commands (`wsgi manage`)
+- Supports both APIGatewayV1 and APIGatewayV2 payloads
 
 ## Install
 
@@ -367,6 +368,7 @@ custom:
     createRoute53Record: true
 ```
 
+**Note**: The **API_GATEWAY_BASE_PATH** configuration is only needed when using the payload V1. In the V2, the path does not have the **basePath** in the beginning.
 ### Using CloudFront
 
 If you're configuring CloudFront manually in front of your API and setting
