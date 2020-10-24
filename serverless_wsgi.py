@@ -76,10 +76,15 @@ def group_headers(headers):
 
 
 def encode_query_string(event, from_alb):
-    params = event.get(u"multiValueQueryStringParameters") or event.get(u"queryStringParameters") or {}
+    params = (
+        event.get(u"multiValueQueryStringParameters")
+        or event.get(u"queryStringParameters")
+        or {}
+    )
     if from_alb:
         params = MultiDict(
-            (url_unquote_plus(k), url_unquote_plus(v)) for k, v in iter_multi_items(params)
+            (url_unquote_plus(k), url_unquote_plus(v))
+            for k, v in iter_multi_items(params)
         )
     return url_encode(params)
 
@@ -88,7 +93,7 @@ def handle_request(app, event, context):
     if event.get("source") in ["aws.events", "serverless-plugin-warmup"]:
         print("Lambda warming event received, skipping handler")
         return {}
-    from_alb = event.get("requestContext").get("elb")
+    from_alb = event.get("requestContext", {}).get("elb")
 
     if u"multiValueHeaders" in event:
         headers = Headers(event[u"multiValueHeaders"])
@@ -130,13 +135,13 @@ def handle_request(app, event, context):
         "CONTENT_TYPE": headers.get(u"Content-Type", ""),
         "PATH_INFO": url_unquote(path_info),
         "QUERY_STRING": encode_query_string(event, from_alb),
-        "REMOTE_ADDR": event[u"requestContext"]
+        "REMOTE_ADDR": event.get(u"requestContext", {})
         .get(u"identity", {})
         .get(u"sourceIp", ""),
-        "REMOTE_USER": event[u"requestContext"]
+        "REMOTE_USER": event.get(u"requestContext", {})
         .get(u"authorizer", {})
         .get(u"principalId", ""),
-        "REQUEST_METHOD": event[u"httpMethod"],
+        "REQUEST_METHOD": event.get(u"httpMethod", {}),
         "SCRIPT_NAME": script_name,
         "SERVER_NAME": headers.get(u"Host", "lambda"),
         "SERVER_PORT": headers.get(u"X-Forwarded-Port", "80"),
@@ -148,7 +153,7 @@ def handle_request(app, event, context):
         "wsgi.run_once": False,
         "wsgi.url_scheme": headers.get(u"X-Forwarded-Proto", "http"),
         "wsgi.version": (1, 0),
-        "serverless.authorizer": event[u"requestContext"].get(u"authorizer"),
+        "serverless.authorizer": event.get(u"requestContext", {}).get(u"authorizer"),
         "serverless.event": event,
         "serverless.context": context,
         # TODO: Deprecate the following entries, as they do not comply with the WSGI
@@ -158,7 +163,7 @@ def handle_request(app, event, context):
         #   These variables should be named using only lower-case letters, numbers, dots,
         #   and underscores, and should be prefixed with a name that is unique to the
         #   defining server or gateway.
-        "API_GATEWAY_AUTHORIZER": event[u"requestContext"].get(u"authorizer"),
+        "API_GATEWAY_AUTHORIZER": event.get(u"requestContext", {}).get(u"authorizer"),
         "event": event,
         "context": context,
     }
