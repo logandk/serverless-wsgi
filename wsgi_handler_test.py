@@ -953,3 +953,133 @@ def test_handler_with_encoded_characters_in_path_v2(
     event_v2["rawPath"] = "/city/new%20york"
     wsgi_handler.handler(event_v2, {"memory_limit_in_mb": "128"})
     assert wsgi_handler.wsgi_app.last_environ["PATH_INFO"] == "/city/new york"
+
+
+@pytest.fixture
+def event_lambda_integration():
+    return {
+        "body": {},
+        "method": "GET",
+        "principalId": "testuser",
+        "stage": "dev",
+        "cognitoPoolClaims": {
+            "sub": ""
+        },
+        "enhancedAuthContext": {
+            "principalId": "testuser",
+            "integrationLatency": "1031",
+            "contextTest": "123"
+        },
+        "headers": {
+            "Accept": "*/*",
+            "Authorization": "Bearer f14a720d62e1d1295d9",
+            "CloudFront-Forwarded-Proto": "https",
+            "CloudFront-Is-Desktop-Viewer": "true",
+            "CloudFront-Is-Mobile-Viewer": "false",
+            "CloudFront-Is-SmartTV-Viewer": "false",
+            "CloudFront-Is-Tablet-Viewer": "false",
+            "CloudFront-Viewer-Country": "FI",
+            "Host": "k3k8rkx1mf.execute-api.us-east-1.amazonaws.com",
+            "User-Agent": "curl/7.68.0",
+            "Via": "2.0 3bf180720d62e0d1295d99086d103efb.cloudfront.net (CloudFront)",
+            "X-Amz-Cf-Id": "9Z6K736EDx_vlsij1PA-ZVxIPPi-vAIMaLNOvJ2FrbpvGMisAISY8Q==",
+            "X-Amzn-Trace-Id": "Root=1-5055b7d3-751afb497f81bab2759b6e7b",
+            "X-Forwarded-For": "83.23.10.243, 130.166.149.164",
+            "X-Forwarded-Port": "443",
+            "X-Forwarded-Proto": "https"
+        },
+        "query": {
+            "q": "test"
+        },
+        "path": {
+            "p": "path"
+        },
+        "identity": {
+            "cognitoIdentityPoolId": "",
+            "accountId": "",
+            "cognitoIdentityId": "",
+            "caller": "",
+            "sourceIp": "83.23.100.243",
+            "principalOrgId": "",
+            "accessKey": "",
+            "cognitoAuthenticationType": "",
+            "cognitoAuthenticationProvider": "",
+            "userArn": "",
+            "userAgent": "curl/7.68.0",
+            "user": ""
+        },
+        "stageVariables": {},
+        "requestPath": "/some/path"
+    }
+
+
+def test_handler_lambda(mock_wsgi_app_file, mock_app, event_lambda_integration, capsys, wsgi_handler):
+    response = wsgi_handler.handler(event_lambda_integration, {"memory_limit_in_mb": "128"})
+
+    assert response == {
+        "body": u"Hello World ☃!",
+        "headers": {
+            "set-cookie": "CUSTOMER=WILE_E_COYOTE; Path=/",
+            "Content-Length": "16",
+            "Content-Type": "text/plain; charset=utf-8",
+            "sEt-cookie": "LOT_NUMBER=42; Path=/",
+            "Set-cookie": "PART_NUMBER=ROCKET_LAUNCHER_0002; Path=/",
+        },
+        "statusCode": 200,
+        "isBase64Encoded": False,
+    }
+
+    assert wsgi_handler.wsgi_app.last_environ == {
+        "CONTENT_LENGTH": "0",
+        "CONTENT_TYPE": "",
+        "HTTP_ACCEPT": "*/*",
+        "HTTP_AUTHORIZATION": "Bearer f14a720d62e1d1295d9",
+        "HTTP_CLOUDFRONT_FORWARDED_PROTO": "https",
+        "HTTP_CLOUDFRONT_IS_DESKTOP_VIEWER": "true",
+        "HTTP_CLOUDFRONT_IS_MOBILE_VIEWER": "false",
+        "HTTP_CLOUDFRONT_IS_SMARTTV_VIEWER": "false",
+        "HTTP_CLOUDFRONT_IS_TABLET_VIEWER": "false",
+        "HTTP_CLOUDFRONT_VIEWER_COUNTRY": "FI",
+        "HTTP_HOST": "k3k8rkx1mf.execute-api.us-east-1.amazonaws.com",
+        "HTTP_USER_AGENT": "curl/7.68.0",
+        "HTTP_VIA": "2.0 3bf180720d62e0d1295d99086d103efb.cloudfront.net (CloudFront)",
+        "HTTP_X_AMZN_TRACE_ID": "Root=1-5055b7d3-751afb497f81bab2759b6e7b",
+        "HTTP_X_AMZ_CF_ID": "9Z6K736EDx_vlsij1PA-ZVxIPPi-vAIMaLNOvJ2FrbpvGMisAISY8Q==",
+        "HTTP_X_FORWARDED_FOR": "83.23.10.243, 130.166.149.164",
+        "HTTP_X_FORWARDED_PORT": "443",
+        "HTTP_X_FORWARDED_PROTO": "https",
+        "PATH_INFO": "/some/path",
+        "QUERY_STRING": "q=test",
+        "REMOTE_ADDR": "83.23.100.243",
+        "REMOTE_USER": "testuser",
+        "REQUEST_METHOD": "GET",
+        "SCRIPT_NAME": "/dev",
+        "SERVER_NAME": "k3k8rkx1mf.execute-api.us-east-1.amazonaws.com",
+        "SERVER_PORT": "443",
+        "SERVER_PROTOCOL": "HTTP/1.1",
+        "wsgi.errors": wsgi_handler.wsgi_app.last_environ["wsgi.errors"],
+        "wsgi.input": wsgi_handler.wsgi_app.last_environ["wsgi.input"],
+        "wsgi.multiprocess": False,
+        "wsgi.multithread": False,
+        "wsgi.run_once": False,
+        "wsgi.url_scheme": "https",
+        "wsgi.version": (1, 0),
+        "API_GATEWAY_AUTHORIZER": {
+            "principalId": "testuser",
+            "integrationLatency": "1031",
+            "contextTest": "123"
+        },
+        "context": {"memory_limit_in_mb": "128"},
+        "event": event_lambda_integration,
+        "serverless.authorizer": {
+            "principalId": "testuser",
+            "integrationLatency": "1031",
+            "contextTest": "123"
+        },
+        "serverless.context": {"memory_limit_in_mb": "128"},
+        "serverless.event": event_lambda_integration,
+    }
+
+    out, err = capsys.readouterr()
+    assert out == ""
+    assert err == "application debug #1\n"
