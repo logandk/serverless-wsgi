@@ -32,6 +32,7 @@ class MockApp:
     def __init__(self):
         self.cookie_count = 3
         self.response_mimetype = "text/plain"
+        self.status_code = 200
 
     def __call__(self, environ, start_response):
         self.last_environ = environ
@@ -44,6 +45,7 @@ class MockApp:
         for cookie in cookies[: self.cookie_count]:
             response.set_cookie(cookie[0], cookie[1])
         print("application debug #1", file=environ["wsgi.errors"])
+        response.status_code = self.status_code
         return response(environ, start_response)
 
 
@@ -1083,3 +1085,9 @@ def test_handler_lambda(mock_wsgi_app_file, mock_app, event_lambda_integration, 
     out, err = capsys.readouterr()
     assert out == ""
     assert err == "application debug #1\n"
+
+
+def test_handler_lambda_error(mock_wsgi_app_file, mock_app, event_lambda_integration, capsys, wsgi_handler):
+    mock_app.status_code = 400
+    with pytest.raises(Exception, match='"statusCode": 400'):
+        wsgi_handler.handler(event_lambda_integration, {"memory_limit_in_mb": "128"})
