@@ -311,6 +311,10 @@ def handle_lambda_integration(app, event, context):
 
     path_info = event[u"requestPath"]
 
+    for key, value in event.get(u"path", {}).items():
+        path_info = path_info.replace("{%s}" % key, value)
+        path_info = path_info.replace("{%s+}" % key, value)
+
     body = event.get("body", {})
     body = json.dumps(body) if body else ""
     body = get_body_bytes(event, body)

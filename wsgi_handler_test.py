@@ -994,7 +994,7 @@ def event_lambda_integration():
             "q": "test"
         },
         "path": {
-            "p": "path"
+            "p": "path2"
         },
         "identity": {
             "cognitoIdentityPoolId": "",
@@ -1011,7 +1011,7 @@ def event_lambda_integration():
             "user": ""
         },
         "stageVariables": {},
-        "requestPath": "/some/path"
+        "requestPath": "/some/{p}"
     }
 
 
@@ -1050,7 +1050,7 @@ def test_handler_lambda(mock_wsgi_app_file, mock_app, event_lambda_integration, 
         "HTTP_X_FORWARDED_FOR": "83.23.10.243, 130.166.149.164",
         "HTTP_X_FORWARDED_PORT": "443",
         "HTTP_X_FORWARDED_PROTO": "https",
-        "PATH_INFO": "/some/path",
+        "PATH_INFO": "/some/path2",
         "QUERY_STRING": "q=test",
         "REMOTE_ADDR": "83.23.100.243",
         "REMOTE_USER": "testuser",
