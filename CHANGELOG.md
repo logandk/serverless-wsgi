@@ -1,3 +1,17 @@
+# 1.7.7
+
+## Features
+
+- Add handler for lambda integration (#167)
+
+  _Jan Varho_
+
+## Bugs
+
+- Fix serverless deprecation warnings (#174)
+
+  _Jan Varho_
+
 # 1.7.6
 
 ## Features
