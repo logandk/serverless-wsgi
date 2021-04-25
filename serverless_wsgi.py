@@ -8,6 +8,7 @@ Inspired by: https://github.com/miserlou/zappa
 Author: Logan Raarup <logan@logan.dk>
 """
 import base64
+import json
 import os
 import sys
 from werkzeug.datastructures import Headers, iter_multi_items, MultiDict
@@ -83,6 +84,8 @@ def encode_query_string(event):
     params = event.get(u"multiValueQueryStringParameters")
     if not params:
         params = event.get(u"queryStringParameters")
+    if not params:
+        params = event.get(u"query")
     if not params:
         params = ""
     if is_alb_event(event):
@@ -162,6 +165,9 @@ def handle_request(app, event, context):
     if event.get("source") in ["aws.events", "serverless-plugin-warmup"]:
         print("Lambda warming event received, skipping handler")
         return {}
+
+    if event.get("version") is None and event.get("isBase64Encoded") is None:
+        return handle_lambda_integration(app, event, context)
 
     if event.get("version") == "2.0":
         return handle_payload_v2(app, event, context)
@@ -294,5 +300,66 @@ def handle_payload_v2(app, event, context):
     response = Response.from_app(app, environ)
 
     returndict = generate_response(response, event)
+
+    return returndict
+
+
+def handle_lambda_integration(app, event, context):
+    headers = Headers(event[u"headers"])
+
+    script_name = get_script_name(headers, event)
+
+    path_info = event[u"requestPath"]
+
+    for key, value in event.get(u"path", {}).items():
+        path_info = path_info.replace("{%s}" % key, value)
+        path_info = path_info.replace("{%s+}" % key, value)
+
+    body = event.get("body", {})
+    body = json.dumps(body) if body else ""
+    body = get_body_bytes(event, body)
+
+    environ = {
+        "CONTENT_LENGTH": str(len(body)),
+        "CONTENT_TYPE": headers.get(u"Content-Type", ""),
+        "PATH_INFO": url_unquote(path_info),
+        "QUERY_STRING": url_encode(event.get(u"query", {})),
+        "REMOTE_ADDR": event.get("identity", {}).get(u"sourceIp", ""),
+        "REMOTE_USER": event.get("principalId", ""),
+        "REQUEST_METHOD": event.get("method", ""),
+        "SCRIPT_NAME": script_name,
+        "SERVER_NAME": headers.get(u"Host", "lambda"),
+        "SERVER_PORT": headers.get(u"X-Forwarded-Port", "80"),
+        "SERVER_PROTOCOL": "HTTP/1.1",
+        "wsgi.errors": sys.stderr,
+        "wsgi.input": BytesIO(body),
+        "wsgi.multiprocess": False,
+        "wsgi.multithread": False,
+        "wsgi.run_once": False,
+        "wsgi.url_scheme": headers.get(u"X-Forwarded-Proto", "http"),
+        "wsgi.version": (1, 0),
+        "serverless.authorizer": event.get("enhancedAuthContext"),
+        "serverless.event": event,
+        "serverless.context": context,
+        # TODO: Deprecate the following entries, as they do not comply with the WSGI
+        # spec. For custom variables, the spec says:
+        #
+        #   Finally, the environ dictionary may also contain server-defined variables.
+        #   These variables should be named using only lower-case letters, numbers, dots,
+        #   and underscores, and should be prefixed with a name that is unique to the
+        #   defining server or gateway.
+        "API_GATEWAY_AUTHORIZER": event.get("enhancedAuthContext"),
+        "event": event,
+        "context": context,
+    }
+
+    environ = setup_environ_items(environ, headers)
+
+    response = Response.from_app(app, environ)
+
+    returndict = generate_response(response, event)
+
+    if response.status_code >= 300:
+        raise RuntimeError(json.dumps(returndict))
 
     return returndict
