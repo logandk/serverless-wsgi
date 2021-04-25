@@ -559,19 +559,24 @@ class ServerlessWSGI {
             lifecycleEvents: ["serve"],
             options: {
               port: {
+                type: "string",
                 usage: "Local server port, defaults to 5000",
                 shortcut: "p"
               },
               host: {
+                type: "string",
                 usage: "Server host, defaults to 'localhost'"
               },
               "disable-threading": {
+                type: 'boolean',
                 usage: "Disables multi-threaded mode"
               },
               "num-processes": {
+                type: "string",
                 usage: "Number of processes for server, defaults to 1"
               },
               ssl: {
+                type: "boolean",
                 usage: "Enable local serving using HTTPS"
               }
             }
@@ -589,10 +594,12 @@ class ServerlessWSGI {
             lifecycleEvents: ["command"],
             options: {
               command: {
+                type: "string",
                 usage: "Command to execute",
                 shortcut: "c"
               },
               file: {
+                type: "string",
                 usage: "Path to a shell script to execute",
                 shortcut: "f"
               }
@@ -603,10 +610,12 @@ class ServerlessWSGI {
                 lifecycleEvents: ["command"],
                 options: {
                   command: {
+                    type: "string",
                     usage: "Command to execute",
                     shortcut: "c"
                   },
                   file: {
+                    type: "string",
                     usage: "Path to a shell script to execute",
                     shortcut: "f"
                   }
@@ -619,10 +628,12 @@ class ServerlessWSGI {
             lifecycleEvents: ["exec"],
             options: {
               command: {
+                type: "string",
                 usage: "Python code to execute",
                 shortcut: "c"
               },
               file: {
+                type: "string",
                 usage: "Path to a Python script to execute",
                 shortcut: "f"
               }
@@ -633,10 +644,12 @@ class ServerlessWSGI {
                 lifecycleEvents: ["exec"],
                 options: {
                   command: {
+                    type: "string",
                     usage: "Python code to execute",
                     shortcut: "c"
                   },
                   file: {
+                    type: "string",
                     usage: "Path to a Python script to execute",
                     shortcut: "f"
                   }
@@ -649,6 +662,7 @@ class ServerlessWSGI {
             lifecycleEvents: ["manage"],
             options: {
               command: {
+                type: "string",
                 usage: "Management command",
                 shortcut: "c",
                 required: true
@@ -660,6 +674,7 @@ class ServerlessWSGI {
                 lifecycleEvents: ["manage"],
                 options: {
                   command: {
+                    type: "string",
                     usage: "Management command",
                     shortcut: "c",
                     required: true
@@ -673,6 +688,7 @@ class ServerlessWSGI {
             lifecycleEvents: ["flask"],
             options: {
               command: {
+                type: "string",
                 usage: "Flask CLI command",
                 shortcut: "c",
                 required: true
@@ -684,6 +700,7 @@ class ServerlessWSGI {
                 lifecycleEvents: ["flask"],
                 options: {
                   command: {
+                    type: "string",
                     usage: "Flask CLI command",
                     shortcut: "c",
                     required: true
