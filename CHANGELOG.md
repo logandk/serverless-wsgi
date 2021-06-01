@@ -1,3 +1,11 @@
+# 1.7.8
+
+## Bugs
+
+- Pin Werkzeug version (#178)
+
+  _Adam Chelminski_
+
 # 1.7.7
 
 ## Features
