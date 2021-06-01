@@ -13,7 +13,7 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/logandk/serverless-wsgi",
     py_modules=["serverless_wsgi"],
-    install_requires=["werkzeug"],
+    install_requires=["werkzeug==1.0.1"],
     classifiers=(
         "Development Status :: 5 - Production/Stable",
         "Programming Language :: Python :: 2",
