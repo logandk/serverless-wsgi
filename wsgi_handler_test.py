@@ -856,7 +856,7 @@ def event_v2():
             "X-Forwarded-Proto": "https",
             "cache-control": "no-cache",
         },
-        "queryStringParameters": {"param1": "value1", "param2": "value2, value3"},
+        "queryStringParameters": {"param1": "value1", "param2": "value2,value3"},
         "requestContext": {
             "accountId": "16794",
             "apiId": "3z6kd9fbb1",
@@ -921,7 +921,7 @@ def test_handler_v2(mock_wsgi_app_file, mock_app, event_v2, capsys, wsgi_handler
         "HTTP_X_FORWARDED_PORT": "443",
         "HTTP_X_FORWARDED_PROTO": "https",
         "PATH_INFO": "/some/path",
-        "QUERY_STRING": url_encode(event_v2["queryStringParameters"]),
+        "QUERY_STRING": "param1=value1&param2=value2&param2=value3",
         "REMOTE_ADDR": "76.20.166.147",
         "REMOTE_USER": "wile_e_coyote",
         "REQUEST_METHOD": "GET",
