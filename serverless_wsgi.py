@@ -259,7 +259,7 @@ def handle_payload_v2(app, event, context):
         "CONTENT_LENGTH": str(len(body)),
         "CONTENT_TYPE": headers.get(u"Content-Type", ""),
         "PATH_INFO": url_unquote(path_info),
-        "QUERY_STRING": url_encode(event.get(u"queryStringParameters", {})),
+        "QUERY_STRING": event.get("rawQueryString", ""),
         "REMOTE_ADDR": event.get("requestContext", {})
         .get(u"http", {})
         .get(u"sourceIp", ""),
