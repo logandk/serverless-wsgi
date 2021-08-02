@@ -166,7 +166,7 @@ def handle_request(app, event, context):
         print("Lambda warming event received, skipping handler")
         return {}
 
-    if event.get("version") is None and event.get("isBase64Encoded") is None:
+    if event.get("version") is None and not event.get("isBase64Encoded"):
         return handle_lambda_integration(app, event, context)
 
     if event.get("version") == "2.0":
