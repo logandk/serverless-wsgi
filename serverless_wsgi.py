@@ -8,6 +8,7 @@ Inspired by: https://github.com/miserlou/zappa
 Author: Logan Raarup <logan@logan.dk>
 """
 import base64
+import io
 import json
 import os
 import sys
@@ -15,7 +16,7 @@ from werkzeug.datastructures import Headers, iter_multi_items, MultiDict
 from werkzeug.wrappers import Response
 from werkzeug.urls import url_encode, url_unquote, url_unquote_plus
 from werkzeug.http import HTTP_STATUS_CODES
-from werkzeug._compat import BytesIO, string_types, to_bytes, wsgi_encoding_dance
+
 
 # List of MIME types that should not be base64 encoded. MIME types within `text/*`
 # are included by default.
@@ -26,6 +27,7 @@ TEXT_MIME_TYPES = [
     "application/vnd.api+json",
     "image/svg+xml",
 ]
+_STRING_TYPES = (str,)
 
 
 def all_casings(input_string):
@@ -115,15 +117,15 @@ def get_script_name(headers, request_context):
 def get_body_bytes(event, body):
     if event.get("isBase64Encoded", False):
         body = base64.b64decode(body)
-    if isinstance(body, string_types):
-        body = to_bytes(body, charset="utf-8")
+    if isinstance(body, _STRING_TYPES):
+        body = body.encode('utf-8')
     return body
 
 
 def setup_environ_items(environ, headers):
     for key, value in environ.items():
-        if isinstance(value, string_types):
-            environ[key] = wsgi_encoding_dance(value)
+        if isinstance(value, _STRING_TYPES):
+            environ[key] = value.encode('utf-8').decode('latin1', 'replace')
 
     for key, value in headers.items():
         key = "HTTP_" + key.upper().replace("-", "_")
@@ -214,7 +216,7 @@ def handle_payload_v1(app, event, context):
         "SERVER_PORT": headers.get(u"X-Forwarded-Port", "80"),
         "SERVER_PROTOCOL": "HTTP/1.1",
         "wsgi.errors": sys.stderr,
-        "wsgi.input": BytesIO(body),
+        "wsgi.input": io.BytesIO(body),
         "wsgi.multiprocess": False,
         "wsgi.multithread": False,
         "wsgi.run_once": False,
@@ -274,7 +276,7 @@ def handle_payload_v2(app, event, context):
         "SERVER_PORT": headers.get(u"X-Forwarded-Port", "80"),
         "SERVER_PROTOCOL": "HTTP/1.1",
         "wsgi.errors": sys.stderr,
-        "wsgi.input": BytesIO(body),
+        "wsgi.input": io.BytesIO(body),
         "wsgi.multiprocess": False,
         "wsgi.multithread": False,
         "wsgi.run_once": False,
@@ -332,7 +334,7 @@ def handle_lambda_integration(app, event, context):
         "SERVER_PORT": headers.get(u"X-Forwarded-Port", "80"),
         "SERVER_PROTOCOL": "HTTP/1.1",
         "wsgi.errors": sys.stderr,
-        "wsgi.input": BytesIO(body),
+        "wsgi.input": io.BytesIO(body),
         "wsgi.multiprocess": False,
         "wsgi.multithread": False,
         "wsgi.run_once": False,
