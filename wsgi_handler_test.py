@@ -1,22 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from __future__ import print_function
-
-try:
-    import __builtin__ as builtins
-except ImportError:  # pragma: no cover
-    import builtins
-
+import builtins
 import importlib
 import json
 import os
-import sys
 import pytest
+import sys
 from werkzeug.datastructures import MultiDict
 from werkzeug.wrappers import Request, Response
 from werkzeug.urls import url_encode
-
-PY2 = sys.version_info[0] == 2
 
 # Reference to open() before monkeypatching
 original_open = open
@@ -36,7 +28,7 @@ class MockApp:
 
     def __call__(self, environ, start_response):
         self.last_environ = environ
-        response = Response(u"Hello World ☃!", mimetype=self.response_mimetype)
+        response = Response("Hello World ☃!", mimetype=self.response_mimetype)
         cookies = [
             ("CUSTOMER", "WILE_E_COYOTE"),
             ("PART_NUMBER", "ROCKET_LAUNCHER_0002"),
@@ -143,6 +135,7 @@ def mock_text_mime_wsgi_app_file(monkeypatch):
 @pytest.fixture
 def event_v1():
     return {
+        "version": "1.0",
         "body": None,
         "headers": {
             "Accept": "*/*",
@@ -242,7 +235,7 @@ def test_handler(mock_wsgi_app_file, mock_app, event_v1, capsys, wsgi_handler):
     response = wsgi_handler.handler(event_v1, {"memory_limit_in_mb": "128"})
 
     assert response == {
-        "body": u"Hello World ☃!",
+        "body": "Hello World ☃!",
         "headers": {
             "set-cookie": "CUSTOMER=WILE_E_COYOTE; Path=/",
             "Content-Length": "16",
@@ -292,9 +285,6 @@ def test_handler(mock_wsgi_app_file, mock_app, event_v1, capsys, wsgi_handler):
         "wsgi.run_once": False,
         "wsgi.url_scheme": "https",
         "wsgi.version": (1, 0),
-        "API_GATEWAY_AUTHORIZER": {"principalId": "wile_e_coyote"},
-        "context": {"memory_limit_in_mb": "128"},
-        "event": event_v1,
         "serverless.authorizer": {"principalId": "wile_e_coyote"},
         "serverless.context": {"memory_limit_in_mb": "128"},
         "serverless.event": event_v1,
@@ -305,7 +295,9 @@ def test_handler(mock_wsgi_app_file, mock_app, event_v1, capsys, wsgi_handler):
     assert err == "application debug #1\n"
 
 
-def test_handler_multivalue(mock_wsgi_app_file, mock_app, event_v1, capsys, wsgi_handler):
+def test_handler_multivalue(
+    mock_wsgi_app_file, mock_app, event_v1, capsys, wsgi_handler
+):
     event_v1["multiValueQueryStringParameters"] = {
         "param1": ["value1"],
         "param2": ["value2", "value3"],
@@ -331,7 +323,7 @@ def test_handler_multivalue(mock_wsgi_app_file, mock_app, event_v1, capsys, wsgi
     )
 
     assert response == {
-        "body": u"Hello World ☃!",
+        "body": "Hello World ☃!",
         "multiValueHeaders": {
             "Content-Length": ["16"],
             "Content-Type": ["text/plain; charset=utf-8"],
@@ -358,7 +350,7 @@ def test_handler_single_cookie(mock_wsgi_app_file, mock_app, event_v1, wsgi_hand
     response = wsgi_handler.handler(event_v1, {})
 
     assert response == {
-        "body": u"Hello World ☃!",
+        "body": "Hello World ☃!",
         "headers": {
             "Set-Cookie": "CUSTOMER=WILE_E_COYOTE; Path=/",
             "Content-Length": "16",
@@ -374,7 +366,7 @@ def test_handler_no_cookie(mock_wsgi_app_file, mock_app, event_v1, wsgi_handler)
     response = wsgi_handler.handler(event_v1, {})
 
     assert response == {
-        "body": u"Hello World ☃!",
+        "body": "Hello World ☃!",
         "headers": {
             "Content-Length": "16",
             "Content-Type": "text/plain; charset=utf-8",
@@ -444,9 +436,6 @@ def test_handler_custom_domain(mock_wsgi_app_file, mock_app, event_v1, wsgi_hand
         "wsgi.run_once": False,
         "wsgi.url_scheme": "https",
         "wsgi.version": (1, 0),
-        "API_GATEWAY_AUTHORIZER": {"principalId": "wile_e_coyote"},
-        "context": {},
-        "event": event_v1,
         "serverless.authorizer": {"principalId": "wile_e_coyote"},
         "serverless.context": {},
         "serverless.event": event_v1,
@@ -502,9 +491,6 @@ def test_handler_api_gateway_base_path(
         "wsgi.run_once": False,
         "wsgi.url_scheme": "https",
         "wsgi.version": (1, 0),
-        "API_GATEWAY_AUTHORIZER": {"principalId": "wile_e_coyote"},
-        "context": {},
-        "event": event_v1,
         "serverless.authorizer": {"principalId": "wile_e_coyote"},
         "serverless.context": {},
         "serverless.event": event_v1,
@@ -527,7 +513,7 @@ def test_handler_base64(mock_wsgi_app_file, mock_app, event_v1, wsgi_handler):
     response = wsgi_handler.handler(event_v1, {})
 
     assert response == {
-        "body": u"SGVsbG8gV29ybGQg4piDIQ==",
+        "body": "SGVsbG8gV29ybGQg4piDIQ==",
         "headers": {
             "Set-Cookie": "CUSTOMER=WILE_E_COYOTE; Path=/",
             "Content-Length": "16",
@@ -552,7 +538,7 @@ def test_handler_plain(mock_wsgi_app_file, mock_app, event_v1, wsgi_handler):
         response = wsgi_handler.handler(event_v1, {})
 
         assert response == {
-            "body": u"Hello World ☃!",
+            "body": "Hello World ☃!",
             "headers": {
                 "Set-Cookie": "CUSTOMER=WILE_E_COYOTE; Path=/",
                 "Content-Length": "16",
@@ -583,19 +569,21 @@ def test_non_package_subdir_app(mock_subdir_wsgi_app_file, mock_app, wsgi_handle
     assert wsgi_handler.wsgi_app.module == "app"
 
 
-def test_handler_binary_request_body(mock_wsgi_app_file, mock_app, event_v1, wsgi_handler):
+def test_handler_binary_request_body(
+    mock_wsgi_app_file, mock_app, event_v1, wsgi_handler
+):
     event_v1["body"] = (
-        u"LS0tLS0tV2ViS2l0Rm9ybUJvdW5kYXJ5VTRDZE5CRWVLQWxIaGRRcQ0KQ29udGVu"
-        u"dC1EaXNwb3NpdGlvbjogZm9ybS1kYXRhOyBuYW1lPSJ3YXQiDQoNCmhleW9vb3Bw"
-        u"cHBwDQotLS0tLS1XZWJLaXRGb3JtQm91bmRhcnlVNENkTkJFZUtBbEhoZFFxDQpD"
-        u"b250ZW50LURpc3Bvc2l0aW9uOiBmb3JtLWRhdGE7IG5hbWU9ImZpbGVUb1VwbG9h"
-        u"ZCI7IGZpbGVuYW1lPSJGRjREMDAtMC44LnBuZyINCkNvbnRlbnQtVHlwZTogaW1h"
-        u"Z2UvcG5nDQoNColQTkcNChoKAAAADUlIRFIAAAABAAAAAQEDAAAAJdtWygAAAANQ"
-        u"TFRF/00AXDU4fwAAAAF0Uk5TzNI0Vv0AAAAKSURBVHicY2IAAAAGAAM2N3yoAAAA"
-        u"AElFTkSuQmCCDQotLS0tLS1XZWJLaXRGb3JtQm91bmRhcnlVNENkTkJFZUtBbEho"
-        u"ZFFxDQpDb250ZW50LURpc3Bvc2l0aW9uOiBmb3JtLWRhdGE7IG5hbWU9InN1Ym1p"
-        u"dCINCg0KVXBsb2FkIEltYWdlDQotLS0tLS1XZWJLaXRGb3JtQm91bmRhcnlVNENk"
-        u"TkJFZUtBbEhoZFFxLS0NCg=="
+        "LS0tLS0tV2ViS2l0Rm9ybUJvdW5kYXJ5VTRDZE5CRWVLQWxIaGRRcQ0KQ29udGVu"
+        "dC1EaXNwb3NpdGlvbjogZm9ybS1kYXRhOyBuYW1lPSJ3YXQiDQoNCmhleW9vb3Bw"
+        "cHBwDQotLS0tLS1XZWJLaXRGb3JtQm91bmRhcnlVNENkTkJFZUtBbEhoZFFxDQpD"
+        "b250ZW50LURpc3Bvc2l0aW9uOiBmb3JtLWRhdGE7IG5hbWU9ImZpbGVUb1VwbG9h"
+        "ZCI7IGZpbGVuYW1lPSJGRjREMDAtMC44LnBuZyINCkNvbnRlbnQtVHlwZTogaW1h"
+        "Z2UvcG5nDQoNColQTkcNChoKAAAADUlIRFIAAAABAAAAAQEDAAAAJdtWygAAAANQ"
+        "TFRF/00AXDU4fwAAAAF0Uk5TzNI0Vv0AAAAKSURBVHicY2IAAAAGAAM2N3yoAAAA"
+        "AElFTkSuQmCCDQotLS0tLS1XZWJLaXRGb3JtQm91bmRhcnlVNENkTkJFZUtBbEho"
+        "ZFFxDQpDb250ZW50LURpc3Bvc2l0aW9uOiBmb3JtLWRhdGE7IG5hbWU9InN1Ym1p"
+        "dCINCg0KVXBsb2FkIEltYWdlDQotLS0tLS1XZWJLaXRGb3JtQm91bmRhcnlVNENk"
+        "TkJFZUtBbEhoZFFxLS0NCg=="
     )
     event_v1["headers"][
         "Content-Type"
@@ -608,17 +596,17 @@ def test_handler_binary_request_body(mock_wsgi_app_file, mock_app, event_v1, wsg
     environ = wsgi_handler.wsgi_app.last_environ
 
     assert environ["CONTENT_LENGTH"] == "496"
-    assert Request(environ).form["submit"] == u"Upload Image"
+    assert Request(environ).form["submit"] == "Upload Image"
 
 
 def test_handler_request_body_undecodable_with_latin1(
     mock_wsgi_app_file, mock_app, event_v1, wsgi_handler
 ):
     event_v1["body"] = (
-        u"------WebKitFormBoundary3vA72kRLuq9D3NdL\r\n"
+        "------WebKitFormBoundary3vA72kRLuq9D3NdL\r\n"
         u'Content-Disposition: form-data; name="text"\r\n\r\n'
-        u"テスト 테스트 测试\r\n"
-        u"------WebKitFormBoundary3vA72kRLuq9D3NdL--"
+        "テスト 테스트 测试\r\n"
+        "------WebKitFormBoundary3vA72kRLuq9D3NdL--"
     )
     event_v1["headers"][
         "Content-Type"
@@ -628,7 +616,7 @@ def test_handler_request_body_undecodable_with_latin1(
     wsgi_handler.handler(event_v1, {})
 
     environ = wsgi_handler.wsgi_app.last_environ
-    assert Request(environ).form["text"] == u"テスト 테스트 测试"
+    assert Request(environ).form["text"] == "テスト 테스트 测试"
 
 
 def test_handler_custom_text_mime_types(
@@ -639,7 +627,7 @@ def test_handler_custom_text_mime_types(
     response = wsgi_handler.handler(event_v1, {})
 
     assert response == {
-        "body": u"Hello World ☃!",
+        "body": "Hello World ☃!",
         "headers": {
             "Set-Cookie": "CUSTOMER=WILE_E_COYOTE; Path=/",
             "Content-Length": "16",
@@ -654,7 +642,7 @@ def test_handler_alb(mock_wsgi_app_file, mock_app, wsgi_handler, elb_event):
     response = wsgi_handler.handler(elb_event, {})
 
     assert response == {
-        "body": u"Hello World ☃!",
+        "body": "Hello World ☃!",
         "headers": {
             "set-cookie": "CUSTOMER=WILE_E_COYOTE; Path=/",
             "Content-Length": "16",
@@ -669,15 +657,13 @@ def test_handler_alb(mock_wsgi_app_file, mock_app, wsgi_handler, elb_event):
 
 
 def test_alb_query_params(mock_wsgi_app_file, mock_app, wsgi_handler, elb_event):
-    elb_event["queryStringParameters"] = {
-        "test": "test%20test"
-    }
+    elb_event["queryStringParameters"] = {"test": "test%20test"}
     response = wsgi_handler.handler(elb_event, {})
     query_string = wsgi_handler.wsgi_app.last_environ["QUERY_STRING"]
     assert query_string == "test=test+test"
 
     assert response == {
-        "body": u"Hello World ☃!",
+        "body": "Hello World ☃!",
         "headers": {
             "set-cookie": "CUSTOMER=WILE_E_COYOTE; Path=/",
             "Content-Length": "16",
@@ -692,20 +678,17 @@ def test_alb_query_params(mock_wsgi_app_file, mock_app, wsgi_handler, elb_event)
 
 
 def test_alb_multi_query_params(mock_wsgi_app_file, mock_app, wsgi_handler, elb_event):
-    del(elb_event["queryStringParameters"])
+    del elb_event["queryStringParameters"]
     elb_event["multiValueQueryStringParameters"] = {
         "%E6%B8%AC%E8%A9%A6": ["%E3%83%86%E3%82%B9%E3%83%88", "test"],
-        "test": "test%20test"
+        "test": "test%20test",
     }
     response = wsgi_handler.handler(elb_event, {})
     query_string = wsgi_handler.wsgi_app.last_environ["QUERY_STRING"]
-    assert query_string == url_encode({
-        "測試": ["テスト", "test"],
-        "test": "test test"
-    })
+    assert query_string == url_encode({"測試": ["テスト", "test"], "test": "test test"})
 
     assert response == {
-        "body": u"Hello World ☃!",
+        "body": "Hello World ☃!",
         "headers": {
             "set-cookie": "CUSTOMER=WILE_E_COYOTE; Path=/",
             "Content-Length": "16",
@@ -868,13 +851,13 @@ def event_v2():
                 "path": "/some/path",
                 "protocol": "HTTP/1.1",
                 "sourceIp": "76.20.166.147",
-                "userAgent": "agent"
+                "userAgent": "agent",
             },
             "requestId": "ad2db740-10a2-11e7-8ced-35048084babb",
             "stage": "dev",
             "routeKey": "$default",
             "time": "12/Mar/2020:19:03:58 +0000",
-            "timeEpoch": 1583348638390
+            "timeEpoch": 1583348638390,
         },
         "pathParameters": {"proxy": "some/path"},
         "isBase64Encoded": False,
@@ -886,7 +869,7 @@ def test_handler_v2(mock_wsgi_app_file, mock_app, event_v2, capsys, wsgi_handler
     response = wsgi_handler.handler(event_v2, {"memory_limit_in_mb": "128"})
 
     assert response == {
-        "body": u"Hello World ☃!",
+        "body": "Hello World ☃!",
         "headers": {
             "set-cookie": "CUSTOMER=WILE_E_COYOTE; Path=/",
             "Content-Length": "16",
@@ -936,9 +919,6 @@ def test_handler_v2(mock_wsgi_app_file, mock_app, event_v2, capsys, wsgi_handler
         "wsgi.run_once": False,
         "wsgi.url_scheme": "https",
         "wsgi.version": (1, 0),
-        "API_GATEWAY_AUTHORIZER": {"principalId": "wile_e_coyote"},
-        "context": {"memory_limit_in_mb": "128"},
-        "event": event_v2,
         "serverless.authorizer": {"principalId": "wile_e_coyote"},
         "serverless.context": {"memory_limit_in_mb": "128"},
         "serverless.event": event_v2,
@@ -950,7 +930,7 @@ def test_handler_v2(mock_wsgi_app_file, mock_app, event_v2, capsys, wsgi_handler
 
 
 def test_handler_with_encoded_characters_in_path_v2(
-        mock_wsgi_app_file, mock_app, event_v2, capsys, wsgi_handler
+    mock_wsgi_app_file, mock_app, event_v2, capsys, wsgi_handler
 ):
     event_v2["rawPath"] = "/city/new%20york"
     wsgi_handler.handler(event_v2, {"memory_limit_in_mb": "128"})
@@ -964,13 +944,11 @@ def event_lambda_integration():
         "method": "GET",
         "principalId": "testuser",
         "stage": "dev",
-        "cognitoPoolClaims": {
-            "sub": ""
-        },
+        "cognitoPoolClaims": {"sub": ""},
         "enhancedAuthContext": {
             "principalId": "testuser",
             "integrationLatency": "1031",
-            "contextTest": "123"
+            "contextTest": "123",
         },
         "headers": {
             "Accept": "*/*",
@@ -988,14 +966,10 @@ def event_lambda_integration():
             "X-Amzn-Trace-Id": "Root=1-5055b7d3-751afb497f81bab2759b6e7b",
             "X-Forwarded-For": "83.23.10.243, 130.166.149.164",
             "X-Forwarded-Port": "443",
-            "X-Forwarded-Proto": "https"
+            "X-Forwarded-Proto": "https",
         },
-        "query": {
-            "q": "test"
-        },
-        "path": {
-            "p": "path2"
-        },
+        "query": {"q": "test"},
+        "path": {"p": "path2"},
         "identity": {
             "cognitoIdentityPoolId": "",
             "accountId": "",
@@ -1008,18 +982,22 @@ def event_lambda_integration():
             "cognitoAuthenticationProvider": "",
             "userArn": "",
             "userAgent": "curl/7.68.0",
-            "user": ""
+            "user": "",
         },
         "stageVariables": {},
-        "requestPath": "/some/{p}"
+        "requestPath": "/some/{p}",
     }
 
 
-def test_handler_lambda(mock_wsgi_app_file, mock_app, event_lambda_integration, capsys, wsgi_handler):
-    response = wsgi_handler.handler(event_lambda_integration, {"memory_limit_in_mb": "128"})
+def test_handler_lambda(
+    mock_wsgi_app_file, mock_app, event_lambda_integration, capsys, wsgi_handler
+):
+    response = wsgi_handler.handler(
+        event_lambda_integration, {"memory_limit_in_mb": "128"}
+    )
 
     assert response == {
-        "body": u"Hello World ☃!",
+        "body": "Hello World ☃!",
         "headers": {
             "set-cookie": "CUSTOMER=WILE_E_COYOTE; Path=/",
             "Content-Length": "16",
@@ -1066,17 +1044,10 @@ def test_handler_lambda(mock_wsgi_app_file, mock_app, event_lambda_integration, 
         "wsgi.run_once": False,
         "wsgi.url_scheme": "https",
         "wsgi.version": (1, 0),
-        "API_GATEWAY_AUTHORIZER": {
-            "principalId": "testuser",
-            "integrationLatency": "1031",
-            "contextTest": "123"
-        },
-        "context": {"memory_limit_in_mb": "128"},
-        "event": event_lambda_integration,
         "serverless.authorizer": {
             "principalId": "testuser",
             "integrationLatency": "1031",
-            "contextTest": "123"
+            "contextTest": "123",
         },
         "serverless.context": {"memory_limit_in_mb": "128"},
         "serverless.event": event_lambda_integration,
@@ -1087,7 +1058,9 @@ def test_handler_lambda(mock_wsgi_app_file, mock_app, event_lambda_integration, 
     assert err == "application debug #1\n"
 
 
-def test_handler_lambda_error(mock_wsgi_app_file, mock_app, event_lambda_integration, capsys, wsgi_handler):
+def test_handler_lambda_error(
+    mock_wsgi_app_file, mock_app, event_lambda_integration, capsys, wsgi_handler
+):
     mock_app.status_code = 400
     with pytest.raises(Exception, match='"statusCode": 400'):
         wsgi_handler.handler(event_lambda_integration, {"memory_limit_in_mb": "128"})
