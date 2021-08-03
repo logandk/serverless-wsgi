@@ -27,7 +27,6 @@ TEXT_MIME_TYPES = [
     "application/vnd.api+json",
     "image/svg+xml",
 ]
-_STRING_TYPES = (str,)
 
 
 def all_casings(input_string):
@@ -117,14 +116,14 @@ def get_script_name(headers, request_context):
 def get_body_bytes(event, body):
     if event.get("isBase64Encoded", False):
         body = base64.b64decode(body)
-    if isinstance(body, _STRING_TYPES):
+    if isinstance(body, str):
         body = body.encode("utf-8")
     return body
 
 
 def setup_environ_items(environ, headers):
     for key, value in environ.items():
-        if isinstance(value, _STRING_TYPES):
+        if isinstance(value, str):
             environ[key] = value.encode("utf-8").decode("latin1", "replace")
 
     for key, value in headers.items():

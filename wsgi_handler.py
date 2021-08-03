@@ -7,6 +7,7 @@ the request when the handler is called by AWS Lambda.
 Author: Logan Raarup <logan@logan.dk>
 """
 import importlib
+import io
 import json
 import os
 import sys
@@ -58,11 +59,10 @@ def handler(event, context):
     if "_serverless-wsgi" in event:
         import shlex
         import subprocess
-        from werkzeug._compat import StringIO, to_native
 
         native_stdout = sys.stdout
         native_stderr = sys.stderr
-        output_buffer = StringIO()
+        output_buffer = io.StringIO()
 
         try:
             sys.stdout = output_buffer
@@ -77,7 +77,7 @@ def handler(event, context):
                 result = subprocess.check_output(
                     meta.get("data", ""), shell=True, stderr=subprocess.STDOUT
                 )
-                output_buffer.write(to_native(result))
+                output_buffer.write(result.decode())
             elif meta.get("command") == "manage":
                 # Run Django management commands
                 from django.core import management
