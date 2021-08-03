@@ -9,10 +9,10 @@ const hasbin = require("hasbin");
 
 class ServerlessWSGI {
   validate() {
-    return new BbPromise(resolve => {
+    return new BbPromise((resolve) => {
       let handlersFixed = false;
 
-      _.each(this.serverless.service.functions, func => {
+      _.each(this.serverless.service.functions, (func) => {
         if (func.handler == "wsgi.handler") {
           func.handler = "wsgi_handler.handler";
           handlersFixed = true;
@@ -67,7 +67,7 @@ class ServerlessWSGI {
       ) {
         let handler = _.find(
           this.serverless.service.functions,
-          fun => fun.handler == "wsgi_handler.handler"
+          (fun) => fun.handler == "wsgi_handler.handler"
         );
 
         // serverless-python-requirements supports packaging individual functions
@@ -84,7 +84,7 @@ class ServerlessWSGI {
   }
 
   configurePackaging() {
-    return new BbPromise(resolve => {
+    return new BbPromise((resolve) => {
       this.serverless.service.package = this.serverless.service.package || {};
       this.serverless.service.package.include =
         this.serverless.service.package.include || [];
@@ -95,7 +95,7 @@ class ServerlessWSGI {
         this.serverless.service.package.include,
         _.map(
           ["wsgi_handler.py", "serverless_wsgi.py", ".serverless-wsgi"],
-          artifact =>
+          (artifact) =>
             path.join(
               path.relative(
                 this.serverless.config.servicePath,
@@ -120,16 +120,14 @@ class ServerlessWSGI {
   }
 
   locatePython() {
-    return new BbPromise(resolve => {
+    return new BbPromise((resolve) => {
       if (
         this.serverless.service.custom &&
         this.serverless.service.custom.wsgi &&
         this.serverless.service.custom.wsgi.pythonBin
       ) {
         this.serverless.cli.log(
-          `Using Python specified in "pythonBin": ${
-            this.serverless.service.custom.wsgi.pythonBin
-          }`
+          `Using Python specified in "pythonBin": ${this.serverless.service.custom.wsgi.pythonBin}`
         );
 
         this.pythonBin = this.serverless.service.custom.wsgi.pythonBin;
@@ -139,18 +137,14 @@ class ServerlessWSGI {
       if (this.serverless.service.provider.runtime) {
         if (hasbin.sync(this.serverless.service.provider.runtime)) {
           this.serverless.cli.log(
-            `Using Python specified in "runtime": ${
-              this.serverless.service.provider.runtime
-            }`
+            `Using Python specified in "runtime": ${this.serverless.service.provider.runtime}`
           );
 
           this.pythonBin = this.serverless.service.provider.runtime;
           return resolve();
         } else {
           this.serverless.cli.log(
-            `Python executable not found for "runtime": ${
-              this.serverless.service.provider.runtime
-            }`
+            `Python executable not found for "runtime": ${this.serverless.service.provider.runtime}`
           );
         }
       }
@@ -197,7 +191,7 @@ class ServerlessWSGI {
       fse.writeFileAsync(
         path.join(this.packageRootPath, ".serverless-wsgi"),
         JSON.stringify(this.getWsgiHandlerConfiguration())
-      )
+      ),
     ]);
   }
 
@@ -232,13 +226,13 @@ class ServerlessWSGI {
 
       this.serverless.cli.log("Packaging required Python packages...");
 
-      const res = child_process.spawnSync(this.pythonBin, args, {'encoding': 'utf8'});
+      const res = child_process.spawnSync(this.pythonBin, args, {
+        encoding: "utf8",
+      });
       if (res.error) {
         if (res.error.code == "ENOENT") {
           return reject(
-            `Unable to run Python executable: ${
-              this.pythonBin
-            }. Use the "pythonBin" option to set your Python executable explicitly.`
+            `Unable to run Python executable: ${this.pythonBin}. Use the "pythonBin" option to set your Python executable explicitly.`
           );
         } else {
           return reject(res.error);
@@ -262,7 +256,7 @@ class ServerlessWSGI {
       if (fse.existsSync(this.requirementsInstallPath)) {
         this.serverless.cli.log("Linking required Python packages...");
 
-        fse.readdirSync(this.requirementsInstallPath).map(file => {
+        fse.readdirSync(this.requirementsInstallPath).map((file) => {
           let relativePath = path.join(
             path.relative(this.serverless.config.servicePath, this.appPath),
             file
@@ -297,7 +291,7 @@ class ServerlessWSGI {
   }
 
   checkWerkzeugPresent() {
-    return new BbPromise(resolve => {
+    return new BbPromise((resolve) => {
       if (!this.wsgiApp || !this.enableRequirements) {
         return resolve();
       }
@@ -315,7 +309,7 @@ class ServerlessWSGI {
   }
 
   unlinkRequirements() {
-    return new BbPromise(resolve => {
+    return new BbPromise((resolve) => {
       if (!this.enableRequirements) {
         return resolve();
       }
@@ -323,7 +317,7 @@ class ServerlessWSGI {
       if (fse.existsSync(this.requirementsInstallPath)) {
         this.serverless.cli.log("Unlinking required Python packages...");
 
-        fse.readdirSync(this.requirementsInstallPath).map(file => {
+        fse.readdirSync(this.requirementsInstallPath).map((file) => {
           if (fse.existsSync(file)) {
             fse.unlinkSync(file);
           }
@@ -346,25 +340,25 @@ class ServerlessWSGI {
     const artifacts = [
       "wsgi_handler.py",
       "serverless_wsgi.py",
-      ".serverless-wsgi"
+      ".serverless-wsgi",
     ];
 
     return BbPromise.all(
-      _.map(artifacts, artifact =>
+      _.map(artifacts, (artifact) =>
         fse.removeAsync(path.join(this.packageRootPath, artifact))
       )
     );
   }
 
   loadEnvVars() {
-    return new BbPromise(resolve => {
+    return new BbPromise((resolve) => {
       const providerEnvVars = _.omitBy(
         this.serverless.service.provider.environment || {},
         _.isObject
       );
       _.merge(process.env, providerEnvVars);
 
-      _.each(this.serverless.service.functions, func => {
+      _.each(this.serverless.service.functions, (func) => {
         if (func.handler == "wsgi_handler.handler") {
           const functionEnvVars = _.omitBy(func.environment || {}, _.isObject);
           _.merge(process.env, functionEnvVars);
@@ -394,7 +388,7 @@ class ServerlessWSGI {
         this.packageRootPath,
         this.wsgiApp,
         port,
-        host
+        host,
       ];
 
       if (num_processes > 1) {
@@ -410,14 +404,12 @@ class ServerlessWSGI {
       }
 
       var status = child_process.spawnSync(this.pythonBin, args, {
-        stdio: "inherit"
+        stdio: "inherit",
       });
       if (status.error) {
         if (status.error.code == "ENOENT") {
           reject(
-            `Unable to run Python executable: ${
-              this.pythonBin
-            }. Use the "pythonBin" option to set your Python executable explicitly.`
+            `Unable to run Python executable: ${this.pythonBin}. Use the "pythonBin" option to set your Python executable explicitly.`
           );
         } else {
           reject(status.error);
@@ -431,7 +423,7 @@ class ServerlessWSGI {
   findHandler() {
     return _.findKey(
       this.serverless.service.functions,
-      fun => fun.handler == "wsgi_handler.handler"
+      (fun) => fun.handler == "wsgi_handler.handler"
     );
   }
 
@@ -451,8 +443,8 @@ class ServerlessWSGI {
     this.serverless.pluginManager.cliOptions.data = JSON.stringify({
       "_serverless-wsgi": {
         command: command,
-        data: data
-      }
+        data: data,
+      },
     });
     this.serverless.pluginManager.cliOptions.context = undefined;
     this.serverless.pluginManager.cliOptions.f = this.serverless.pluginManager.cliOptions.function;
@@ -469,7 +461,7 @@ class ServerlessWSGI {
 
     /* eslint-disable no-console */
     const native_log = console.log;
-    console.log = msg => (output += msg + "\n");
+    console.log = (msg) => (output += msg + "\n");
 
     return this.serverless.pluginManager
       .run(local ? ["invoke", "local"] : ["invoke"])
@@ -561,33 +553,33 @@ class ServerlessWSGI {
               port: {
                 type: "string",
                 usage: "Local server port, defaults to 5000",
-                shortcut: "p"
+                shortcut: "p",
               },
               host: {
                 type: "string",
-                usage: "Server host, defaults to 'localhost'"
+                usage: "Server host, defaults to 'localhost'",
               },
               "disable-threading": {
-                type: 'boolean',
-                usage: "Disables multi-threaded mode"
+                type: "boolean",
+                usage: "Disables multi-threaded mode",
               },
               "num-processes": {
                 type: "string",
-                usage: "Number of processes for server, defaults to 1"
+                usage: "Number of processes for server, defaults to 1",
               },
               ssl: {
                 type: "boolean",
-                usage: "Enable local serving using HTTPS"
-              }
-            }
+                usage: "Enable local serving using HTTPS",
+              },
+            },
           },
           install: {
             usage: "Install WSGI handler and requirements for local use",
-            lifecycleEvents: ["install"]
+            lifecycleEvents: ["install"],
           },
           clean: {
             usage: "Remove cached requirements",
-            lifecycleEvents: ["clean"]
+            lifecycleEvents: ["clean"],
           },
           command: {
             usage: "Execute shell commands or scripts remotely",
@@ -596,13 +588,13 @@ class ServerlessWSGI {
               command: {
                 type: "string",
                 usage: "Command to execute",
-                shortcut: "c"
+                shortcut: "c",
               },
               file: {
                 type: "string",
                 usage: "Path to a shell script to execute",
-                shortcut: "f"
-              }
+                shortcut: "f",
+              },
             },
             commands: {
               local: {
@@ -612,16 +604,16 @@ class ServerlessWSGI {
                   command: {
                     type: "string",
                     usage: "Command to execute",
-                    shortcut: "c"
+                    shortcut: "c",
                   },
                   file: {
                     type: "string",
                     usage: "Path to a shell script to execute",
-                    shortcut: "f"
-                  }
-                }
-              }
-            }
+                    shortcut: "f",
+                  },
+                },
+              },
+            },
           },
           exec: {
             usage: "Evaluate Python code remotely",
@@ -630,13 +622,13 @@ class ServerlessWSGI {
               command: {
                 type: "string",
                 usage: "Python code to execute",
-                shortcut: "c"
+                shortcut: "c",
               },
               file: {
                 type: "string",
                 usage: "Path to a Python script to execute",
-                shortcut: "f"
-              }
+                shortcut: "f",
+              },
             },
             commands: {
               local: {
@@ -646,16 +638,16 @@ class ServerlessWSGI {
                   command: {
                     type: "string",
                     usage: "Python code to execute",
-                    shortcut: "c"
+                    shortcut: "c",
                   },
                   file: {
                     type: "string",
                     usage: "Path to a Python script to execute",
-                    shortcut: "f"
-                  }
-                }
-              }
-            }
+                    shortcut: "f",
+                  },
+                },
+              },
+            },
           },
           manage: {
             usage: "Run Django management commands remotely",
@@ -665,8 +657,8 @@ class ServerlessWSGI {
                 type: "string",
                 usage: "Management command",
                 shortcut: "c",
-                required: true
-              }
+                required: true,
+              },
             },
             commands: {
               local: {
@@ -677,11 +669,11 @@ class ServerlessWSGI {
                     type: "string",
                     usage: "Management command",
                     shortcut: "c",
-                    required: true
-                  }
-                }
-              }
-            }
+                    required: true,
+                  },
+                },
+              },
+            },
           },
           flask: {
             usage: "Run Flask CLI commands remotely",
@@ -691,8 +683,8 @@ class ServerlessWSGI {
                 type: "string",
                 usage: "Flask CLI command",
                 shortcut: "c",
-                required: true
-              }
+                required: true,
+              },
             },
             commands: {
               local: {
@@ -703,14 +695,14 @@ class ServerlessWSGI {
                     type: "string",
                     usage: "Flask CLI command",
                     shortcut: "c",
-                    required: true
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
+                    required: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     };
 
     const deployBeforeHook = () =>
@@ -818,9 +810,7 @@ class ServerlessWSGI {
           });
       },
       "after:invoke:local:invoke": () =>
-        BbPromise.bind(this)
-          .then(this.validate)
-          .then(this.cleanup)
+        BbPromise.bind(this).then(this.validate).then(this.cleanup),
     };
   }
 }
