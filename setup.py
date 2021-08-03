@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="serverless-wsgi",
-    version="1.7.8",
+    version="2.0.0",
     author="Logan Raarup",
     author_email="logan@logan.dk",
     description="Amazon AWS API Gateway WSGI wrapper",
@@ -13,7 +13,7 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/logandk/serverless-wsgi",
     py_modules=["serverless_wsgi"],
-    install_requires=["werkzeug==1.0.1"],
+    install_requires=["werkzeug>2"],
     classifiers=(
         "Development Status :: 5 - Production/Stable",
         "Programming Language :: Python :: 2",
