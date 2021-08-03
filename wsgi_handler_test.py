@@ -135,7 +135,6 @@ def mock_text_mime_wsgi_app_file(monkeypatch):
 @pytest.fixture
 def event_v1():
     return {
-        "version": "1.0",
         "body": None,
         "headers": {
             "Accept": "*/*",

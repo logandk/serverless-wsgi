@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="serverless-wsgi",
-    version="2.0.0",
+    version="2.0.1",
     python_requires=">3.6",
     author="Logan Raarup",
     author_email="logan@logan.dk",
@@ -17,7 +17,6 @@ setuptools.setup(
     install_requires=["werkzeug>2"],
     classifiers=(
         "Development Status :: 5 - Production/Stable",
-        "Programming Language :: Python :: 2",
         "Programming Language :: Python :: 3",
         "Intended Audience :: Developers",
         "License :: OSI Approved :: MIT License",

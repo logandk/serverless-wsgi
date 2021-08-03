@@ -1,3 +1,9 @@
+# 2.0.1
+
+## Bugs
+
+- Lambda integration handler invoked for API Gateway proxy events, caused by #185 (#188)
+
 # 2.0.0
 
 ## Features
