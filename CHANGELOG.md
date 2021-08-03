@@ -1,3 +1,10 @@
+# 2.0.0
+
+## Features
+
+- Drops Python 2 support and require Werkzeug 2 or later
+- Remove deprecated API_GATEWAY_AUTHORIZER, event and context variables from WSGI environment. (Use serverless.authorizer, serverless.event and serverless.context instead)
+
 # 1.7.8
 
 ## Bugs
