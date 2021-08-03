@@ -12,15 +12,12 @@ jobs:
           - { name: "3.8", python: "3.8", os: ubuntu-latest }
           - { name: "3.7", python: "3.7", os: ubuntu-latest }
           - { name: "3.6", python: "3.6", os: ubuntu-latest }
-    env:
-      CODECOV_TOKEN: "89d22de7-bfaf-43a0-81da-33cc733fd294"
     steps:
       - uses: actions/checkout@v2
 
       - uses: actions/setup-node@v2
         with:
           node-version: "14"
-      - run: npm install -g codecov
       - run: npm install
 
       - uses: actions/setup-python@v2
@@ -39,11 +36,16 @@ jobs:
         with:
           path: ${{ steps.pip-cache.outputs.dir }}
           key: pip|${{ runner.os }}|${{ matrix.python }}|${{ hashFiles('setup.py') }}|${{ hashFiles('requirements.txt') }}
-      - run: pip install pytest pytest-cov codecov flake8 virtualenv urllib3[secure]
+      - run: pip install pytest pytest-cov flake8 virtualenv urllib3[secure]
       - run: pip install -r requirements.txt
 
       - run: npm test
       - run: npm run lint
       - run: npm run pytest
       - run: npm run pylint
-      - run: which -a codecov | bash
+
+      - uses: codecov/codecov-action@v2
+        with:
+          token: "89d22de7-bfaf-43a0-81da-33cc733fd294"
+          fail_ci_if_error: true
+          verbose: true
