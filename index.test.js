@@ -1566,13 +1566,13 @@ describe("serverless-wsgi", () => {
         expect(plugin.serverless.pluginManager.cliOptions.context).to.be
           .undefined;
         expect(plugin.serverless.pluginManager.cliOptions.f).to.equal("app");
-        expect(plugin.serverless.pluginManager.cliOptions.function).to.equal(
+        expect(plugin.options.function).to.equal(
           "app"
         );
         expect(plugin.serverless.pluginManager.cliOptions.d).to.equal(
           '{"_serverless-wsgi":{"command":"exec","data":"print(1+4)"}}'
         );
-        expect(plugin.serverless.pluginManager.cliOptions.data).to.equal(
+        expect(plugin.options.data).to.equal(
           '{"_serverless-wsgi":{"command":"exec","data":"print(1+4)"}}'
         );
         expect(consoleSpy.calledWith("5")).to.be.true;
@@ -1609,13 +1609,13 @@ describe("serverless-wsgi", () => {
       sandbox.stub(fse, "readFileSync").returns("print(1+4)");
       plugin.hooks["wsgi:exec:exec"]().then(() => {
         expect(plugin.serverless.pluginManager.cliOptions.f).to.equal("app");
-        expect(plugin.serverless.pluginManager.cliOptions.function).to.equal(
+        expect(plugin.options.function).to.equal(
           "app"
         );
         expect(plugin.serverless.pluginManager.cliOptions.d).to.equal(
           '{"_serverless-wsgi":{"command":"exec","data":"print(1+4)"}}'
         );
-        expect(plugin.serverless.pluginManager.cliOptions.data).to.equal(
+        expect(plugin.options.data).to.equal(
           '{"_serverless-wsgi":{"command":"exec","data":"print(1+4)"}}'
         );
         expect(consoleSpy.calledWith({ response: "5" })).to.be.true;
@@ -1702,13 +1702,13 @@ describe("serverless-wsgi", () => {
         expect(plugin.serverless.pluginManager.cliOptions.context).to.be
           .undefined;
         expect(plugin.serverless.pluginManager.cliOptions.f).to.equal("app");
-        expect(plugin.serverless.pluginManager.cliOptions.function).to.equal(
+        expect(plugin.options.function).to.equal(
           "app"
         );
         expect(plugin.serverless.pluginManager.cliOptions.d).to.equal(
           '{"_serverless-wsgi":{"command":"exec","data":"print(1+4)"}}'
         );
-        expect(plugin.serverless.pluginManager.cliOptions.data).to.equal(
+        expect(plugin.options.data).to.equal(
           '{"_serverless-wsgi":{"command":"exec","data":"print(1+4)"}}'
         );
         expect(consoleSpy.calledWith("5")).to.be.true;
@@ -1745,13 +1745,13 @@ describe("serverless-wsgi", () => {
       sandbox.stub(fse, "readFileSync").returns("print(1+4)");
       plugin.hooks["wsgi:exec:local:exec"]().then(() => {
         expect(plugin.serverless.pluginManager.cliOptions.f).to.equal("app");
-        expect(plugin.serverless.pluginManager.cliOptions.function).to.equal(
+        expect(plugin.options.function).to.equal(
           "app"
         );
         expect(plugin.serverless.pluginManager.cliOptions.d).to.equal(
           '{"_serverless-wsgi":{"command":"exec","data":"print(1+4)"}}'
         );
-        expect(plugin.serverless.pluginManager.cliOptions.data).to.equal(
+        expect(plugin.options.data).to.equal(
           '{"_serverless-wsgi":{"command":"exec","data":"print(1+4)"}}'
         );
         expect(consoleSpy.calledWith({ response: "5" })).to.be.true;
@@ -1831,13 +1831,13 @@ describe("serverless-wsgi", () => {
         expect(plugin.serverless.pluginManager.cliOptions.context).to.be
           .undefined;
         expect(plugin.serverless.pluginManager.cliOptions.f).to.equal("app");
-        expect(plugin.serverless.pluginManager.cliOptions.function).to.equal(
+        expect(plugin.options.function).to.equal(
           "app"
         );
         expect(plugin.serverless.pluginManager.cliOptions.d).to.equal(
           '{"_serverless-wsgi":{"command":"command","data":"pwd"}}'
         );
-        expect(plugin.serverless.pluginManager.cliOptions.data).to.equal(
+        expect(plugin.options.data).to.equal(
           '{"_serverless-wsgi":{"command":"command","data":"pwd"}}'
         );
         expect(consoleSpy.calledWith("non-json output")).to.be.true;
@@ -1874,13 +1874,13 @@ describe("serverless-wsgi", () => {
       sandbox.stub(fse, "readFileSync").returns("pwd");
       plugin.hooks["wsgi:command:command"]().then(() => {
         expect(plugin.serverless.pluginManager.cliOptions.f).to.equal("app");
-        expect(plugin.serverless.pluginManager.cliOptions.function).to.equal(
+        expect(plugin.options.function).to.equal(
           "app"
         );
         expect(plugin.serverless.pluginManager.cliOptions.d).to.equal(
           '{"_serverless-wsgi":{"command":"command","data":"pwd"}}'
         );
-        expect(plugin.serverless.pluginManager.cliOptions.data).to.equal(
+        expect(plugin.options.data).to.equal(
           '{"_serverless-wsgi":{"command":"command","data":"pwd"}}'
         );
         expect(consoleSpy.calledWith("/var/task")).to.be.true;
@@ -1960,13 +1960,13 @@ describe("serverless-wsgi", () => {
         expect(plugin.serverless.pluginManager.cliOptions.context).to.be
           .undefined;
         expect(plugin.serverless.pluginManager.cliOptions.f).to.equal("app");
-        expect(plugin.serverless.pluginManager.cliOptions.function).to.equal(
+        expect(plugin.options.function).to.equal(
           "app"
         );
         expect(plugin.serverless.pluginManager.cliOptions.d).to.equal(
           '{"_serverless-wsgi":{"command":"command","data":"pwd"}}'
         );
-        expect(plugin.serverless.pluginManager.cliOptions.data).to.equal(
+        expect(plugin.options.data).to.equal(
           '{"_serverless-wsgi":{"command":"command","data":"pwd"}}'
         );
         expect(consoleSpy.calledWith("non-json output")).to.be.true;
@@ -2003,13 +2003,13 @@ describe("serverless-wsgi", () => {
       sandbox.stub(fse, "readFileSync").returns("pwd");
       plugin.hooks["wsgi:command:local:command"]().then(() => {
         expect(plugin.serverless.pluginManager.cliOptions.f).to.equal("app");
-        expect(plugin.serverless.pluginManager.cliOptions.function).to.equal(
+        expect(plugin.options.function).to.equal(
           "app"
         );
         expect(plugin.serverless.pluginManager.cliOptions.d).to.equal(
           '{"_serverless-wsgi":{"command":"command","data":"pwd"}}'
         );
-        expect(plugin.serverless.pluginManager.cliOptions.data).to.equal(
+        expect(plugin.options.data).to.equal(
           '{"_serverless-wsgi":{"command":"command","data":"pwd"}}'
         );
         expect(consoleSpy.calledWith("/var/task")).to.be.true;
@@ -2047,13 +2047,13 @@ describe("serverless-wsgi", () => {
       let consoleSpy = sandbox.spy(console, "log");
       plugin.hooks["wsgi:manage:manage"]().then(() => {
         expect(plugin.serverless.pluginManager.cliOptions.f).to.equal("app");
-        expect(plugin.serverless.pluginManager.cliOptions.function).to.equal(
+        expect(plugin.options.function).to.equal(
           "app"
         );
         expect(plugin.serverless.pluginManager.cliOptions.d).to.equal(
           '{"_serverless-wsgi":{"command":"manage","data":"check"}}'
         );
-        expect(plugin.serverless.pluginManager.cliOptions.data).to.equal(
+        expect(plugin.options.data).to.equal(
           '{"_serverless-wsgi":{"command":"manage","data":"check"}}'
         );
         expect(consoleSpy.calledWith("manage command output")).to.be.true;
@@ -2094,13 +2094,13 @@ describe("serverless-wsgi", () => {
         expect(plugin.serverless.pluginManager.cliOptions.context).to.be
           .undefined;
         expect(plugin.serverless.pluginManager.cliOptions.f).to.equal("app");
-        expect(plugin.serverless.pluginManager.cliOptions.function).to.equal(
+        expect(plugin.options.function).to.equal(
           "app"
         );
         expect(plugin.serverless.pluginManager.cliOptions.d).to.equal(
           '{"_serverless-wsgi":{"command":"manage","data":"check"}}'
         );
-        expect(plugin.serverless.pluginManager.cliOptions.data).to.equal(
+        expect(plugin.options.data).to.equal(
           '{"_serverless-wsgi":{"command":"manage","data":"check"}}'
         );
         expect(consoleSpy.calledWith("manage command output")).to.be.true;
@@ -2138,13 +2138,13 @@ describe("serverless-wsgi", () => {
       let consoleSpy = sandbox.spy(console, "log");
       plugin.hooks["wsgi:flask:flask"]().then(() => {
         expect(plugin.serverless.pluginManager.cliOptions.f).to.equal("app");
-        expect(plugin.serverless.pluginManager.cliOptions.function).to.equal(
+        expect(plugin.options.function).to.equal(
           "app"
         );
         expect(plugin.serverless.pluginManager.cliOptions.d).to.equal(
           '{"_serverless-wsgi":{"command":"flask","data":"check"}}'
         );
-        expect(plugin.serverless.pluginManager.cliOptions.data).to.equal(
+        expect(plugin.options.data).to.equal(
           '{"_serverless-wsgi":{"command":"flask","data":"check"}}'
         );
         expect(consoleSpy.calledWith("flask command output")).to.be.true;
@@ -2185,13 +2185,13 @@ describe("serverless-wsgi", () => {
         expect(plugin.serverless.pluginManager.cliOptions.context).to.be
           .undefined;
         expect(plugin.serverless.pluginManager.cliOptions.f).to.equal("app");
-        expect(plugin.serverless.pluginManager.cliOptions.function).to.equal(
+        expect(plugin.options.function).to.equal(
           "app"
         );
         expect(plugin.serverless.pluginManager.cliOptions.d).to.equal(
           '{"_serverless-wsgi":{"command":"flask","data":"check"}}'
         );
-        expect(plugin.serverless.pluginManager.cliOptions.data).to.equal(
+        expect(plugin.options.data).to.equal(
           '{"_serverless-wsgi":{"command":"flask","data":"check"}}'
         );
         expect(consoleSpy.calledWith("flask command output")).to.be.true;
