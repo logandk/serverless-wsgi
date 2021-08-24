@@ -440,16 +440,29 @@ class ServerlessWSGI {
     // no proper plugin-facing API. Instead, the current CLI options are modified
     // to match those of an invoke call.
     this.serverless.pluginManager.cliOptions.function = handlerFunction;
+    this.options.function = handlerFunction;
+    this.options.data = JSON.stringify({
+      "_serverless-wsgi": {
+        command: command,
+        data: data,
+      },
+    });
     this.serverless.pluginManager.cliOptions.data = JSON.stringify({
       "_serverless-wsgi": {
         command: command,
         data: data,
       },
     });
+
     this.serverless.pluginManager.cliOptions.context = undefined;
     this.serverless.pluginManager.cliOptions.f = this.serverless.pluginManager.cliOptions.function;
     this.serverless.pluginManager.cliOptions.d = this.serverless.pluginManager.cliOptions.data;
     this.serverless.pluginManager.cliOptions.c = this.serverless.pluginManager.cliOptions.context;
+    this.options.context = undefined;
+    this.options.f = this.options.function;
+    this.options.d = this.options.data;
+    this.options.c = this.options.context;
+
 
     // The invoke plugin prints the response to the console as JSON. When invoking commands
     // remotely, we get a string back and we want it to appear in the console as it would have
