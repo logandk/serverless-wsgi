@@ -131,13 +131,11 @@ describe("serverless-wsgi", () => {
           ])
         ).to.be.true;
         sandbox.restore();
-        expect(plugin.serverless.service.package.include).to.have.members([
+        expect(plugin.serverless.service.package.patterns).to.have.members([
           "wsgi_handler.py",
           "serverless_wsgi.py",
-          ".serverless-wsgi"
-        ]);
-        expect(plugin.serverless.service.package.exclude).to.have.members([
-          ".requirements/**"
+          ".serverless-wsgi",
+          "!.requirements/**"
         ]);
       });
     });
@@ -296,17 +294,15 @@ describe("serverless-wsgi", () => {
           ])
         ).to.be.true;
         sandbox.restore();
-        expect(plugin.serverless.service.package.include).to.have.members([
+        expect(plugin.serverless.service.package.patterns).to.have.members([
           "wsgi_handler.py",
           "serverless_wsgi.py",
           ".serverless-wsgi",
           "web/flask",
           "web/flask/**",
           "web/werkzeug",
-          "web/werkzeug/**"
-        ]);
-        expect(plugin.serverless.service.package.exclude).to.have.members([
-          "web/.requirements/**"
+          "web/werkzeug/**",
+          "!web/.requirements/**"
         ]);
       });
     });
@@ -367,17 +363,15 @@ describe("serverless-wsgi", () => {
           ])
         ).to.be.true;
         sandbox.restore();
-        expect(plugin.serverless.service.package.include).to.have.members([
+        expect(plugin.serverless.service.package.patterns).to.have.members([
           "web/wsgi_handler.py",
           "web/serverless_wsgi.py",
           "web/.serverless-wsgi",
           "web/flask",
           "web/flask/**",
           "web/werkzeug",
-          "web/werkzeug/**"
-        ]);
-        expect(plugin.serverless.service.package.exclude).to.have.members([
-          "web/.requirements/**"
+          "web/werkzeug/**",
+          "!web/.requirements/**"
         ]);
       });
     });
@@ -391,7 +385,7 @@ describe("serverless-wsgi", () => {
           service: {
             provider: { runtime: "python2.7" },
             custom: { wsgi: { app: "api.app" } },
-            package: { include: ["sample.txt"] }
+            package: { patterns: ["sample.txt"] }
           },
           classes: { Error: Error },
           cli: { log: () => {} }
@@ -422,18 +416,16 @@ describe("serverless-wsgi", () => {
             "/tmp/.requirements"
           ])
         ).to.be.true;
-        expect(plugin.serverless.service.package.include).to.have.members([
+        expect(plugin.serverless.service.package.patterns).to.have.members([
           "sample.txt",
           "wsgi_handler.py",
           "serverless_wsgi.py",
           ".serverless-wsgi",
+          "!.requirements/**",
           "flask",
           "flask/**",
           "werkzeug",
           "werkzeug/**"
-        ]);
-        expect(plugin.serverless.service.package.exclude).to.have.members([
-          ".requirements/**"
         ]);
         sandbox.restore();
       });
@@ -446,7 +438,7 @@ describe("serverless-wsgi", () => {
           service: {
             provider: { runtime: "python2.7" },
             custom: { wsgi: { app: "api.app", pythonBin: "my-python" } },
-            package: { include: ["sample.txt"] }
+            package: { patterns: ["sample.txt"] }
           },
           classes: { Error: Error },
           cli: { log: () => {} }
@@ -477,16 +469,14 @@ describe("serverless-wsgi", () => {
             "/tmp/.requirements"
           ])
         ).to.be.true;
-        expect(plugin.serverless.service.package.include).to.have.members([
+        expect(plugin.serverless.service.package.patterns).to.have.members([
           "sample.txt",
           "wsgi_handler.py",
           "serverless_wsgi.py",
           ".serverless-wsgi",
           "flask",
-          "flask/**"
-        ]);
-        expect(plugin.serverless.service.package.exclude).to.have.members([
-          ".requirements/**"
+          "flask/**",
+          "!.requirements/**"
         ]);
         sandbox.restore();
       });
@@ -526,15 +516,13 @@ describe("serverless-wsgi", () => {
             "/tmp/api/.requirements"
           ])
         ).to.be.true;
-        expect(plugin.serverless.service.package.include).to.have.members([
+        expect(plugin.serverless.service.package.patterns).to.have.members([
           "wsgi_handler.py",
           "serverless_wsgi.py",
           ".serverless-wsgi",
           "api/werkzeug",
-          "api/werkzeug/**"
-        ]);
-        expect(plugin.serverless.service.package.exclude).to.have.members([
-          "api/.requirements/**"
+          "api/werkzeug/**",
+          "!api/.requirements/**"
         ]);
         sandbox.restore();
       });
@@ -697,8 +685,11 @@ describe("serverless-wsgi", () => {
         expect(copyStub.called).to.be.false;
         expect(writeStub.called).to.be.false;
         expect(procStub.called).to.be.false;
-        expect(plugin.serverless.service.package.exclude).to.have.members([
-          ".requirements/**"
+        expect(plugin.serverless.service.package.patterns).to.have.members([
+          "wsgi_handler.py",
+          "serverless_wsgi.py",
+          ".serverless-wsgi",
+          "!.requirements/**"
         ]);
         sandbox.restore();
       });
@@ -805,7 +796,7 @@ describe("serverless-wsgi", () => {
         expect(writeStub.called).to.be.true;
         expect(existsStub.called).to.be.false;
         expect(procStub.called).to.be.false;
-        expect(plugin.serverless.service.package.include).not.to.have.members([
+        expect(plugin.serverless.service.package.patterns).not.to.have.members([
           ".requirements/**"
         ]);
         sandbox.restore();
@@ -866,7 +857,7 @@ describe("serverless-wsgi", () => {
         expect(writeStub.called).to.be.true;
         expect(existsStub.called).to.be.false;
         expect(procStub.called).to.be.false;
-        expect(plugin.serverless.service.package.include).not.to.have.members([
+        expect(plugin.serverless.service.package.patterns).not.to.have.members([
           ".requirements/**"
         ]);
         sandbox.restore();
