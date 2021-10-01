@@ -1,3 +1,11 @@
+# 2.0.2
+
+## Bugs
+
+- Compatibility upgrade for serverless 2.32 (#189)
+
+  _Justin Lyons_
+
 # 2.0.1
 
 ## Bugs
