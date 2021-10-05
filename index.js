@@ -382,6 +382,8 @@ class ServerlessWSGI {
       const disable_threading = this.options["disable-threading"] || false;
       const num_processes = this.options["num-processes"] || 1;
       const ssl = this.options.ssl || false;
+      const ssl_pub = this.options["ssl-pub"] || "";
+      const ssl_pri = this.options["ssl-pri"] || "";
 
       var args = [
         path.resolve(__dirname, "serve.py"),
@@ -401,6 +403,14 @@ class ServerlessWSGI {
 
       if (ssl) {
         args.push("--ssl");
+      }
+
+      if (ssl_pub) {
+        args.push("--ssl-pub", ssl_pub);
+      }
+
+      if (ssl_pri) {
+        args.push("--ssl-pri", ssl_pri);
       }
 
       var status = child_process.spawnSync(this.pythonBin, args, {
@@ -584,6 +594,14 @@ class ServerlessWSGI {
                 type: "boolean",
                 usage: "Enable local serving using HTTPS",
               },
+              "ssl-pub": {
+                type: "string",
+                usage: "local ssl pem file to use for ssl"
+              },
+              "ssl-pri": {
+                type: "string",
+                usage: "local ssl pem file to use for ssl private key"
+              }
             },
           },
           install: {

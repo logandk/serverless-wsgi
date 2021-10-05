@@ -34,13 +34,15 @@ def parse_args():  # pragma: no cover
     parser.add_argument("--disable-threading", action="store_false", dest="use_threads")
     parser.add_argument("--num-processes", type=int, dest="processes", default=1)
 
-    # Optional serving using HTTPS
+    # Optional serving using HTTPS and passing pub and pri key
     parser.add_argument("--ssl", action="store_true", dest="ssl")
+    parser.add_argument("--ssl-pub", dest="ssl_pub")
+    parser.add_argument("--ssl-pri", dest="ssl_pri")
 
     return parser.parse_args()
 
 
-def serve(cwd, app, port=5000, host="localhost", threaded=True, processes=1, ssl=False):
+def serve(cwd, app, port=5000, host="localhost", threaded=True, processes=1, ssl=False, ssl_keys=None):
     sys.path.insert(0, cwd)
 
     os.environ["IS_OFFLINE"] = "True"
@@ -53,7 +55,7 @@ def serve(cwd, app, port=5000, host="localhost", threaded=True, processes=1, ssl
     wsgi_app = getattr(wsgi_module, wsgi_fqn[1])
 
     if ssl:
-        ssl_context = "adhoc"
+        ssl_context = ssl_keys or "adhoc"
     else:
         ssl_context = None
 
@@ -76,6 +78,18 @@ def serve(cwd, app, port=5000, host="localhost", threaded=True, processes=1, ssl
     )
 
 
+def _validate_ssl_keys(cert_file, private_key_file):
+    if not cert_file and not private_key_file:
+        return None
+    if not cert_file or not private_key_file:
+        sys.exit("Missing either cert file or private key file (hint: --ssl-pub <file> and --ssl-pri <file>)")
+    if not os.path.exists(cert_file):
+        sys.exit("Cert file can't be found")
+    if not os.path.exists(private_key_file):
+        sys.exit("Private key file can't be found")
+    return (cert_file, private_key_file)
+
+
 if __name__ == "__main__":  # pragma: no cover
     args = parse_args()
 
@@ -86,5 +100,6 @@ if __name__ == "__main__":  # pragma: no cover
         host=args.host,
         threaded=args.use_threads,
         processes=args.processes,
-        ssl=args.ssl,
+        ssl=args.ssl or (bool(args.ssl_pub) and bool(args.ssl_pri)),
+        ssl_keys=_validate_ssl_keys(args.ssl_pub, args.ssl_pri)
     )
