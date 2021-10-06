@@ -4,6 +4,7 @@ import importlib
 import pytest
 import serve
 import sys
+import os
 from werkzeug import serving
 
 
@@ -44,6 +45,19 @@ def mock_path(monkeypatch):
     path = []
     monkeypatch.setattr(sys, "path", path)
     return path
+
+
+@pytest.fixture
+def mock_os_path_exists(monkeypatch):
+    mock_path = ObjectStub()
+    mock_path.file_names_that_exist = []
+
+    def mock_exists(file_name):
+        return file_name in mock_path.file_names_that_exist
+
+    monkeypatch.setattr(os.path, 'exists', mock_exists)
+
+    return mock_path
 
 
 def test_serve(mock_path, mock_importlib, mock_werkzeug):
@@ -160,3 +174,42 @@ def test_serve_non_debuggable_app(mock_path, mock_importlib, mock_werkzeug):
 
     serve.serve("/tmp1", "app.app", "5000")
     assert mock_werkzeug.lastcall.app is None
+
+
+def test_validate_ssl_keys_with_no_keys_passed():
+    return_value = serve._validate_ssl_keys(None, None)
+    assert return_value is None
+
+
+def test_validate_ssl_keys_with_sys_exit_for_missing_key():
+    with pytest.raises(SystemExit) as pytest_wrapped_e:
+        serve._validate_ssl_keys('test.pem', None)
+
+    assert pytest_wrapped_e.type == SystemExit
+    assert pytest_wrapped_e.value.code == "Missing either cert file or private key file (hint: --ssl-pub <file> and --ssl-pri <file>)"
+
+
+def test_validate_ssl_keys_with_non_existant_cert_file(mock_os_path_exists):
+    with pytest.raises(SystemExit) as pytest_wrapped_e:
+        serve._validate_ssl_keys('test.pem', 'test-key.pem')
+
+    assert pytest_wrapped_e.type == SystemExit
+    assert pytest_wrapped_e.value.code == "Cert file can't be found"
+
+
+def test_validate_ssl_keys_with_non_existant_key_file(mock_os_path_exists):
+    mock_os_path_exists.file_names_that_exist = ['test.pem']
+    with pytest.raises(SystemExit) as pytest_wrapped_e:
+        serve._validate_ssl_keys('test.pem', 'test-key.pem')
+
+    assert pytest_wrapped_e.type == SystemExit
+    assert pytest_wrapped_e.value.code == "Private key file can't be found"
+
+
+def test_validate_ssl_keys_with_actual_keys(mock_os_path_exists):
+    mock_os_path_exists.file_names_that_exist = ['test.pem', 'test-key.pem']
+    return_value = serve._validate_ssl_keys('test.pem', 'test-key.pem')
+
+    assert type(return_value) is tuple
+    assert return_value[0] == 'test.pem'
+    assert return_value[1] == 'test-key.pem'
