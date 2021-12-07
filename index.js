@@ -14,7 +14,7 @@ class ServerlessWSGI {
 
       _.each(this.serverless.service.functions, (func) => {
         if (func.handler == "wsgi.handler") {
-          func.handler = "wsgi_handler.handler";
+          func.handler = func.handler.replace("wsgi.handler", "wsgi_handler.handler");
           handlersFixed = true;
         }
       });
@@ -67,7 +67,7 @@ class ServerlessWSGI {
       ) {
         let handler = _.find(
           this.serverless.service.functions,
-          (fun) => fun.handler == "wsgi_handler.handler"
+          (fun) => _.includes(fun.handler, "wsgi_handler.handler")
         );
 
         // serverless-python-requirements supports packaging individual functions
@@ -359,7 +359,7 @@ class ServerlessWSGI {
       _.merge(process.env, providerEnvVars);
 
       _.each(this.serverless.service.functions, (func) => {
-        if (func.handler == "wsgi_handler.handler") {
+        if (_.includes(func.handler, "wsgi_handler.handler")) {
           const functionEnvVars = _.omitBy(func.environment || {}, _.isObject);
           _.merge(process.env, functionEnvVars);
         }
@@ -433,7 +433,7 @@ class ServerlessWSGI {
   findHandler() {
     return _.findKey(
       this.serverless.service.functions,
-      (fun) => fun.handler == "wsgi_handler.handler"
+      (fun) => _.includes(fun.handler, "wsgi_handler.handler")
     );
   }
 
@@ -814,7 +814,7 @@ class ServerlessWSGI {
       "after:package:createDeploymentArtifacts": deployAfterHook,
 
       "before:deploy:function:packageFunction": () => {
-        if (this.options.functionObj.handler == "wsgi_handler.handler") {
+        if (_.includes(this.options.functionObj.handler, "wsgi_handler.handler")) {
           return deployBeforeHook();
         } else {
           return deployBeforeHookWithoutHandler();
@@ -833,7 +833,7 @@ class ServerlessWSGI {
         return BbPromise.bind(this)
           .then(this.validate)
           .then(() => {
-            if (functionObj.handler == "wsgi_handler.handler") {
+            if (_.includes(functionObj.handler, "wsgi_handler.handler")) {
               return this.packWsgiHandler(false);
             } else {
               return BbPromise.resolve();
