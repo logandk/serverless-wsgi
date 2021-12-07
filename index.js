@@ -86,13 +86,11 @@ class ServerlessWSGI {
   configurePackaging() {
     return new BbPromise((resolve) => {
       this.serverless.service.package = this.serverless.service.package || {};
-      this.serverless.service.package.include =
-        this.serverless.service.package.include || [];
-      this.serverless.service.package.exclude =
-        this.serverless.service.package.exclude || [];
+      this.serverless.service.package.patterns =
+        this.serverless.service.package.patterns || [];
 
-      this.serverless.service.package.include = _.union(
-        this.serverless.service.package.include,
+      this.serverless.service.package.patterns = _.union(
+        this.serverless.service.package.patterns,
         _.map(
           ["wsgi_handler.py", "serverless_wsgi.py", ".serverless-wsgi"],
           (artifact) =>
@@ -107,11 +105,11 @@ class ServerlessWSGI {
       );
 
       if (this.enableRequirements) {
-        this.serverless.service.package.exclude.push(
-          path.join(
+        this.serverless.service.package.patterns.push(
+          `!${path.join(
             path.relative(this.serverless.config.servicePath, this.appPath),
             ".requirements/**"
-          )
+          )}`
         );
       }
 
@@ -262,8 +260,8 @@ class ServerlessWSGI {
             file
           );
 
-          this.serverless.service.package.include.push(relativePath);
-          this.serverless.service.package.include.push(`${relativePath}/**`);
+          this.serverless.service.package.patterns.push(relativePath);
+          this.serverless.service.package.patterns.push(`${relativePath}/**`);
 
           try {
             fse.symlinkSync(`${this.requirementsInstallPath}/${file}`, file);

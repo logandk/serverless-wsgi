@@ -59,5 +59,8 @@
     "fs-extra": "^9.1.0",
     "hasbin": "^1.2.3",
     "lodash": "^4.17.21"
+  },
+  "peerDependences": {
+    "serverless": "^2.32.0"
   }
 }
