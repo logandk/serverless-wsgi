@@ -1,3 +1,19 @@
+# 3.0.0
+
+## Features
+
+- Update serverless integration for v3 compatibility (breaks integration with serverless < 2.32.0) (#193)
+
+  _Mariusz Nowak_
+
+- Add options for specifying SSL cert location when serving locally (#195)
+
+  _Nathaniel J. Padgett_
+
+- Support wsgi handler placed in a subfolder (#198)
+
+  _Felipe Passos_
+
 # 2.0.2
 
 ## Bugs
