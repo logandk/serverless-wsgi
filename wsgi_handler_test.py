@@ -736,8 +736,8 @@ def test_command_command(mock_wsgi_app_file, mock_app, wsgi_handler):
         {},
     )
 
-    assert response[0] == 2
-    assert "'non-existing-filename': No such file or directory" in response[1]
+    assert response[0] > 0
+    assert "No such file or directory" in response[1]
 
 
 def test_command_manage(mock_wsgi_app_file, mock_app, wsgi_handler):
