@@ -213,6 +213,8 @@ locally. This command requires the `werkzeug` Python package to be installed,
 and acts as a simple wrapper for starting werkzeug's built-in HTTP server.
 
 By default, the server will start on port 5000.
+(Note: macOS [reserves port 5000](https://twitter.com/mitsuhiko/status/1462734023164416009)
+for AirPlay by default, see below for instructions on changing the port.)
 
 ```
 $ sls wsgi serve
@@ -369,6 +371,7 @@ custom:
 ```
 
 **Note**: The **API_GATEWAY_BASE_PATH** configuration is only needed when using the payload V1. In the V2, the path does not have the **basePath** in the beginning.
+
 ### Using CloudFront
 
 If you're configuring CloudFront manually in front of your API and setting
