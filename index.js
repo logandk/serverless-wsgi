@@ -489,9 +489,9 @@ class ServerlessWSGI {
     /* eslint-disable no-console */
     const native_log = console.log;
     console.log = (msg) => (output += msg + "\n");
-
+    /* eslint-disable no-unused-vars */
     const {
-      originalStdoutWrite, // Original `write` bound to `process.stdout`
+      originalStdoutWrite, // Original `write` bound to `process.stdout`#noqa
       originalWrite, // Original `write` on its own
       restoreStdoutWrite, // Allows to restore previous state
     } = overrideStdoutWrite(
@@ -505,6 +505,8 @@ class ServerlessWSGI {
         // originalStdoutWrite(orig.substring(orig.indexOf(",") + 7).replace(/\\n/g,"\n") + "\n");
       }
     );
+    /* eslint-enable no-unused-vars */
+
 
     return this.serverless.pluginManager
       .run(local ? ["invoke", "local"] : ["invoke"])
