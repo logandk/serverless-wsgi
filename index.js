@@ -6,6 +6,7 @@ const path = require("path");
 const fse = BbPromise.promisifyAll(require("fs-extra"));
 const child_process = require("child_process");
 const hasbin = require("hasbin");
+const overrideStdoutWrite = require("process-utils/override-stdout-write");
 
 class ServerlessWSGI {
   validate() {
@@ -14,7 +15,10 @@ class ServerlessWSGI {
 
       _.each(this.serverless.service.functions, (func) => {
         if (func.handler == "wsgi.handler") {
-          func.handler = func.handler.replace("wsgi.handler", "wsgi_handler.handler");
+          func.handler = func.handler.replace(
+            "wsgi.handler",
+            "wsgi_handler.handler"
+          );
           handlersFixed = true;
         }
       });
@@ -48,7 +52,8 @@ class ServerlessWSGI {
         }
 
         if (_.isBoolean(this.serverless.service.custom.wsgi.packRequirements)) {
-          this.enableRequirements = this.serverless.service.custom.wsgi.packRequirements;
+          this.enableRequirements =
+            this.serverless.service.custom.wsgi.packRequirements;
         }
 
         this.pipArgs = this.serverless.service.custom.wsgi.pipArgs;
@@ -65,9 +70,8 @@ class ServerlessWSGI {
         this.serverless.service.package.individually &&
         this.serverless.config.servicePath != this.appPath
       ) {
-        let handler = _.find(
-          this.serverless.service.functions,
-          (fun) => _.includes(fun.handler, "wsgi_handler.handler")
+        let handler = _.find(this.serverless.service.functions, (fun) =>
+          _.includes(fun.handler, "wsgi_handler.handler")
         );
 
         // serverless-python-requirements supports packaging individual functions
@@ -159,7 +163,8 @@ class ServerlessWSGI {
     const config = { app: this.wsgiApp };
 
     if (_.isArray(this.serverless.service.custom.wsgi.textMimeTypes)) {
-      config.text_mime_types = this.serverless.service.custom.wsgi.textMimeTypes;
+      config.text_mime_types =
+        this.serverless.service.custom.wsgi.textMimeTypes;
     }
 
     return config;
@@ -429,9 +434,8 @@ class ServerlessWSGI {
   }
 
   findHandler() {
-    return _.findKey(
-      this.serverless.service.functions,
-      (fun) => _.includes(fun.handler, "wsgi_handler.handler")
+    return _.findKey(this.serverless.service.functions, (fun) =>
+      _.includes(fun.handler, "wsgi_handler.handler")
     );
   }
 
@@ -463,14 +467,16 @@ class ServerlessWSGI {
     });
 
     this.serverless.pluginManager.cliOptions.context = undefined;
-    this.serverless.pluginManager.cliOptions.f = this.serverless.pluginManager.cliOptions.function;
-    this.serverless.pluginManager.cliOptions.d = this.serverless.pluginManager.cliOptions.data;
-    this.serverless.pluginManager.cliOptions.c = this.serverless.pluginManager.cliOptions.context;
+    this.serverless.pluginManager.cliOptions.f =
+      this.serverless.pluginManager.cliOptions.function;
+    this.serverless.pluginManager.cliOptions.d =
+      this.serverless.pluginManager.cliOptions.data;
+    this.serverless.pluginManager.cliOptions.c =
+      this.serverless.pluginManager.cliOptions.context;
     this.options.context = undefined;
     this.options.f = this.options.function;
     this.options.d = this.options.data;
     this.options.c = this.options.context;
-
 
     // The invoke plugin prints the response to the console as JSON. When invoking commands
     // remotely, we get a string back and we want it to appear in the console as it would have
@@ -483,6 +489,22 @@ class ServerlessWSGI {
     /* eslint-disable no-console */
     const native_log = console.log;
     console.log = (msg) => (output += msg + "\n");
+
+    const {
+      originalStdoutWrite, // Original `write` bound to `process.stdout`
+      originalWrite, // Original `write` on its own
+      restoreStdoutWrite, // Allows to restore previous state
+    } = overrideStdoutWrite(
+      // process.stdout.write replacement
+      (
+        orig, // data input
+        originalStdoutWrite // // Original `write` bound to `process.stdout`
+      ) => {
+        // Example of filtering ANSI codes for original stdout.write
+        originalStdoutWrite(orig.replace(/["]+/g, "").replace(/\\n/g, "\n"));
+        // originalStdoutWrite(orig.substring(orig.indexOf(",") + 7).replace(/\\n/g,"\n") + "\n");
+      }
+    );
 
     return this.serverless.pluginManager
       .run(local ? ["invoke", "local"] : ["invoke"])
@@ -594,12 +616,12 @@ class ServerlessWSGI {
               },
               "ssl-pub": {
                 type: "string",
-                usage: "local ssl pem file to use for ssl"
+                usage: "local ssl pem file to use for ssl",
               },
               "ssl-pri": {
                 type: "string",
-                usage: "local ssl pem file to use for ssl private key"
-              }
+                usage: "local ssl pem file to use for ssl private key",
+              },
             },
           },
           install: {
@@ -812,7 +834,9 @@ class ServerlessWSGI {
       "after:package:createDeploymentArtifacts": deployAfterHook,
 
       "before:deploy:function:packageFunction": () => {
-        if (_.includes(this.options.functionObj.handler, "wsgi_handler.handler")) {
+        if (
+          _.includes(this.options.functionObj.handler, "wsgi_handler.handler")
+        ) {
           return deployBeforeHook();
         } else {
           return deployBeforeHookWithoutHandler();
