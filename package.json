@@ -1,6 +1,6 @@
 {
   "name": "serverless-wsgi",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "engines": {
     "node": ">=10"
   },
@@ -49,7 +49,7 @@
   "devDependencies": {
     "chai": "^4.3.6",
     "chai-as-promised": "^7.0.0",
-    "eslint": "^8.15.0",
+    "eslint": "^8.21.0",
     "istanbul": "^0.4.4",
     "mocha": "^10.0.0",
     "sinon": "^14.0.0"

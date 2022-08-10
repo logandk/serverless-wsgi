@@ -1,3 +1,11 @@
+# 3.0.1
+
+## Bugs
+
+- Fix console output on commands/manage
+
+  _Justin Lyons_
+
 # 3.0.0
 
 ## Features
