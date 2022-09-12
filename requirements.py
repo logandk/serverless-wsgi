@@ -94,6 +94,9 @@ def package(req_files, target_dir, pip_args=""):
         "*.pyc",
         "__pycache__",
         "_virtualenv.*",
+        "distutils-precedence.pth",
+        "six.py",
+        "zipp.py"
     ]
 
     shutil.copytree(
