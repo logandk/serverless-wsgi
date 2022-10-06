@@ -254,6 +254,12 @@ def handle_payload_v2(app, event, context):
     script_name = get_script_name(headers, event.get("requestContext", {}))
 
     path_info = strip_express_gateway_query_params(event["rawPath"])
+    base_path = os.environ.get("API_GATEWAY_BASE_PATH")
+    if base_path:
+        script_name = "/" + base_path
+
+        if path_info.startswith(script_name):
+            path_info = path_info[len(script_name) :]
 
     body = event.get("body", "")
     body = get_body_bytes(event, body)
