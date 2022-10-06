@@ -199,7 +199,7 @@ def handle_payload_v1(app, event, context):
         if path_info.startswith(script_name):
             path_info = path_info[len(script_name) :]
 
-    body = event["body"] or ""
+    body = event.get("body") or ""
     body = get_body_bytes(event, body)
 
     environ = {
