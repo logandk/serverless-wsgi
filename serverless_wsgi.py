@@ -162,6 +162,16 @@ def generate_response(response, event):
     return returndict
 
 
+def strip_express_gateway_query_params(path):
+    """Contrary to regular AWS lambda HTTP events, Express Gateway
+    (https://github.com/ExpressGateway/express-gateway-plugin-lambda)
+    adds query parameters to the path, which we need to strip.
+    """
+    if "?" in path:
+        path = path.split("?")[0]
+    return path
+
+
 def handle_request(app, event, context):
     if event.get("source") in ["aws.events", "serverless-plugin-warmup"]:
         print("Lambda warming event received, skipping handler")
@@ -191,7 +201,7 @@ def handle_payload_v1(app, event, context):
     # If a user is using a custom domain on API Gateway, they may have a base
     # path in their URL. This allows us to strip it out via an optional
     # environment variable.
-    path_info = event["path"]
+    path_info = strip_express_gateway_query_params(event["path"])
     base_path = os.environ.get("API_GATEWAY_BASE_PATH")
     if base_path:
         script_name = "/" + base_path
@@ -243,7 +253,7 @@ def handle_payload_v2(app, event, context):
 
     script_name = get_script_name(headers, event.get("requestContext", {}))
 
-    path_info = event["rawPath"]
+    path_info = strip_express_gateway_query_params(event["rawPath"])
 
     body = event.get("body", "")
     body = get_body_bytes(event, body)
@@ -294,7 +304,7 @@ def handle_lambda_integration(app, event, context):
 
     script_name = get_script_name(headers, event)
 
-    path_info = event["requestPath"]
+    path_info = strip_express_gateway_query_params(event["requestPath"])
 
     for key, value in event.get("path", {}).items():
         path_info = path_info.replace("{%s}" % key, value)
