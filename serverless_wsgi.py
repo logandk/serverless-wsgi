@@ -251,7 +251,7 @@ def handle_payload_v2(app, event, context):
     headers["Cookie"] = "; ".join(event.get("cookies", []))
 
     environ = {
-        "CONTENT_LENGTH": str(len(body)),
+        "CONTENT_LENGTH": str(len(body or "")),
         "CONTENT_TYPE": headers.get("Content-Type", ""),
         "PATH_INFO": url_unquote(path_info),
         "QUERY_STRING": event.get("rawQueryString", ""),
@@ -305,7 +305,7 @@ def handle_lambda_integration(app, event, context):
     body = get_body_bytes(event, body)
 
     environ = {
-        "CONTENT_LENGTH": str(len(body)),
+        "CONTENT_LENGTH": str(len(body or "")),
         "CONTENT_TYPE": headers.get("Content-Type", ""),
         "PATH_INFO": url_unquote(path_info),
         "QUERY_STRING": url_encode(event.get("query", {})),
