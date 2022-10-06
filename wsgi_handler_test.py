@@ -192,6 +192,13 @@ def event_v1():
 
 
 @pytest.fixture
+def event_v1_offline(event_v1):
+    event = event_v1
+    del event["body"]
+    return event
+
+
+@pytest.fixture
 def elb_event():
     return {
         "requestContext": {
@@ -292,6 +299,12 @@ def test_handler(mock_wsgi_app_file, mock_app, event_v1, capsys, wsgi_handler):
     out, err = capsys.readouterr()
     assert out == ""
     assert err == "application debug #1\n"
+
+
+def test_handler_offline(mock_wsgi_app_file, mock_app, event_v1_offline, wsgi_handler):
+    response = wsgi_handler.handler(event_v1_offline, {"memory_limit_in_mb": "128"})
+
+    assert response["body"] == "Hello World ☃!"
 
 
 def test_handler_multivalue(
