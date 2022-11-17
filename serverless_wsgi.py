@@ -180,6 +180,7 @@ def handle_request(app, event, context):
     if (
         event.get("version") is None
         and event.get("isBase64Encoded") is None
+        and event.get("requestPath") is not None
         and not is_alb_event(event)
     ):
         return handle_lambda_integration(app, event, context)
