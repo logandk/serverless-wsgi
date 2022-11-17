@@ -136,7 +136,7 @@ def setup_environ_items(environ, headers):
 def generate_response(response, event):
     returndict = {"statusCode": response.status_code}
 
-    if "multiValueHeaders" in event:
+    if "multiValueHeaders" in event and event["multiValueHeaders"]:
         returndict["multiValueHeaders"] = group_headers(response.headers)
     else:
         returndict["headers"] = split_headers(response.headers)
@@ -192,7 +192,7 @@ def handle_request(app, event, context):
 
 
 def handle_payload_v1(app, event, context):
-    if "multiValueHeaders" in event:
+    if "multiValueHeaders" in event and event["multiValueHeaders"]:
         headers = Headers(event["multiValueHeaders"])
     else:
         headers = Headers(event["headers"])
