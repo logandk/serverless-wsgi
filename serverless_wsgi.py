@@ -220,8 +220,8 @@ def handle_payload_v1(app, event, context):
         "REMOTE_ADDR": event.get("requestContext", {})
         .get("identity", {})
         .get("sourceIp", ""),
-        "REMOTE_USER": event.get("requestContext", {})
-        .get("authorizer", {})
+        "REMOTE_USER": (event.get("requestContext", {})
+                        .get("authorizer") or {})
         .get("principalId", ""),
         "REQUEST_METHOD": event.get("httpMethod", {}),
         "SCRIPT_NAME": script_name,
