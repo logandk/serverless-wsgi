@@ -136,7 +136,7 @@ def setup_environ_items(environ, headers):
 def generate_response(response, event):
     returndict = {"statusCode": response.status_code}
 
-    if "multiValueHeaders" in event:
+    if "multiValueHeaders" in event and event["multiValueHeaders"]:
         returndict["multiValueHeaders"] = group_headers(response.headers)
     else:
         returndict["headers"] = split_headers(response.headers)
@@ -180,6 +180,7 @@ def handle_request(app, event, context):
     if (
         event.get("version") is None
         and event.get("isBase64Encoded") is None
+        and event.get("requestPath") is not None
         and not is_alb_event(event)
     ):
         return handle_lambda_integration(app, event, context)
@@ -191,7 +192,7 @@ def handle_request(app, event, context):
 
 
 def handle_payload_v1(app, event, context):
-    if "multiValueHeaders" in event:
+    if "multiValueHeaders" in event and event["multiValueHeaders"]:
         headers = Headers(event["multiValueHeaders"])
     else:
         headers = Headers(event["headers"])
@@ -220,8 +221,8 @@ def handle_payload_v1(app, event, context):
         "REMOTE_ADDR": event.get("requestContext", {})
         .get("identity", {})
         .get("sourceIp", ""),
-        "REMOTE_USER": event.get("requestContext", {})
-        .get("authorizer", {})
+        "REMOTE_USER": (event.get("requestContext", {})
+                        .get("authorizer") or {})
         .get("principalId", ""),
         "REQUEST_METHOD": event.get("httpMethod", {}),
         "SCRIPT_NAME": script_name,
