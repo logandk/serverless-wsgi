@@ -1,3 +1,21 @@
+# 3.0.2
+
+## Features
+
+- Support base path stripping for v2 events
+- Default to https when protocol not specified in event
+- Add blacklist entries
+
+  _arsoni20_
+
+## Bugs
+
+- Fix handling of v1 event payload emitted by Serverless Offline plugin
+- Handle event with None body emitted by Serverless Offline plugin
+- Fixes for Scaleway
+
+  _Andrej Shadura_
+
 # 3.0.1
 
 ## Bugs
