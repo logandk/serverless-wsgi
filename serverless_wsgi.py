@@ -12,11 +12,11 @@ import io
 import json
 import os
 import sys
-from werkzeug.datastructures import Headers, iter_multi_items, MultiDict
-from werkzeug.wrappers import Response
-from werkzeug.urls import url_encode, url_unquote, url_unquote_plus
-from werkzeug.http import HTTP_STATUS_CODES
+from urllib.parse import urlencode, unquote, unquote_plus
 
+from werkzeug.datastructures import Headers, iter_multi_items, MultiDict
+from werkzeug.http import HTTP_STATUS_CODES
+from werkzeug.wrappers import Response
 
 # List of MIME types that should not be base64 encoded. MIME types within `text/*`
 # are included by default.
@@ -91,10 +91,10 @@ def encode_query_string(event):
         params = ""
     if is_alb_event(event):
         params = MultiDict(
-            (url_unquote_plus(k), url_unquote_plus(v))
+            (unquote_plus(k), unquote_plus(v))
             for k, v in iter_multi_items(params)
         )
-    return url_encode(params)
+    return urlencode(params)
 
 
 def get_script_name(headers, request_context):
@@ -151,7 +151,7 @@ def generate_response(response, event):
     if response.data:
         mimetype = response.mimetype or "text/plain"
         if (
-            mimetype.startswith("text/") or mimetype in TEXT_MIME_TYPES
+                mimetype.startswith("text/") or mimetype in TEXT_MIME_TYPES
         ) and not response.headers.get("Content-Encoding", ""):
             returndict["body"] = response.get_data(as_text=True)
             returndict["isBase64Encoded"] = False
@@ -178,10 +178,10 @@ def handle_request(app, event, context):
         return {}
 
     if (
-        event.get("version") is None
-        and event.get("isBase64Encoded") is None
-        and event.get("requestPath") is not None
-        and not is_alb_event(event)
+            event.get("version") is None
+            and event.get("isBase64Encoded") is None
+            and event.get("requestPath") is not None
+            and not is_alb_event(event)
     ):
         return handle_lambda_integration(app, event, context)
 
@@ -208,7 +208,7 @@ def handle_payload_v1(app, event, context):
         script_name = "/" + base_path
 
         if path_info.startswith(script_name):
-            path_info = path_info[len(script_name) :]
+            path_info = path_info[len(script_name):]
 
     body = event.get("body") or ""
     body = get_body_bytes(event, body)
@@ -216,7 +216,7 @@ def handle_payload_v1(app, event, context):
     environ = {
         "CONTENT_LENGTH": str(len(body)),
         "CONTENT_TYPE": headers.get("Content-Type", ""),
-        "PATH_INFO": url_unquote(path_info),
+        "PATH_INFO": unquote(path_info),
         "QUERY_STRING": encode_query_string(event),
         "REMOTE_ADDR": event.get("requestContext", {})
         .get("identity", {})
@@ -260,7 +260,7 @@ def handle_payload_v2(app, event, context):
         script_name = "/" + base_path
 
         if path_info.startswith(script_name):
-            path_info = path_info[len(script_name) :]
+            path_info = path_info[len(script_name):]
 
     body = event.get("body", "")
     body = get_body_bytes(event, body)
@@ -270,7 +270,7 @@ def handle_payload_v2(app, event, context):
     environ = {
         "CONTENT_LENGTH": str(len(body or "")),
         "CONTENT_TYPE": headers.get("Content-Type", ""),
-        "PATH_INFO": url_unquote(path_info),
+        "PATH_INFO": unquote(path_info),
         "QUERY_STRING": event.get("rawQueryString", ""),
         "REMOTE_ADDR": event.get("requestContext", {})
         .get("http", {})
@@ -324,8 +324,8 @@ def handle_lambda_integration(app, event, context):
     environ = {
         "CONTENT_LENGTH": str(len(body or "")),
         "CONTENT_TYPE": headers.get("Content-Type", ""),
-        "PATH_INFO": url_unquote(path_info),
-        "QUERY_STRING": url_encode(event.get("query", {})),
+        "PATH_INFO": unquote(path_info),
+        "QUERY_STRING": urlencode(event.get("query", {})),
         "REMOTE_ADDR": event.get("identity", {}).get("sourceIp", ""),
         "REMOTE_USER": event.get("principalId", ""),
         "REQUEST_METHOD": event.get("method", ""),
