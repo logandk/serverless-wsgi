@@ -1,3 +1,11 @@
+# 3.0.3
+
+## Features
+
+- As of Werkzeug 3.0.0, url_encode is no longer available, use the urllib counterparts
+
+  _Ryan Whittaker_
+
 # 3.0.2
 
 ## Features
