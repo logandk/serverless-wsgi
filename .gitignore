@@ -49,3 +49,14 @@ __pycache__
 env/
 build/
 *.egg-info/
+
+# Devenv
+.devenv*
+devenv.local.nix
+
+# direnv
+.direnv
+
+# pre-commit
+.pre-commit-config.yaml
+
