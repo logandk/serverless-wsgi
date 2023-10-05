@@ -14,7 +14,7 @@ import os
 import sys
 from urllib.parse import urlencode, unquote, unquote_plus
 
-from werkzeug.datastructures import Headers, iter_multi_items, MultiDict
+from werkzeug.datastructures import Headers, iter_multi_items
 from werkzeug.http import HTTP_STATUS_CODES
 from werkzeug.wrappers import Response
 
@@ -90,11 +90,11 @@ def encode_query_string(event):
     if not params:
         params = ""
     if is_alb_event(event):
-        params = MultiDict(
+        params = [
             (unquote_plus(k), unquote_plus(v))
             for k, v in iter_multi_items(params)
-        )
-    return urlencode(params)
+        ]
+    return urlencode(params, doseq=True)
 
 
 def get_script_name(headers, request_context):
@@ -156,7 +156,8 @@ def generate_response(response, event):
             returndict["body"] = response.get_data(as_text=True)
             returndict["isBase64Encoded"] = False
         else:
-            returndict["body"] = base64.b64encode(response.data).decode("utf-8")
+            returndict["body"] = base64.b64encode(
+                response.data).decode("utf-8")
             returndict["isBase64Encoded"] = True
 
     return returndict
@@ -325,7 +326,7 @@ def handle_lambda_integration(app, event, context):
         "CONTENT_LENGTH": str(len(body or "")),
         "CONTENT_TYPE": headers.get("Content-Type", ""),
         "PATH_INFO": unquote(path_info),
-        "QUERY_STRING": urlencode(event.get("query", {})),
+        "QUERY_STRING": urlencode(event.get("query", {}), doseq=True),
         "REMOTE_ADDR": event.get("identity", {}).get("sourceIp", ""),
         "REMOTE_USER": event.get("principalId", ""),
         "REQUEST_METHOD": event.get("method", ""),

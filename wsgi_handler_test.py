@@ -6,9 +6,8 @@ import json
 import os
 import pytest
 import sys
-from werkzeug.datastructures import MultiDict
+from urllib.parse import urlencode
 from werkzeug.wrappers import Request, Response
-from werkzeug.urls import url_encode
 
 # Reference to open() before monkeypatching
 original_open = open
@@ -126,7 +125,8 @@ def mock_text_mime_wsgi_app_file(monkeypatch):
     with manager.open("/tmp/.serverless-wsgi", "w") as f:
         f.write(
             json.dumps(
-                {"app": "app.app", "text_mime_types": ["application/custom+json"]}
+                {"app": "app.app", "text_mime_types": [
+                    "application/custom+json"]}
             )
         )
     monkeypatch.setattr(builtins, "open", manager.open)
@@ -276,7 +276,7 @@ def test_handler(mock_wsgi_app_file, mock_app, event_v1, capsys, wsgi_handler):
         "HTTP_X_FORWARDED_PORT": "443",
         "HTTP_X_FORWARDED_PROTO": "https",
         "PATH_INFO": "/some/path",
-        "QUERY_STRING": url_encode(event_v1["queryStringParameters"]),
+        "QUERY_STRING": urlencode(event_v1["queryStringParameters"], doseq=True),
         "REMOTE_ADDR": "76.20.166.147",
         "REMOTE_USER": "wile_e_coyote",
         "REQUEST_METHOD": "GET",
@@ -302,7 +302,8 @@ def test_handler(mock_wsgi_app_file, mock_app, event_v1, capsys, wsgi_handler):
 
 
 def test_handler_offline(mock_wsgi_app_file, mock_app, event_v1_offline, wsgi_handler):
-    response = wsgi_handler.handler(event_v1_offline, {"memory_limit_in_mb": "128"})
+    response = wsgi_handler.handler(
+        event_v1_offline, {"memory_limit_in_mb": "128"})
 
     assert response["body"] == "Hello World ☃!"
 
@@ -326,12 +327,14 @@ def test_handler_multivalue(
     response = wsgi_handler.handler(event_v1, {"memory_limit_in_mb": "128"})
     query_string = wsgi_handler.wsgi_app.last_environ["QUERY_STRING"]
 
-    assert query_string == url_encode(
-        MultiDict(
+    print(query_string)
+    assert query_string == urlencode(
+        [
             (i, k)
             for i, j in event_v1["multiValueQueryStringParameters"].items()
             for k in j
-        )
+        ],
+        doseq=True
     )
 
     assert response == {
@@ -433,7 +436,7 @@ def test_handler_custom_domain(mock_wsgi_app_file, mock_app, event_v1, wsgi_hand
         "HTTP_X_FORWARDED_PORT": "443",
         "HTTP_X_FORWARDED_PROTO": "https",
         "PATH_INFO": "/some/path",
-        "QUERY_STRING": url_encode(event_v1["queryStringParameters"]),
+        "QUERY_STRING": urlencode(event_v1["queryStringParameters"], doseq=True),
         "REMOTE_ADDR": "76.20.166.147",
         "REMOTE_USER": "wile_e_coyote",
         "REQUEST_METHOD": "GET",
@@ -488,7 +491,7 @@ def test_handler_api_gateway_base_path(
         "HTTP_X_FORWARDED_PORT": "443",
         "HTTP_X_FORWARDED_PROTO": "https",
         "PATH_INFO": "/some/path",
-        "QUERY_STRING": url_encode(event_v1["queryStringParameters"]),
+        "QUERY_STRING": urlencode(event_v1["queryStringParameters"]),
         "REMOTE_ADDR": "76.20.166.147",
         "REMOTE_USER": "wile_e_coyote",
         "REQUEST_METHOD": "GET",
@@ -697,7 +700,8 @@ def test_alb_multi_query_params(mock_wsgi_app_file, mock_app, wsgi_handler, elb_
     }
     response = wsgi_handler.handler(elb_event, {})
     query_string = wsgi_handler.wsgi_app.last_environ["QUERY_STRING"]
-    assert query_string == url_encode({"測試": ["テスト", "test"], "test": "test test"})
+    assert query_string == urlencode(
+        {"測試": ["テスト", "test"], "test": "test test"}, doseq=True)
 
     assert response == {
         "body": "Hello World ☃!",
@@ -1075,4 +1079,5 @@ def test_handler_lambda_error(
 ):
     mock_app.status_code = 400
     with pytest.raises(Exception, match='"statusCode": 400'):
-        wsgi_handler.handler(event_lambda_integration, {"memory_limit_in_mb": "128"})
+        wsgi_handler.handler(event_lambda_integration, {
+                             "memory_limit_in_mb": "128"})
