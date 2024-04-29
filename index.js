@@ -482,13 +482,10 @@ class ServerlessWSGI {
     // remotely, we get a string back and we want it to appear in the console as it would have
     // if it was invoked locally.
     //
-    // Thus, console.log is temporarily hijacked to capture the output and parse it as JSON. This
-    // hack is needed to avoid having to call the provider-specific invoke plugins.
+    // We capture stdout output in order to parse the array returned from the lambda invocation, 
+    // then restore stdout.
     let output = "";
 
-    /* eslint-disable no-console */
-    const native_log = console.log;
-    console.log = (msg) => (output += msg + "\n");
     /* eslint-disable no-unused-vars */
     const {
       originalStdoutWrite, // Original `write` bound to `process.stdout`#noqa
@@ -500,9 +497,7 @@ class ServerlessWSGI {
         orig, // data input
         originalStdoutWrite // // Original `write` bound to `process.stdout`
       ) => {
-        // Example of filtering ANSI codes for original stdout.write
-        originalStdoutWrite(orig.replace(/["]+/g, "").replace(/\\n/g, "\n"));
-        // originalStdoutWrite(orig.substring(orig.indexOf(",") + 7).replace(/\\n/g,"\n") + "\n");
+        output += orig;
       }
     );
     /* eslint-enable no-unused-vars */
@@ -525,18 +520,18 @@ class ServerlessWSGI {
                 ? _.trimEnd(output[1], "\n")
                 : output[1];
               if (return_code == 0) {
-                native_log(output_data);
+                this.serverless.cli.log(output_data)
               } else {
-                return reject(output_data);
+                return reject(new this.serverless.classes.Error(output_data));
               }
             } else {
-              native_log(output);
+              this.serverless.cli.log(output);
             }
             return resolve();
           })
       )
       .finally(() => {
-        console.log = native_log;
+        restoreStdoutWrite();
       });
     /* eslint-enable no-console */
   }
