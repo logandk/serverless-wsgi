@@ -520,7 +520,7 @@ class ServerlessWSGI {
                 ? _.trimEnd(output[1], "\n")
                 : output[1];
               if (return_code == 0) {
-                this.serverless.cli.log(output_data)
+                this.serverless.cli.log(output_data);
               } else {
                 return reject(new this.serverless.classes.Error(output_data));
               }
