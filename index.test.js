@@ -1545,6 +1545,8 @@ describe("serverless-wsgi", () => {
   });
 
   describe("exec", () => {
+    const mockCli = Object({log: () => {}});
+    
     it("fails when invoked without command or file", () => {
       var plugin = new Plugin(
         {
@@ -1574,7 +1576,7 @@ describe("serverless-wsgi", () => {
             functions: { app: { handler: "wsgi_handler.handler" } },
           },
           classes: { Error: Error },
-          cli: { log: () => {} },
+          cli: mockCli,
           pluginManager: {
             cliOptions: {},
             run: (command) =>
@@ -1589,7 +1591,7 @@ describe("serverless-wsgi", () => {
       );
 
       var sandbox = sinon.createSandbox();
-      let consoleSpy = sandbox.spy(console, "log");
+      let loggerSpy = sandbox.spy(mockCli, "log");
       return plugin.hooks["wsgi:exec:exec"]().then(() => {
         expect(plugin.serverless.pluginManager.cliOptions.c).to.be.undefined;
         expect(plugin.serverless.pluginManager.cliOptions.context).to.be
@@ -1602,7 +1604,7 @@ describe("serverless-wsgi", () => {
         expect(plugin.options.data).to.equal(
           '{"_serverless-wsgi":{"command":"exec","data":"print(1+4)"}}'
         );
-        expect(consoleSpy.calledWith("5")).to.be.true;
+        expect(loggerSpy.calledWith("5")).to.be.true;
         sandbox.restore();
       });
     });
@@ -1617,7 +1619,7 @@ describe("serverless-wsgi", () => {
             functions: { app: { handler: "wsgi_handler.handler" } },
           },
           classes: { Error: Error },
-          cli: { log: () => {} },
+          cli: mockCli,
           pluginManager: {
             cliOptions: {},
             run: (command) =>
@@ -1632,7 +1634,7 @@ describe("serverless-wsgi", () => {
       );
 
       var sandbox = sinon.createSandbox();
-      let consoleSpy = sandbox.spy(console, "log");
+      let loggerSpy = sandbox.spy(mockCli, "log");
       sandbox.stub(fse, "readFileSync").returns("print(1+4)");
       return plugin.hooks["wsgi:exec:exec"]().then(() => {
         expect(plugin.serverless.pluginManager.cliOptions.f).to.equal("app");
@@ -1643,7 +1645,7 @@ describe("serverless-wsgi", () => {
         expect(plugin.options.data).to.equal(
           '{"_serverless-wsgi":{"command":"exec","data":"print(1+4)"}}'
         );
-        expect(consoleSpy.calledWith({ response: "5" })).to.be.true;
+        expect(loggerSpy.calledWith({ response: "5" })).to.be.true;
         sandbox.restore();
       });
     });
@@ -1679,6 +1681,8 @@ describe("serverless-wsgi", () => {
   });
 
   describe("exec local", () => {
+    const mockCli = {log: () => {}};
+
     it("fails when invoked without command or file", () => {
       var plugin = new Plugin(
         {
@@ -1688,7 +1692,7 @@ describe("serverless-wsgi", () => {
             custom: { wsgi: { app: "api.app" } },
           },
           classes: { Error: Error },
-          cli: { log: () => {} },
+          cli: mockCli,
         },
         {}
       );
@@ -1708,7 +1712,7 @@ describe("serverless-wsgi", () => {
             functions: { app: { handler: "wsgi_handler.handler" } },
           },
           classes: { Error: Error },
-          cli: { log: () => {} },
+          cli: mockCli,
           pluginManager: {
             cliOptions: {},
             run: (command) =>
@@ -1723,7 +1727,7 @@ describe("serverless-wsgi", () => {
       );
 
       var sandbox = sinon.createSandbox();
-      let consoleSpy = sandbox.spy(console, "log");
+      let loggerSpy = sandbox.spy(mockCli, "log");
       return plugin.hooks["wsgi:exec:local:exec"]().then(() => {
         expect(plugin.serverless.pluginManager.cliOptions.c).to.be.undefined;
         expect(plugin.serverless.pluginManager.cliOptions.context).to.be
@@ -1736,7 +1740,7 @@ describe("serverless-wsgi", () => {
         expect(plugin.options.data).to.equal(
           '{"_serverless-wsgi":{"command":"exec","data":"print(1+4)"}}'
         );
-        expect(consoleSpy.calledWith("5")).to.be.true;
+        expect(loggerSpy.calledWith("5")).to.be.true;
         sandbox.restore();
       });
     });
@@ -1751,7 +1755,7 @@ describe("serverless-wsgi", () => {
             functions: { app: { handler: "wsgi_handler.handler" } },
           },
           classes: { Error: Error },
-          cli: { log: () => {} },
+          cli: mockCli,
           pluginManager: {
             cliOptions: {},
             run: (command) =>
@@ -1766,7 +1770,7 @@ describe("serverless-wsgi", () => {
       );
 
       var sandbox = sinon.createSandbox();
-      let consoleSpy = sandbox.spy(console, "log");
+      let loggerSpy = sandbox.spy(mockCli, "log");
       sandbox.stub(fse, "readFileSync").returns("print(1+4)");
       return plugin.hooks["wsgi:exec:local:exec"]().then(() => {
         expect(plugin.serverless.pluginManager.cliOptions.f).to.equal("app");
@@ -1777,13 +1781,15 @@ describe("serverless-wsgi", () => {
         expect(plugin.options.data).to.equal(
           '{"_serverless-wsgi":{"command":"exec","data":"print(1+4)"}}'
         );
-        expect(consoleSpy.calledWith({ response: "5" })).to.be.true;
+        expect(loggerSpy.calledWith({ response: "5" })).to.be.true;
         sandbox.restore();
       });
     });
   });
 
   describe("command", () => {
+    const mockCli = {log: () => {}};
+
     it("fails when no wsgi handler is set", () => {
       var plugin = new Plugin(
         {
@@ -1794,7 +1800,7 @@ describe("serverless-wsgi", () => {
             functions: { app: { handler: "other.handler" } },
           },
           classes: { Error: Error },
-          cli: { log: () => {} },
+          cli: mockCli,
         },
         { command: "pwd" }
       );
@@ -1813,7 +1819,7 @@ describe("serverless-wsgi", () => {
             custom: { wsgi: { app: "api.app" } },
           },
           classes: { Error: Error },
-          cli: { log: () => {} },
+          cli: mockCli,
         },
         {}
       );
@@ -1833,7 +1839,7 @@ describe("serverless-wsgi", () => {
             functions: { app: { handler: "wsgi_handler.handler" } },
           },
           classes: { Error: Error },
-          cli: { log: () => {} },
+          cli: mockCli,
           pluginManager: {
             cliOptions: {},
             run: (command) =>
@@ -1848,7 +1854,7 @@ describe("serverless-wsgi", () => {
       );
 
       var sandbox = sinon.createSandbox();
-      let consoleSpy = sandbox.spy(console, "log");
+      let loggerSpy = sandbox.spy(mockCli, "log");
       return plugin.hooks["wsgi:command:command"]().then(() => {
         expect(plugin.serverless.pluginManager.cliOptions.c).to.be.undefined;
         expect(plugin.serverless.pluginManager.cliOptions.context).to.be
@@ -1861,7 +1867,7 @@ describe("serverless-wsgi", () => {
         expect(plugin.options.data).to.equal(
           '{"_serverless-wsgi":{"command":"command","data":"pwd"}}'
         );
-        expect(consoleSpy.calledWith("non-json output")).to.be.true;
+        expect(loggerSpy.calledWith("non-json output")).to.be.true;
         sandbox.restore();
       });
     });
@@ -1876,7 +1882,7 @@ describe("serverless-wsgi", () => {
             functions: { app: { handler: "wsgi_handler.handler" } },
           },
           classes: { Error: Error },
-          cli: { log: () => {} },
+          cli: mockCli,
           pluginManager: {
             cliOptions: {},
             run: (command) =>
@@ -1891,7 +1897,7 @@ describe("serverless-wsgi", () => {
       );
 
       var sandbox = sinon.createSandbox();
-      let consoleSpy = sandbox.spy(console, "log");
+      let loggerSpy = sandbox.spy(mockCli, "log");
       sandbox.stub(fse, "readFileSync").returns("pwd");
       return plugin.hooks["wsgi:command:command"]().then(() => {
         expect(plugin.serverless.pluginManager.cliOptions.f).to.equal("app");
@@ -1902,13 +1908,15 @@ describe("serverless-wsgi", () => {
         expect(plugin.options.data).to.equal(
           '{"_serverless-wsgi":{"command":"command","data":"pwd"}}'
         );
-        expect(consoleSpy.calledWith("/var/task")).to.be.true;
+        expect(loggerSpy.calledWith("/var/task")).to.be.true;
         sandbox.restore();
       });
     });
   });
 
   describe("command local", () => {
+    const mockCli = {log: () => {}};
+
     it("fails when no wsgi handler is set", () => {
       var plugin = new Plugin(
         {
@@ -1919,7 +1927,7 @@ describe("serverless-wsgi", () => {
             functions: { app: { handler: "other.handler" } },
           },
           classes: { Error: Error },
-          cli: { log: () => {} },
+          cli: { mockCli },
         },
         { command: "pwd" }
       );
@@ -1940,7 +1948,7 @@ describe("serverless-wsgi", () => {
             custom: { wsgi: { app: "api.app" } },
           },
           classes: { Error: Error },
-          cli: { log: () => {} },
+          cli: { mockCli },
         },
         {}
       );
@@ -1962,13 +1970,13 @@ describe("serverless-wsgi", () => {
             functions: { app: { handler: "wsgi_handler.handler" } },
           },
           classes: { Error: Error },
-          cli: { log: () => {} },
+          cli: mockCli,
           pluginManager: {
             cliOptions: {},
             run: (command) =>
               new BbPromise((resolve) => {
                 expect(command).to.deep.equal(["invoke", "local"]);
-                console.log("non-json output"); // eslint-disable-line no-console
+                mockCli.log("non-json output"); // eslint-disable-line no-console
                 resolve();
               }),
           },
@@ -1977,7 +1985,7 @@ describe("serverless-wsgi", () => {
       );
 
       var sandbox = sinon.createSandbox();
-      let consoleSpy = sandbox.spy(console, "log");
+      let loggerSpy = sandbox.spy(mockCli, "log");
       return plugin.hooks["wsgi:command:local:command"]().then(() => {
         expect(plugin.serverless.pluginManager.cliOptions.c).to.be.undefined;
         expect(plugin.serverless.pluginManager.cliOptions.context).to.be
@@ -1990,7 +1998,7 @@ describe("serverless-wsgi", () => {
         expect(plugin.options.data).to.equal(
           '{"_serverless-wsgi":{"command":"command","data":"pwd"}}'
         );
-        expect(consoleSpy.calledWith("non-json output")).to.be.true;
+        expect(loggerSpy.calledWith("non-json output")).to.be.true;
         sandbox.restore();
       });
     });
@@ -2005,7 +2013,7 @@ describe("serverless-wsgi", () => {
             functions: { app: { handler: "wsgi_handler.handler" } },
           },
           classes: { Error: Error },
-          cli: { log: () => {} },
+          cli: mockCli,
           pluginManager: {
             cliOptions: {},
             run: (command) =>
@@ -2020,7 +2028,7 @@ describe("serverless-wsgi", () => {
       );
 
       var sandbox = sinon.createSandbox();
-      let consoleSpy = sandbox.spy(console, "log");
+      let loggerSpy = sandbox.spy(mockCli, "log");
       sandbox.stub(fse, "readFileSync").returns("pwd");
       return plugin.hooks["wsgi:command:local:command"]().then(() => {
         expect(plugin.serverless.pluginManager.cliOptions.f).to.equal("app");
@@ -2031,13 +2039,15 @@ describe("serverless-wsgi", () => {
         expect(plugin.options.data).to.equal(
           '{"_serverless-wsgi":{"command":"command","data":"pwd"}}'
         );
-        expect(consoleSpy.calledWith("/var/task")).to.be.true;
+        expect(loggerSpy.calledWith("/var/task")).to.be.true;
         sandbox.restore();
       });
     });
   });
 
   describe("manage", () => {
+    const mockCli = Object({log: () => {}});
+
     it("calls handler to execute manage commands remotely from argument", () => {
       var plugin = new Plugin(
         {
@@ -2048,7 +2058,7 @@ describe("serverless-wsgi", () => {
             functions: { app: { handler: "wsgi_handler.handler" } },
           },
           classes: { Error: Error },
-          cli: { log: () => {} },
+          cli: mockCli,
           pluginManager: {
             cliOptions: {},
             run: (command) =>
@@ -2063,7 +2073,7 @@ describe("serverless-wsgi", () => {
       );
 
       var sandbox = sinon.createSandbox();
-      let consoleSpy = sandbox.spy(console, "log");
+      let loggerSpy = sandbox.spy(mockCli, "log");
       return plugin.hooks["wsgi:manage:manage"]().then(() => {
         expect(plugin.serverless.pluginManager.cliOptions.f).to.equal("app");
         expect(plugin.options.function).to.equal("app");
@@ -2073,13 +2083,15 @@ describe("serverless-wsgi", () => {
         expect(plugin.options.data).to.equal(
           '{"_serverless-wsgi":{"command":"manage","data":"check"}}'
         );
-        expect(consoleSpy.calledWith("manage command output")).to.be.true;
+        expect(loggerSpy.calledWith("manage command output")).to.be.true;
         sandbox.restore();
       });
     });
   });
 
   describe("manage local", () => {
+    const mockCli = Object({log: () => {}});
+
     it("calls handler to execute manage commands locally from argument", () => {
       var plugin = new Plugin(
         {
@@ -2090,7 +2102,7 @@ describe("serverless-wsgi", () => {
             functions: { app: { handler: "wsgi_handler.handler" } },
           },
           classes: { Error: Error },
-          cli: { log: () => {} },
+          cli: mockCli,
           pluginManager: {
             cliOptions: {},
             run: (command) =>
@@ -2105,7 +2117,7 @@ describe("serverless-wsgi", () => {
       );
 
       var sandbox = sinon.createSandbox();
-      let consoleSpy = sandbox.spy(console, "log");
+      let loggerSpy = sandbox.spy(mockCli, "log");
       return plugin.hooks["wsgi:manage:local:manage"]().then(() => {
         expect(plugin.serverless.pluginManager.cliOptions.c).to.be.undefined;
         expect(plugin.serverless.pluginManager.cliOptions.context).to.be
@@ -2118,13 +2130,14 @@ describe("serverless-wsgi", () => {
         expect(plugin.options.data).to.equal(
           '{"_serverless-wsgi":{"command":"manage","data":"check"}}'
         );
-        expect(consoleSpy.calledWith("manage command output")).to.be.true;
+        expect(loggerSpy.calledWith("manage command output")).to.be.true;
         sandbox.restore();
       });
     });
   });
 
   describe("flask", () => {
+    const mockCli = Object({log: () => {}});
     it("calls handler to execute flask commands remotely from argument", () => {
       var plugin = new Plugin(
         {
@@ -2135,7 +2148,7 @@ describe("serverless-wsgi", () => {
             functions: { app: { handler: "wsgi_handler.handler" } },
           },
           classes: { Error: Error },
-          cli: { log: () => {} },
+          cli: mockCli,
           pluginManager: {
             cliOptions: {},
             run: (command) =>
@@ -2150,7 +2163,7 @@ describe("serverless-wsgi", () => {
       );
 
       var sandbox = sinon.createSandbox();
-      let consoleSpy = sandbox.spy(console, "log");
+      let loggerSpy = sandbox.spy(mockCli, "log");
       return plugin.hooks["wsgi:flask:flask"]().then(() => {
         expect(plugin.serverless.pluginManager.cliOptions.f).to.equal("app");
         expect(plugin.options.function).to.equal("app");
@@ -2160,13 +2173,14 @@ describe("serverless-wsgi", () => {
         expect(plugin.options.data).to.equal(
           '{"_serverless-wsgi":{"command":"flask","data":"check"}}'
         );
-        expect(consoleSpy.calledWith("flask command output")).to.be.true;
+        expect(loggerSpy.calledWith("flask command output")).to.be.true;
         sandbox.restore();
       });
     });
   });
 
   describe("flask local", () => {
+    const mockCli = Object({log: () => {}});
     it("calls handler to execute flask commands locally from argument", () => {
       var plugin = new Plugin(
         {
@@ -2177,7 +2191,7 @@ describe("serverless-wsgi", () => {
             functions: { app: { handler: "wsgi_handler.handler" } },
           },
           classes: { Error: Error },
-          cli: { log: () => {} },
+          cli: mockCli,
           pluginManager: {
             cliOptions: {},
             run: (command) =>
@@ -2192,7 +2206,7 @@ describe("serverless-wsgi", () => {
       );
 
       var sandbox = sinon.createSandbox();
-      let consoleSpy = sandbox.spy(console, "log");
+      let loggerSpy = sandbox.spy(mockCli, "log");
       return plugin.hooks["wsgi:flask:local:flask"]().then(() => {
         expect(plugin.serverless.pluginManager.cliOptions.c).to.be.undefined;
         expect(plugin.serverless.pluginManager.cliOptions.context).to.be
@@ -2205,7 +2219,7 @@ describe("serverless-wsgi", () => {
         expect(plugin.options.data).to.equal(
           '{"_serverless-wsgi":{"command":"flask","data":"check"}}'
         );
-        expect(consoleSpy.calledWith("flask command output")).to.be.true;
+        expect(loggerSpy.calledWith("flask command output")).to.be.true;
         sandbox.restore();
       });
     });
