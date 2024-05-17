@@ -1,3 +1,11 @@
+# 3.0.4
+
+## Bugs
+
+- Fix lambda response processing
+
+  _Eric Petway_
+
 # 3.0.3
 
 ## Features
