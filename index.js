@@ -434,29 +434,13 @@ class ServerlessWSGI {
   }
 
   findHandler() {
-    const functionName = this.options.function || this.options.f;
-
-    if (functionName) {
-      // If the function name is specified, return it directly
-      if (this.serverless.service.functions[functionName]) {
-        return functionName;
-      } else {
-        throw new Error(`Function "${functionName}" not found.`);
-      }
-    } else {
-      return _.findKey(this.serverless.service.functions, (fun) =>
-        _.includes(fun.handler, "wsgi_handler.handler")
-      );
-    }
+    return _.findKey(this.serverless.service.functions, (fun) =>
+      _.includes(fun.handler, "wsgi_handler.handler")
+    );
   }
 
   invokeHandler(command, data, local) {
-    let handlerFunction;
-    try {
-      handlerFunction = this.findHandler();
-    } catch (error) {
-      return BbPromise.reject(error.message);
-    }
+    const handlerFunction = this.findHandler();
 
     if (!handlerFunction) {
       return BbPromise.reject(
@@ -498,7 +482,7 @@ class ServerlessWSGI {
     // remotely, we get a string back and we want it to appear in the console as it would have
     // if it was invoked locally.
     //
-    // We capture stdout output in order to parse the array returned from the lambda invocation,
+    // We capture stdout output in order to parse the array returned from the lambda invocation, 
     // then restore stdout.
     let output = "";
 
@@ -517,6 +501,7 @@ class ServerlessWSGI {
       }
     );
     /* eslint-enable no-unused-vars */
+
 
     return this.serverless.pluginManager
       .run(local ? ["invoke", "local"] : ["invoke"])
