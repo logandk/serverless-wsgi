@@ -498,7 +498,7 @@ class ServerlessWSGI {
     // remotely, we get a string back and we want it to appear in the console as it would have
     // if it was invoked locally.
     //
-    // We capture stdout output in order to parse the array returned from the lambda invocation,
+    // We capture stdout output in order to parse the array returned from the lambda invocation, 
     // then restore stdout.
     let output = "";
 
