@@ -1,5 +1,9 @@
 # 3.0.5
 
+## Security
+
+- Remove hasbin dependency
+
 ## Features
 
 - Add ability to provide function to execute when calling sls wsgi command

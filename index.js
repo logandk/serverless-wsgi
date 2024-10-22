@@ -5,7 +5,7 @@ const _ = require("lodash");
 const path = require("path");
 const fse = BbPromise.promisifyAll(require("fs-extra"));
 const child_process = require("child_process");
-const hasbin = require("hasbin");
+const commandExists = require("command-exists");
 const overrideStdoutWrite = require("process-utils/override-stdout-write");
 
 class ServerlessWSGI {
@@ -137,7 +137,7 @@ class ServerlessWSGI {
       }
 
       if (this.serverless.service.provider.runtime) {
-        if (hasbin.sync(this.serverless.service.provider.runtime)) {
+        if (commandExists.sync(this.serverless.service.provider.runtime)) {
           this.serverless.cli.log(
             `Using Python specified in "runtime": ${this.serverless.service.provider.runtime}`
           );
@@ -282,7 +282,7 @@ class ServerlessWSGI {
             if (linkConflict) {
               return reject(
                 `Unable to link dependency '${file}' ` +
-                  "because a file by the same name exists in this service"
+                "because a file by the same name exists in this service"
               );
             }
           }
@@ -498,7 +498,7 @@ class ServerlessWSGI {
     // remotely, we get a string back and we want it to appear in the console as it would have
     // if it was invoked locally.
     //
-    // We capture stdout output in order to parse the array returned from the lambda invocation, 
+    // We capture stdout output in order to parse the array returned from the lambda invocation,
     // then restore stdout.
     let output = "";
 
