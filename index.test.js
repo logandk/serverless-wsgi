@@ -1,6 +1,5 @@
 "use strict";
 
-/* global describe it */
 const chai = require("chai");
 const expect = chai.expect;
 const sinon = require("sinon");
@@ -65,7 +64,7 @@ describe("serverless-wsgi", () => {
           config: { servicePath: "/tmp" },
           service: { provider: { runtime: "python2.7" } },
           classes: { Error: Error },
-          cli: { log: () => {} },
+          cli: { log: () => { } },
         },
         {}
       );
@@ -95,7 +94,7 @@ describe("serverless-wsgi", () => {
             custom: { wsgi: { app: "api.app" } },
           },
           classes: { Error: Error },
-          cli: { log: () => {} },
+          cli: { log: () => { } },
         },
         {}
       );
@@ -158,7 +157,7 @@ describe("serverless-wsgi", () => {
             },
           },
           classes: { Error: Error },
-          cli: { log: () => {} },
+          cli: { log: () => { } },
         },
         {}
       );
@@ -194,7 +193,7 @@ describe("serverless-wsgi", () => {
             },
           },
           classes: { Error: Error },
-          cli: { log: () => {} },
+          cli: { log: () => { } },
         },
         {}
       );
@@ -230,7 +229,7 @@ describe("serverless-wsgi", () => {
             custom: { wsgi: { app: "api.app" } },
           },
           classes: { Error: Error },
-          cli: { log: () => {} },
+          cli: { log: () => { } },
         },
         {}
       );
@@ -261,7 +260,7 @@ describe("serverless-wsgi", () => {
             },
           },
           classes: { Error: Error },
-          cli: { log: () => {} },
+          cli: { log: () => { } },
         },
         {}
       );
@@ -332,7 +331,7 @@ describe("serverless-wsgi", () => {
             },
           },
           classes: { Error: Error },
-          cli: { log: () => {} },
+          cli: { log: () => { } },
         },
         {}
       );
@@ -402,7 +401,7 @@ describe("serverless-wsgi", () => {
             package: { patterns: ["sample.txt"] },
           },
           classes: { Error: Error },
-          cli: { log: () => {} },
+          cli: { log: () => { } },
         },
         {}
       );
@@ -457,7 +456,7 @@ describe("serverless-wsgi", () => {
             package: { patterns: ["sample.txt"] },
           },
           classes: { Error: Error },
-          cli: { log: () => {} },
+          cli: { log: () => { } },
         },
         {}
       );
@@ -509,7 +508,7 @@ describe("serverless-wsgi", () => {
             custom: { wsgi: { app: "api/api.app" } },
           },
           classes: { Error: Error },
-          cli: { log: () => {} },
+          cli: { log: () => { } },
         },
         {}
       );
@@ -554,7 +553,7 @@ describe("serverless-wsgi", () => {
           config: { servicePath: "/tmp" },
           service: { provider: { runtime: "python2.7" } },
           classes: { Error: Error },
-          cli: { log: () => {} },
+          cli: { log: () => { } },
         },
         {}
       );
@@ -581,7 +580,7 @@ describe("serverless-wsgi", () => {
           config: { servicePath: "/tmp" },
           service: { provider: { runtime: "python2.7" } },
           classes: { Error: Error },
-          cli: { log: () => {} },
+          cli: { log: () => { } },
         },
         {}
       );
@@ -608,7 +607,7 @@ describe("serverless-wsgi", () => {
           config: { servicePath: "/tmp" },
           service: { provider: { runtime: "python2.7" } },
           classes: { Error: Error },
-          cli: { log: () => {} },
+          cli: { log: () => { } },
         },
         {}
       );
@@ -650,7 +649,7 @@ describe("serverless-wsgi", () => {
             custom: { wsgi: { pipArgs: "--no-deps 'imaginary \"value\"'" } },
           },
           classes: { Error: Error },
-          cli: { log: () => {} },
+          cli: { log: () => { } },
         },
         {}
       );
@@ -691,7 +690,7 @@ describe("serverless-wsgi", () => {
           config: { servicePath: "/tmp" },
           service: { provider: { runtime: "python2.7" } },
           classes: { Error: Error },
-          cli: { log: () => {} },
+          cli: { log: () => { } },
         },
         {}
       );
@@ -727,7 +726,7 @@ describe("serverless-wsgi", () => {
           config: { servicePath: "/tmp" },
           service: { provider: { runtime: "python2.7" } },
           classes: { Error: Error },
-          cli: { log: () => {} },
+          cli: { log: () => { } },
         },
         {}
       );
@@ -750,7 +749,7 @@ describe("serverless-wsgi", () => {
           config: { servicePath: "/tmp" },
           service: { provider: { runtime: "python2.7" } },
           classes: { Error: Error },
-          cli: { log: () => {} },
+          cli: { log: () => { } },
         },
         {}
       );
@@ -775,7 +774,7 @@ describe("serverless-wsgi", () => {
           config: { servicePath: "/tmp" },
           service: { provider: { runtime: "python2.7" } },
           classes: { Error: Error },
-          cli: { log: () => {} },
+          cli: { log: () => { } },
         },
         {}
       );
@@ -803,7 +802,7 @@ describe("serverless-wsgi", () => {
             custom: { wsgi: { app: "api.app", packRequirements: false } },
           },
           classes: { Error: Error },
-          cli: { log: () => {} },
+          cli: { log: () => { } },
         },
         {}
       );
@@ -840,7 +839,7 @@ describe("serverless-wsgi", () => {
             custom: { wsgi: { app: "api.app", packRequirements: false } },
           },
           classes: { Error: Error },
-          cli: { log: () => {} },
+          cli: { log: () => { } },
         },
         {}
       );
@@ -868,7 +867,7 @@ describe("serverless-wsgi", () => {
             plugins: ["serverless-wsgi", "serverless-python-requirements"],
           },
           classes: { Error: Error },
-          cli: { log: () => {} },
+          cli: { log: () => { } },
         },
         {}
       );
@@ -911,7 +910,7 @@ describe("serverless-wsgi", () => {
             functions: functions,
           },
           classes: { Error: Error },
-          cli: { log: () => {} },
+          cli: { log: () => { } },
         },
         { functionObj: functions.app }
       );
@@ -947,7 +946,7 @@ describe("serverless-wsgi", () => {
             functions: functions,
           },
           classes: { Error: Error },
-          cli: { log: () => {} },
+          cli: { log: () => { } },
         },
         { functionObj: functions.app }
       );
@@ -1006,7 +1005,7 @@ describe("serverless-wsgi", () => {
             functions: functions,
           },
           classes: { Error: Error },
-          cli: { log: () => {} },
+          cli: { log: () => { } },
         },
         { functionObj: functions.app }
       );
@@ -1038,7 +1037,7 @@ describe("serverless-wsgi", () => {
         config: { servicePath: "/tmp" },
         service: { provider: { runtime: "python2.7" } },
         classes: { Error: Error },
-        cli: { log: () => {} },
+        cli: { log: () => { } },
       });
 
       return expect(plugin.hooks["wsgi:serve:serve"]()).to.be.rejected;
@@ -1053,7 +1052,7 @@ describe("serverless-wsgi", () => {
             custom: { wsgi: { app: "api.app" } },
           },
           classes: { Error: Error },
-          cli: { log: () => {} },
+          cli: { log: () => { } },
         },
         {}
       );
@@ -1089,7 +1088,7 @@ describe("serverless-wsgi", () => {
             custom: { wsgi: { app: "api.app" } },
           },
           classes: { Error: Error },
-          cli: { log: () => {} },
+          cli: { log: () => { } },
         },
         {}
       );
@@ -1129,7 +1128,7 @@ describe("serverless-wsgi", () => {
             custom: { wsgi: { app: "api.app" } },
           },
           classes: { Error: Error },
-          cli: { log: () => {} },
+          cli: { log: () => { } },
         },
         {}
       );
@@ -1169,7 +1168,7 @@ describe("serverless-wsgi", () => {
             custom: { wsgi: { app: "api.app" } },
           },
           classes: { Error: Error },
-          cli: { log: () => {} },
+          cli: { log: () => { } },
         },
         { port: 8000 }
       );
@@ -1205,7 +1204,7 @@ describe("serverless-wsgi", () => {
             custom: { wsgi: { app: "api.app" } },
           },
           classes: { Error: Error },
-          cli: { log: () => {} },
+          cli: { log: () => { } },
         },
         { host: "0.0.0.0" }
       );
@@ -1241,7 +1240,7 @@ describe("serverless-wsgi", () => {
             custom: { wsgi: { app: "api.app" } },
           },
           classes: { Error: Error },
-          cli: { log: () => {} },
+          cli: { log: () => { } },
         },
         { "disable-threading": true }
       );
@@ -1278,7 +1277,7 @@ describe("serverless-wsgi", () => {
             custom: { wsgi: { app: "api.app" } },
           },
           classes: { Error: Error },
-          cli: { log: () => {} },
+          cli: { log: () => { } },
         },
         { "num-processes": 10 }
       );
@@ -1316,7 +1315,7 @@ describe("serverless-wsgi", () => {
             custom: { wsgi: { app: "api.app" } },
           },
           classes: { Error: Error },
-          cli: { log: () => {} },
+          cli: { log: () => { } },
         },
         { ssl: true }
       );
@@ -1367,7 +1366,7 @@ describe("serverless-wsgi", () => {
             custom: { wsgi: { app: "api.app" } },
           },
           classes: { Error: Error },
-          cli: { log: () => {} },
+          cli: { log: () => { } },
         },
         { port: 8000 }
       );
@@ -1398,7 +1397,7 @@ describe("serverless-wsgi", () => {
             },
           },
           classes: { Error: Error },
-          cli: { log: () => {} },
+          cli: { log: () => { } },
         },
         {}
       );
@@ -1436,7 +1435,7 @@ describe("serverless-wsgi", () => {
             custom: { wsgi: { app: "api.app" } },
           },
           classes: { Error: Error },
-          cli: { log: () => {} },
+          cli: { log: () => { } },
         },
         {}
       );
@@ -1491,7 +1490,7 @@ describe("serverless-wsgi", () => {
             custom: { wsgi: { app: "api.app" } },
           },
           classes: { Error: Error },
-          cli: { log: () => {} },
+          cli: { log: () => { } },
         },
         {}
       );
@@ -1525,7 +1524,7 @@ describe("serverless-wsgi", () => {
             functions: functions,
           },
           classes: { Error: Error },
-          cli: { log: () => {} },
+          cli: { log: () => { } },
         },
         { functionObj: functions.app }
       );
@@ -1545,8 +1544,8 @@ describe("serverless-wsgi", () => {
   });
 
   describe("exec", () => {
-    const mockCli = Object({log: () => {}});
-    
+    const mockCli = Object({ log: () => { } });
+
     it("fails when invoked without command or file", () => {
       var plugin = new Plugin(
         {
@@ -1556,7 +1555,7 @@ describe("serverless-wsgi", () => {
             custom: { wsgi: { app: "api.app" } },
           },
           classes: { Error: Error },
-          cli: { log: () => {} },
+          cli: { log: () => { } },
         },
         {}
       );
@@ -1660,7 +1659,7 @@ describe("serverless-wsgi", () => {
             functions: { app: { handler: "wsgi_handler.handler" } },
           },
           classes: { Error: Error },
-          cli: { log: () => {} },
+          cli: { log: () => { } },
           pluginManager: {
             cliOptions: {},
             run: (command) =>
@@ -1681,7 +1680,7 @@ describe("serverless-wsgi", () => {
   });
 
   describe("exec local", () => {
-    const mockCli = {log: () => {}};
+    const mockCli = { log: () => { } };
 
     it("fails when invoked without command or file", () => {
       var plugin = new Plugin(
@@ -1788,7 +1787,7 @@ describe("serverless-wsgi", () => {
   });
 
   describe("command", () => {
-    const mockCli = {log: () => {}};
+    const mockCli = { log: () => { } };
 
     it("fails when no wsgi handler is set", () => {
       var plugin = new Plugin(
@@ -1915,7 +1914,7 @@ describe("serverless-wsgi", () => {
   });
 
   describe("command local", () => {
-    const mockCli = {log: () => {}};
+    const mockCli = { log: () => { } };
 
     it("fails when no wsgi handler is set", () => {
       var plugin = new Plugin(
@@ -2046,34 +2045,48 @@ describe("serverless-wsgi", () => {
   });
 
   describe("manage", () => {
-    const mockCli = Object({log: () => {}});
+    const mockCli = {
+      log: sinon.spy(),
+    };
 
-    it("calls handler to execute manage commands remotely from argument", () => {
-      var plugin = new Plugin(
+    let plugin;
+    let sandbox;
+
+    beforeEach(() => {
+      sandbox = sinon.createSandbox();
+      plugin = new Plugin(
         {
           config: { servicePath: "/tmp" },
           service: {
             provider: { runtime: "python2.7" },
             custom: { wsgi: { app: "api.app" } },
-            functions: { app: { handler: "wsgi_handler.handler" } },
+            functions: {
+              app: { handler: "wsgi_handler.handler" },
+              otherFunc: { handler: "other_handler.handler" },
+            },
           },
           classes: { Error: Error },
           cli: mockCli,
           pluginManager: {
             cliOptions: {},
-            run: (command) =>
-              new BbPromise((resolve) => {
-                expect(command).to.deep.equal(["invoke"]);
-                console.log('[0, "manage command output"]'); // eslint-disable-line no-console
-                resolve();
-              }),
+            run: sandbox.stub().resolves(),
           },
         },
         { command: "check" }
       );
+    });
 
-      var sandbox = sinon.createSandbox();
-      let loggerSpy = sandbox.spy(mockCli, "log");
+    afterEach(() => {
+      sandbox.restore();
+    });
+
+    it("calls handler to execute manage commands remotely from argument", () => {
+      plugin.serverless.pluginManager.run.callsFake((command) => {
+        expect(command).to.deep.equal(["invoke"]);
+        console.log('[0, "manage command output"]');
+        return BbPromise.resolve();
+      });
+
       return plugin.hooks["wsgi:manage:manage"]().then(() => {
         expect(plugin.serverless.pluginManager.cliOptions.f).to.equal("app");
         expect(plugin.options.function).to.equal("app");
@@ -2083,14 +2096,65 @@ describe("serverless-wsgi", () => {
         expect(plugin.options.data).to.equal(
           '{"_serverless-wsgi":{"command":"manage","data":"check"}}'
         );
-        expect(loggerSpy.calledWith("manage command output")).to.be.true;
-        sandbox.restore();
+        expect(mockCli.log.calledWith("manage command output")).to.be.true;
       });
+    });
+
+    it("uses the function specified by --function", () => {
+      plugin.options.function = "otherFunc";
+
+      return plugin.hooks["wsgi:manage:manage"]().then(() => {
+        expect(plugin.serverless.pluginManager.cliOptions.f).to.equal(
+          "otherFunc"
+        );
+        expect(plugin.options.function).to.equal("otherFunc");
+      });
+    });
+
+    it("uses the function specified by -f", () => {
+      plugin.options.f = "otherFunc";
+
+      return plugin.hooks["wsgi:manage:manage"]().then(() => {
+        expect(plugin.serverless.pluginManager.cliOptions.f).to.equal(
+          "otherFunc"
+        );
+        expect(plugin.options.function).to.equal("otherFunc");
+      });
+    });
+
+    it("throws an error when specified function is not found", () => {
+      plugin.options.function = "nonExistentFunc";
+
+      return expect(plugin.hooks["wsgi:manage:manage"]()).to.be.rejectedWith(
+        'Function "nonExistentFunc" not found.'
+      );
+    });
+
+    it("falls back to finding wsgi handler when no function is specified", () => {
+      delete plugin.options.function;
+      delete plugin.options.f;
+
+      return plugin.hooks["wsgi:manage:manage"]().then(() => {
+        expect(plugin.serverless.pluginManager.cliOptions.f).to.equal("app");
+        expect(plugin.options.function).to.equal("app");
+      });
+    });
+
+    it("rejects when no wsgi handler is found and no function is specified", () => {
+      delete plugin.options.function;
+      delete plugin.options.f;
+      plugin.serverless.service.functions = {
+        someFunc: { handler: "some_handler.handler" },
+      };
+
+      return expect(plugin.hooks["wsgi:manage:manage"]()).to.be.rejectedWith(
+        "No functions were found with handler: wsgi_handler.handler"
+      );
     });
   });
 
   describe("manage local", () => {
-    const mockCli = Object({log: () => {}});
+    const mockCli = Object({ log: () => { } });
 
     it("calls handler to execute manage commands locally from argument", () => {
       var plugin = new Plugin(
@@ -2137,7 +2201,7 @@ describe("serverless-wsgi", () => {
   });
 
   describe("flask", () => {
-    const mockCli = Object({log: () => {}});
+    const mockCli = Object({ log: () => { } });
     it("calls handler to execute flask commands remotely from argument", () => {
       var plugin = new Plugin(
         {
@@ -2180,7 +2244,7 @@ describe("serverless-wsgi", () => {
   });
 
   describe("flask local", () => {
-    const mockCli = Object({log: () => {}});
+    const mockCli = Object({ log: () => { } });
     it("calls handler to execute flask commands locally from argument", () => {
       var plugin = new Plugin(
         {
@@ -2241,7 +2305,7 @@ describe("serverless-wsgi", () => {
             getFunction: (name) => functions[name],
           },
           classes: { Error: Error },
-          cli: { log: () => {} },
+          cli: { log: () => { } },
         },
         { function: "other" }
       );
@@ -2289,7 +2353,7 @@ describe("serverless-wsgi", () => {
             },
           },
           classes: { Error: Error },
-          cli: { log: () => {} },
+          cli: { log: () => { } },
         },
         { function: "app" }
       );

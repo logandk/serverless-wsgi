@@ -434,13 +434,29 @@ class ServerlessWSGI {
   }
 
   findHandler() {
-    return _.findKey(this.serverless.service.functions, (fun) =>
-      _.includes(fun.handler, "wsgi_handler.handler")
-    );
+    const functionName = this.options.function || this.options.f;
+
+    if (functionName) {
+      // If the function name is specified, return it directly
+      if (this.serverless.service.functions[functionName]) {
+        return functionName;
+      } else {
+        throw new Error(`Function "${functionName}" not found.`);
+      }
+    } else {
+      return _.findKey(this.serverless.service.functions, (fun) =>
+        _.includes(fun.handler, "wsgi_handler.handler")
+      );
+    }
   }
 
   invokeHandler(command, data, local) {
-    const handlerFunction = this.findHandler();
+    let handlerFunction;
+    try {
+      handlerFunction = this.findHandler();
+    } catch (error) {
+      return BbPromise.reject(error.message);
+    }
 
     if (!handlerFunction) {
       return BbPromise.reject(
