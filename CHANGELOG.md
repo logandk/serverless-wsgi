@@ -1,3 +1,11 @@
+# 3.0.5
+
+## Features
+
+- Add ability to provide function to execute when calling sls wsgi command
+
+  _ayaan-qadri_
+
 # 3.0.4
 
 ## Bugs
