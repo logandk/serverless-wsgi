@@ -813,18 +813,16 @@ def test_command_unknown(mock_wsgi_app_file, mock_app, wsgi_handler):
 
 
 def test_app_import_error(mock_wsgi_app_file, mock_app_with_import_error, event_v1, wsgi_handler):
-    with pytest.raises(ImportError, match="Unable to import app app.app"):
-        response = wsgi_handler.handler(event_v1, {})
-        pytest.exit(response)
-        assert response == {
-            "statusCode": 500,
-            "body": "<!doctype html>\n<html lang=en>\n<title>500 Internal Server Error</title>\n<h1>Internal Server Error</h1>\n<p>Unable to import app: app.app</p>\n",
-            "headers": {
-                "Content-Type": "text/html; charset=utf-8",
-                "Content-Length": "140"
-            },
-            "isBase64Encoded": False
-        }
+    response = wsgi_handler.handler(event_v1, {})
+    assert response == {
+        "statusCode": 500,
+        "body": "<!doctype html>\n<html lang=en>\n<title>500 Internal Server Error</title>\n<h1>Internal Server Error</h1>\n<p>Unable to import app: app.app</p>\n",
+        "headers": {
+            "Content-Type": "text/html; charset=utf-8",
+            "Content-Length": "140"
+        },
+        "isBase64Encoded": False
+    }
 
 
 def test_handler_with_encoded_characters_in_path(
