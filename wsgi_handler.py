@@ -45,9 +45,9 @@ def import_app(config):
         wsgi_module = importlib.import_module(wsgi_fqn_parts[-1])
 
         return getattr(wsgi_module, wsgi_fqn[1])
-    except:  # noqa
-        logging.exception("Unable to import app '{}' - {}".format(config["app"], str(e)), exc_info=e)
-        return InternalServerError("Unable to import app {}".format(config["app"]))
+    except Exception as err:
+        logging.exception("Unable to import app: '{}' - {}".format(config["app"], err))
+        return InternalServerError("Unable to import app: {}".format(config["app"]))
 
 
 def append_text_mime_types(config):
