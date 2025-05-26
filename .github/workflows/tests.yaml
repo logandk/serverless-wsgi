@@ -12,14 +12,14 @@ jobs:
           - { name: "3.8", python: "3.8", os: ubuntu-latest }
           - { name: "3.7", python: "3.7", os: ubuntu-latest }
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v4
         with:
           node-version: "14"
       - run: npm install
 
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python }}
       - name: update pip
@@ -31,7 +31,7 @@ jobs:
         id: pip-cache
         run: echo "::set-output name=dir::$(pip cache dir)"
       - name: cache pip
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: ${{ steps.pip-cache.outputs.dir }}
           key: pip|${{ runner.os }}|${{ matrix.python }}|${{ hashFiles('setup.py') }}|${{ hashFiles('requirements.txt') }}
@@ -43,7 +43,7 @@ jobs:
       - run: npm run pytest
       - run: npm run pylint
 
-      - uses: codecov/codecov-action@v2
+      - uses: codecov/codecov-action@v4
         with:
           token: "89d22de7-bfaf-43a0-81da-33cc733fd294"
           fail_ci_if_error: true
