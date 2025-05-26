@@ -12,14 +12,14 @@ jobs:
           - { name: "3.9", python: "3.9", os: ubuntu-latest }
           - { name: "3.8", python: "3.8", os: ubuntu-latest }
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v4
         with:
           node-version: "14"
       - run: npm install
 
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python }}
       - name: update pip
@@ -43,7 +43,7 @@ jobs:
       - run: npm run pytest
       - run: npm run pylint
 
-      - uses: codecov/codecov-action@v2
+      - uses: codecov/codecov-action@v4
         with:
           token: "89d22de7-bfaf-43a0-81da-33cc733fd294"
           fail_ci_if_error: true

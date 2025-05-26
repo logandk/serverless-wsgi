@@ -9,9 +9,11 @@ Author: Logan Raarup <logan@logan.dk>
 import importlib
 import io
 import json
+import logging
 import os
 import sys
 import traceback
+from werkzeug.exceptions import InternalServerError
 
 # Call decompression helper from `serverless-python-requirements` if
 # available. See: https://github.com/UnitedIncome/serverless-python-requirements#dealing-with-lambdas-size-limitations
@@ -43,9 +45,9 @@ def import_app(config):
         wsgi_module = importlib.import_module(wsgi_fqn_parts[-1])
 
         return getattr(wsgi_module, wsgi_fqn[1])
-    except:  # noqa
-        traceback.print_exc()
-        raise Exception("Unable to import {}".format(config["app"]))
+    except Exception as err:
+        logging.exception("Unable to import app: '{}' - {}".format(config["app"], err))
+        return InternalServerError("Unable to import app: {}".format(config["app"]))
 
 
 def append_text_mime_types(config):
