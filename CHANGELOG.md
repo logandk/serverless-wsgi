@@ -1,3 +1,11 @@
+# 3.1.0
+
+## Bugs
+
+- Fix missing CloudWatch log messages for errors occurring during app start-up
+
+  _Kieren Eaton_
+
 # 3.0.5
 
 ## Security
